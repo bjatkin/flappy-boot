@@ -12,11 +12,11 @@ const MaxAttrs = 128
 var (
 	// Block0 is the first block of sprite data, it contains sprites 0 - 255 if the sprites use the
 	// 256 color palette, and sprites 0 - 511 if the sprites use the 16 color palettes
-	Block0 = memmap.OAM[4*memmap.CharBlockOffset : 5*memmap.CharBlockOffset]
+	Block0 = memmap.VRAM[4*memmap.CharBlockOffset : 5*memmap.CharBlockOffset]
 
 	// Block1 is the second block of sprite data, it contains sprites 256 - 511 if the sprites use the
 	// 256 color palette, and sprites 512 - 1023 if the sprites use the 16 color palettes
-	Block1 = memmap.OAM[5*memmap.CharBlockOffset:]
+	Block1 = memmap.VRAM[5*memmap.CharBlockOffset:]
 
 	// Palette is the 256 color palette memory for sprites
 	Palette = memmap.Palette[0x0100:]

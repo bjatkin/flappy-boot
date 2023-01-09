@@ -28,10 +28,6 @@ func LoadPalette256(fs embed.FS, name string) error {
 
 // LoadPalette16 loads a 16 color palette from an embedded file into memory
 func LoadPalette16(fs embed.FS, name string, palIndex int) error {
-	if palIndex > 0x0010 {
-		return fmt.Errorf("palette bank %d does not exist must be 0-16", palIndex)
-	}
-
 	palette, err := fs.Open(name)
 	if err != nil {
 		return fmt.Errorf("failed to open palette file %s: %s", name, err)
@@ -42,9 +38,9 @@ func LoadPalette16(fs embed.FS, name string, palIndex int) error {
 		return fmt.Errorf("failed to read palette file: %s", err)
 	}
 
-	start := 0x0100 + 0x0010*palIndex
-	memmap.Copy16(memmap.Palette[start:start+0x0010], pal)
-
+	// TODO: leverage some constants here (maybe we don't even need the Palette0-F vars, just offsets)
+	p := 0x0010 * palIndex
+	memmap.Copy16(hw_sprite.Palette[p:p+0x0010], pal)
 	return nil
 }
 

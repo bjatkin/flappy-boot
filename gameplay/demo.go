@@ -20,10 +20,25 @@ func NewDemo(assets embed.FS) *Demo {
 
 func (d *Demo) Init() error {
 	// Load in the sprite palettes
-	sprite.LoadPalette16(d.assets, "palette_0.p16", 0)
-	sprite.LoadPalette16(d.assets, "palette_1.p16", 1)
-	sprite.LoadPalette16(d.assets, "palette_2.p16", 2)
-	sprite.LoadPalette16(d.assets, "palette_3.p16", 3)
+	err := sprite.LoadPalette16(d.assets, "assets/gba/palette_0.p16", 0)
+	if err != nil {
+		return err
+	}
+
+	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_1.p16", 1)
+	if err != nil {
+		return err
+	}
+
+	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_2.p16", 2)
+	if err != nil {
+		return err
+	}
+
+	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_3.p16", 3)
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -99,7 +99,8 @@ func Copy16[T values](dest []T, src []byte) {
 	src16 := *((*[]T)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&src[0])),
 
-		// these need to be uintptrs since there's a bug in the tinygo complier right now
+		// these need to be uintptrs since the len and cap need to match the size of a pointer
+		// on the GBA
 		Cap: uintptr(len(src) / 2),
 		Len: uintptr(len(src) / 2),
 	})))
@@ -120,7 +121,8 @@ func Load16[T values](dest []T, src fs.File, buffer []byte) error {
 	buffer16 := *((*[]T)(unsafe.Pointer(&reflect.SliceHeader{
 		Data: uintptr(unsafe.Pointer(&buffer[0])),
 
-		// these need to be uintprts since there's a bug in the tinygo complier right now
+		// these need to be uintptrs since the len and cap need to match the size of a pointer
+		// on the GBA
 		Cap: uintptr(len(buffer) / 2),
 		Len: uintptr(len(buffer) / 2),
 	})))
