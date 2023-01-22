@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
-	"reflect"
 	"unsafe"
 )
 
@@ -44,39 +43,25 @@ type PaletteValue uint16
 
 // Palette is the system palette data, it consistes of 1kb and holds 16 bit color entries
 // for both the background and sprite palettes
-var Palette = *((*[]PaletteValue)(unsafe.Pointer(&reflect.SliceHeader{
-	Data: PaletteAddr,
-
-	// the gba has 2, 256 color palettes. PaletteValues are uint16 which is why these values are in HalfKBytes
-	Cap: HalfKByte,
-	Len: HalfKByte,
-})))
+// the gba has 2, 256 color palettes. PaletteValues are uint16 which is why these values are in HalfKBytes
+var Palette = unsafe.Slice((*PaletteValue)(unsafe.Pointer(PaletteAddr)), HalfKByte)
 
 // VRAMValue represents a valid VRAM value
 type VRAMValue uint16
 
 // VRAM is the system vram data, there are 96kb and depending on the mode
-// this data can be used to achieve different effect.
-var VRAM = *((*[]VRAMValue)(unsafe.Pointer(&reflect.SliceHeader{
-	Data: VRAMAddr,
-
-	// the gba has 96 KByte of VRAM, VRAMValues are uint16 which is why these values are in HalfKBytes
-	Cap: 96 * HalfKByte,
-	Len: 96 * HalfKByte,
-})))
+// this data can be used to achieve different effect, such as drawing data to the screen and storing sprite gfx.
+// the gba has 96 KByte of VRAM, VRAMValues are uint16 which is why these values are in HalfKBytes
+var VRAM = unsafe.Slice((*VRAMValue)(unsafe.Pointer(VRAMAddr)), 96*HalfKByte)
 
 // OAMValue represents a valid OAM value
 type OAMValue uint16
 
-var OAM = *((*[]OAMValue)(unsafe.Pointer(&reflect.SliceHeader{
-	Data: OAMAddr,
-
-	// the gba has 128 normal sprite attributes and 32 affine attributes. These attributes
-	// are interlaced resulting in 1kb of data. OAMValues are uint16 which is why these
-	// values are in HalfKBytes
-	Cap: HalfKByte,
-	Len: HalfKByte,
-})))
+// OAM is the object attribute data in the GBA hardware
+// the gba has 128 normal sprite attributes and 32 affine attributes. These attributes
+// are interlaced resulting in 1kb of data. OAMValues are uint16 which is why these
+// values are in HalfKBytes
+var OAM = unsafe.Slice((*OAMValue)(unsafe.Pointer(OAMAddr)), HalfKByte)
 
 // values is a composit type of all the core memory value types
 type values interface {
@@ -96,14 +81,8 @@ func SetReg[T any](reg *T, value T) {
 
 // Copy16 coppies data from the source to the destination in 16 bit chunks
 func Copy16[T values](dest []T, src []byte) {
-	src16 := *((*[]T)(unsafe.Pointer(&reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(&src[0])),
-
-		// these need to be uintptrs since the len and cap need to match the size of a pointer
-		// on the GBA
-		Cap: uintptr(len(src) / 2),
-		Len: uintptr(len(src) / 2),
-	})))
+	ptr := (*T)(unsafe.Pointer(&src[0]))
+	src16 := unsafe.Slice(ptr, len(src)/2)
 
 	for i := range src16 {
 		if len(dest) <= i {
@@ -118,14 +97,8 @@ func Copy16[T values](dest []T, src []byte) {
 // internal ram. Sizes less thean 32kb may lead to faster loading times as the buffer will fit
 // into internal work ram. Ultimately it is up to the compiler if this happens however.
 func Load16[T values](dest []T, src fs.File, buffer []byte) error {
-	buffer16 := *((*[]T)(unsafe.Pointer(&reflect.SliceHeader{
-		Data: uintptr(unsafe.Pointer(&buffer[0])),
-
-		// these need to be uintptrs since the len and cap need to match the size of a pointer
-		// on the GBA
-		Cap: uintptr(len(buffer) / 2),
-		Len: uintptr(len(buffer) / 2),
-	})))
+	ptr := (*T)(unsafe.Pointer(&buffer[0]))
+	buffer16 := unsafe.Slice(ptr, len(buffer)/2)
 
 	var offset int
 	for {

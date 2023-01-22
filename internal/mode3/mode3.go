@@ -43,8 +43,8 @@ func CopyDispColors(src []display.Color) {
 // Enable sets the LCD to mode 3 and configures the VRAM using the provided options
 // the following options are avilable
 //
-// * With1DSprites enables sprites and sets the VRAM to use 1D sprite tile mapping
-// * With2DSprites enables sprites and sets the VRAM to use 2D sprite tile mapping
+// - With1DSprites enables sprites and sets the VRAM to use 1D sprite tile mapping
+// - With2DSprites enables sprites and sets the VRAM to use 2D sprite tile mapping
 func Enable(options ...Option) {
 	controll := hw_display.Mode3 | hw_display.BG2
 	var bgControl hw_display.BGControllReg
