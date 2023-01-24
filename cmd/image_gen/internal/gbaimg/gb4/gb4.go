@@ -22,13 +22,17 @@ func NewPal16(m image.Image, o *Options) (color.Palette, error) {
 		return nil, fmt.Errorf("palette is too large %d", len(pal))
 	}
 
-	var transparent gbacol.RGB15
-	if o != nil && o.Transparent != nil {
-		transparent = *o.Transparent
+	for len(pal) < 16 {
+		pal = append(pal, gbacol.RGB15(0x0000))
 	}
 
-	if i := pal.Index(transparent); i != 0 {
-		pal[0], pal[i] = pal[i], pal[0]
+	var tIndex int
+	if o != nil && o.Transparent != nil {
+		tIndex = pal.Index(o.Transparent)
+	}
+
+	if tIndex != 0 {
+		pal[0], pal[tIndex] = pal[tIndex], pal[0]
 	}
 
 	return pal, nil
@@ -85,11 +89,16 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	raw = append(raw, 0, 0) // preserver alignment
 
 	raw = append(raw, byteconv.Itoa(uint32(dx))...)
+	fmt.Println("Width: ", dx)
 	raw = append(raw, byteconv.Itoa(uint32(dy))...)
+	fmt.Println("Height: ", dy)
 	raw = append(raw, byteconv.Itoa(uint32(tileCount))...)
+	fmt.Println("TileCount: ", tileCount)
 
+	fmt.Println("Pal")
 	for _, p := range pal {
 		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
+		fmt.Printf("0x%X\n", uint16(p16))
 		raw = append(raw, p16.Bytes()...)
 	}
 

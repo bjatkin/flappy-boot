@@ -4,7 +4,6 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/display"
 	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/mode3"
-	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
 // Node is an interface that includes an Init, Update, and Draw function
@@ -47,7 +46,7 @@ func Run(node Node) {
 			// here ensures that only drawing code takes place in the draw function.
 			// this also ensures that sprite data will never be updated mid-frame
 			// which would cause screen tearing
-			sprite.CopyOAM()
+			// sprite.CopyOAM()
 
 			err = node.Draw()
 			if err != nil {
@@ -56,7 +55,7 @@ func Run(node Node) {
 
 			// unload this Node and then load the next one
 			if next != nil {
-				sprite.Reset()
+				// sprite.Reset()
 				node.Unload()
 				node = next
 				break

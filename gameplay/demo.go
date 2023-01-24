@@ -3,7 +3,9 @@ package gameplay
 import (
 	"embed"
 
+	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
@@ -19,6 +21,15 @@ func NewDemo(assets embed.FS) *Demo {
 }
 
 func (d *Demo) Init() error {
+	test := assets.NewBG()
+	for i := range test.Palette {
+		memmap.Palette[i] = memmap.PaletteValue(test.Palette[i])
+	}
+
+	for i := range test.Tiles {
+		memmap.VRAM[i] = memmap.VRAMValue(test.Tiles[i])
+	}
+
 	// Load in the sprite palettes
 	err := sprite.LoadPalette16(d.assets, "assets/gba/palette_0.p16", 0)
 	if err != nil {

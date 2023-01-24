@@ -44,7 +44,8 @@ type PaletteValue uint16
 // Palette is the system palette data, it consistes of 1kb and holds 16 bit color entries
 // for both the background and sprite palettes
 // the gba has 2, 256 color palettes. PaletteValues are uint16 which is why these values are in HalfKBytes
-var Palette = unsafe.Slice((*PaletteValue)(unsafe.Pointer(PaletteAddr)), HalfKByte)
+var paletteStart = (*PaletteValue)(unsafe.Pointer(PaletteAddr))
+var Palette = unsafe.Slice(paletteStart, HalfKByte)
 
 // VRAMValue represents a valid VRAM value
 type VRAMValue uint16
@@ -52,7 +53,8 @@ type VRAMValue uint16
 // VRAM is the system vram data, there are 96kb and depending on the mode
 // this data can be used to achieve different effect, such as drawing data to the screen and storing sprite gfx.
 // the gba has 96 KByte of VRAM, VRAMValues are uint16 which is why these values are in HalfKBytes
-var VRAM = unsafe.Slice((*VRAMValue)(unsafe.Pointer(VRAMAddr)), 96*HalfKByte)
+var vramStart = (*VRAMValue)(unsafe.Pointer(VRAMAddr)) // vramStart is needed to prevent tinygo from failing
+var VRAM = unsafe.Slice(vramStart, 96*HalfKByte)
 
 // OAMValue represents a valid OAM value
 type OAMValue uint16
@@ -61,7 +63,8 @@ type OAMValue uint16
 // the gba has 128 normal sprite attributes and 32 affine attributes. These attributes
 // are interlaced resulting in 1kb of data. OAMValues are uint16 which is why these
 // values are in HalfKBytes
-var OAM = unsafe.Slice((*OAMValue)(unsafe.Pointer(OAMAddr)), HalfKByte)
+var oamStart = (*OAMValue)(unsafe.Pointer(OAMAddr)) // oamStart is needed to prevent tinygo from failing
+var OAM = unsafe.Slice(oamStart, HalfKByte)
 
 // values is a composit type of all the core memory value types
 type values interface {
