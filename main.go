@@ -11,6 +11,5 @@ import (
 var assetFS embed.FS
 
 func main() {
-	// assets.NewBG()
 	game.Run(gameplay.NewDemo(assetFS))
 }

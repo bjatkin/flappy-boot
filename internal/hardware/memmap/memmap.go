@@ -72,14 +72,14 @@ type values interface {
 }
 
 // GetReg returns the volatile value of a 16 bit regiter
-func GetReg[T any](reg *T) T {
-	v := C.GetReg(C.uint(any(reg).(uintptr)))
-	return any(v).(T)
+func GetReg[T Reg](reg *T) T {
+	v := C.GetReg((*C.ushort)(unsafe.Pointer(reg)))
+	return T(v)
 }
 
 // SetReg sets the value of a 16 bit volitile register
-func SetReg[T any](reg *T, value T) {
-	C.SetReg(C.uint(any(reg).(uintptr)), C.ushort(any(value).(uint16)))
+func SetReg[T Reg](reg *T, value T) {
+	C.SetReg((*C.ushort)(unsafe.Pointer(reg)), C.ushort(value))
 }
 
 // Copy16 coppies data from the source to the destination in 16 bit chunks

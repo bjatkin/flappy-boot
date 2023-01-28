@@ -23,11 +23,11 @@ func Enable(options ...Option) {
 
 // Option is a functional option that is used to define the parameters for
 // the mode 0 graphics mode
-type Option func(display.ControllReg) display.ControllReg
+type Option func(memmap.DisplayControll) memmap.DisplayControll
 
 // WithBG can be used to enable backgrounds 0 - 3
 func WithBG(BG0, BG1, BG2, BG3 bool) Option {
-	return func(r display.ControllReg) display.ControllReg {
+	return func(r memmap.DisplayControll) memmap.DisplayControll {
 		val := r
 		if BG0 {
 			val |= display.BG0
@@ -48,7 +48,7 @@ func WithBG(BG0, BG1, BG2, BG3 bool) Option {
 // With1DSprites enables sprites in mode 0 and will set the sprite memory mapping
 // mode to be 1D rather than the default which is 2D sprite mapping
 func With1DSprites() Option {
-	return func(r display.ControllReg) display.ControllReg {
+	return func(r memmap.DisplayControll) memmap.DisplayControll {
 		return r | display.Sprites | display.Sprite1D
 	}
 }
@@ -56,14 +56,14 @@ func With1DSprites() Option {
 // With2DSprites enables sprites in mode 0 and will set the sprite memory mapping
 // mode to be 2D which is the default
 func With2DSprites() Option {
-	return func(r display.ControllReg) display.ControllReg {
+	return func(r memmap.DisplayControll) memmap.DisplayControll {
 		return r | display.Sprites
 	}
 }
 
 // WithWindows can enable windows 1 and 2 as well as the sprite window
 func WithWindows(Win1, Win2, WinSpr bool) Option {
-	return func(r display.ControllReg) display.ControllReg {
+	return func(r memmap.DisplayControll) memmap.DisplayControll {
 		val := r
 		if Win1 {
 			val |= display.Win1

@@ -5,7 +5,9 @@ import (
 
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+	"github.com/bjatkin/flappy_boot/internal/mode0"
 	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
@@ -21,6 +23,12 @@ func NewDemo(assets embed.FS) *Demo {
 }
 
 func (d *Demo) Init() error {
+	// TODO: why does map data look weirdly like sprite data?
+	// TODO: why does the screen block data not seem to match up with the map data even when the screen block seems to be configured correctly
+	//
+	mode0.Enable(mode0.WithBG(true, true, true, true))
+	memmap.SetReg(display.BG0Controll, 1<<display.SBBShift)
+
 	test := assets.NewBG()
 	for i := range test.Palette {
 		memmap.Palette[i] = memmap.PaletteValue(test.Palette[i])
@@ -28,6 +36,10 @@ func (d *Demo) Init() error {
 
 	for i := range test.Tiles {
 		memmap.VRAM[i] = memmap.VRAMValue(test.Tiles[i])
+	}
+
+	for i := range test.TileMap {
+		memmap.VRAM[i+memmap.ScreenBlockOffset*4] = memmap.VRAMValue(test.TileMap[i])
 	}
 
 	// Load in the sprite palettes

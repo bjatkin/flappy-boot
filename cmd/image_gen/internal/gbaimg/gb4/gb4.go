@@ -10,7 +10,6 @@ import (
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
-	"golang.org/x/exp/slices"
 )
 
 // NewPal16 converts an image into a valid color.Palette.
@@ -44,6 +43,7 @@ func NewPal16(m image.Image, o *Options) (color.Palette, error) {
 type Options struct {
 	TileSize    *tile.Size
 	Transparent *gbacol.RGB15
+	IncludeMap  bool
 }
 
 // Encode writes the image as a valid 4 bit rgb image (.gb4) to the provided writer
@@ -75,6 +75,10 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 		size = *o.TileSize
 	}
 
+	if o.IncludeMap && size != tile.S8x8 {
+		return fmt.Errorf("tile size must be 8x8 if a tile map is included")
+	}
+
 	pal, err := NewPal16(m, o)
 	if err != nil {
 		return err
@@ -101,8 +105,26 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 		raw = append(raw, tile.Bytes()...)
 	}
 
+	// only include the map data if the tile size is 8x8
+	vFlip := uint16(0x0800)
+	hFlip := uint16(0x0400)
 	for _, tile := range tiles {
-		raw = append(raw, byte(slices.Index(uniqueTiles, tile)))
+		for i, match := range uniqueTiles {
+			switch {
+			case gbaimg.Match(tile.Img, match.Img):
+				raw = append(raw, byteconv.Itoa(uint16(i))...)
+				break
+			case gbaimg.Match(gbaimg.Flip(tile.Img, true, false), match.Img):
+				raw = append(raw, byteconv.Itoa(uint16(i)|hFlip)...)
+				break
+			case gbaimg.Match(gbaimg.Flip(tile.Img, false, true), match.Img):
+				raw = append(raw, byteconv.Itoa(uint16(i)|vFlip)...)
+				break
+			case gbaimg.Match(gbaimg.Flip(tile.Img, true, true), match.Img):
+				raw = append(raw, byteconv.Itoa(uint16(i)|hFlip|vFlip)...)
+				break
+			}
+		}
 	}
 
 	_, err = w.Write(raw)

@@ -132,3 +132,22 @@ func NewPal(m image.Image) color.Palette {
 
 	return ret
 }
+
+// Match returns true if the color data of the underlying images is equivilant
+func Match(a, b image.Image) bool {
+	if a.Bounds().Dx() != b.Bounds().Dx() || a.Bounds().Dy() != b.Bounds().Dy() {
+		return false
+	}
+
+	match := true
+	Walk(a, func(x, y int) {
+		c1 := a.At(x, y)
+		c2 := b.At(x, y)
+		rgb1 := color.RGBAModel.Convert(c1).(color.RGBA)
+		rgb2 := color.RGBAModel.Convert(c2).(color.RGBA)
+
+		match = match && rgb1.R == rgb2.R && rgb1.G == rgb2.G && rgb1.B == rgb2.B
+	})
+
+	return match
+}

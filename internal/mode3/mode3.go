@@ -47,7 +47,7 @@ func CopyDispColors(src []display.Color) {
 // - With2DSprites enables sprites and sets the VRAM to use 2D sprite tile mapping
 func Enable(options ...Option) {
 	controll := hw_display.Mode3 | hw_display.BG2
-	var bgControl hw_display.BGControllReg
+	var bgControl memmap.BGControll
 	for _, opt := range options {
 		controll, bgControl = opt(controll, bgControl)
 	}
@@ -58,12 +58,12 @@ func Enable(options ...Option) {
 
 // Option is a functional option that is used to define the parameters for
 // the mode 3 graphics mode
-type Option func(hw_display.ControllReg, hw_display.BGControllReg) (hw_display.ControllReg, hw_display.BGControllReg)
+type Option func(memmap.DisplayControll, memmap.BGControll) (memmap.DisplayControll, memmap.BGControll)
 
 // With1DSprites enables sprites in mode 3 and will set the sprite memory mapping
 // mode to be 1D rather than the default which is 2D sprite mapping
 func With1DSprites() Option {
-	return func(r hw_display.ControllReg, c hw_display.BGControllReg) (hw_display.ControllReg, hw_display.BGControllReg) {
+	return func(r memmap.DisplayControll, c memmap.BGControll) (memmap.DisplayControll, memmap.BGControll) {
 		return r | hw_display.Sprites | hw_display.Sprite1D, c
 	}
 }
@@ -71,14 +71,14 @@ func With1DSprites() Option {
 // With2DSprites enables sprites in mode 3 and will set the sprite memory mapping
 // mode to be 2D which is the default
 func With2DSprites() Option {
-	return func(r hw_display.ControllReg, c hw_display.BGControllReg) (hw_display.ControllReg, hw_display.BGControllReg) {
+	return func(r memmap.DisplayControll, c memmap.BGControll) (memmap.DisplayControll, memmap.BGControll) {
 		return r | hw_display.Sprites, c
 	}
 }
 
 // WithWindows can enable windows 1 and 2 as well as the sprite window
 func WithWindows(Win1, Win2, WinSpr bool) Option {
-	return func(r hw_display.ControllReg, c hw_display.BGControllReg) (hw_display.ControllReg, hw_display.BGControllReg) {
+	return func(r memmap.DisplayControll, c memmap.BGControll) (memmap.DisplayControll, memmap.BGControll) {
 		val := r
 		if Win1 {
 			val |= hw_display.Win1
@@ -96,11 +96,11 @@ func WithWindows(Win1, Win2, WinSpr bool) Option {
 // WithPriority sets the priority for the background, it can be 0, 1, 2, or 3
 // with priority 3 being rendered below 2, 2 rendered below 1 and 1 rendered below 0
 func WithPriority(priority uint) Option {
-	return func(r hw_display.ControllReg, c hw_display.BGControllReg) (hw_display.ControllReg, hw_display.BGControllReg) {
+	return func(r memmap.DisplayControll, c memmap.BGControll) (memmap.DisplayControll, memmap.BGControll) {
 		if priority > 3 {
 			priority = 3
 		}
-		return r, hw_display.BGControllReg(priority)
+		return r, memmap.BGControll(priority)
 	}
 }
 

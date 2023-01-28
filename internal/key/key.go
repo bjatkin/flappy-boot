@@ -5,7 +5,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
-type Key hw_key.InputReg
+type Key memmap.Input
 
 // these constants remap the hardware register values to the Key type to make them eaiser to use
 // in gameplay code
@@ -44,11 +44,11 @@ const (
 var (
 	// previous holds the state of the hardware key input register durring the last KeyPoll
 	// it is used to check key transition states
-	previous hw_key.InputReg
+	previous memmap.Input
 
 	// current holds the state of the hardware key input register the current KeyPoll
 	// it is used to check key transition states
-	current hw_key.InputReg
+	current memmap.Input
 )
 
 // KeyPoll reads they key input register and the current key state
@@ -76,27 +76,27 @@ func Combo(keys ...Key) Key {
 // NOTE: having both IsDown as a function and Down as a key is kinda confusing
 // I should maybe use different terminology
 func IsDown(key Key) bool {
-	return (^previous & ^current & hw_key.InputReg(key) == hw_key.InputReg(key))
+	return (^previous & ^current & memmap.Input(key) == memmap.Input(key))
 }
 
 // IsUp returns true if the key is not being held down
 // it will not return true if the key was released durring this KeyPoll
 func IsUp(key Key) bool {
-	return (^previous & ^current & hw_key.InputReg(key)) == 0
+	return (^previous & ^current & memmap.Input(key)) == 0
 }
 
 // Pressed returns true if the key was first pressed down durring this KeyPoll
 func Pressed(key Key) bool {
-	return (previous & ^current & hw_key.InputReg(key)) == hw_key.InputReg(key)
+	return (previous & ^current & memmap.Input(key)) == memmap.Input(key)
 }
 
 // Released returns true if the key was released durring this KeyPoll
 func Released(key Key) bool {
-	return (^previous & current & hw_key.InputReg(key)) == hw_key.InputReg(key)
+	return (^previous & current & memmap.Input(key)) == memmap.Input(key)
 }
 
 // PressedDown returns true if the key was first press down durring this KeyPoll
 // or if it is currently being held down
 func PressedDown(key Key) bool {
-	return (^current & hw_key.InputReg(key)) == hw_key.InputReg(key)
+	return (^current & memmap.Input(key)) == memmap.Input(key)
 }
