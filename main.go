@@ -8,8 +8,9 @@ import (
 )
 
 //go:embed assets/gba
-var assets embed.FS
+var assetFS embed.FS
 
 func main() {
-	game.Run(gameplay.NewDemo(assets))
+	// assets.NewBG()
+	game.Run(gameplay.NewDemo(assetFS))
 }

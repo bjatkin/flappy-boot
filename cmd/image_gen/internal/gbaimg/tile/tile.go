@@ -19,18 +19,18 @@ type Size uint16
 // valid tile sizes
 const (
 	// TODO make these bitfields that match the ones in the sprite attrs
-	S8x8   Size = 0x0000
-	S16x8  Size = 0x0002
-	S8x16  Size = 0x0004
-	S16x16 Size = 0x0008
-	S32x8  Size = 0x0010
-	S8x32  Size = 0x0020
-	S32x32 Size = 0x0040
-	S32x16 Size = 0x0080
-	S16x32 Size = 0x0100
-	S64x64 Size = 0x0200
-	S64x32 Size = 0x0400
-	S32x64 Size = 0x0800
+	S8x8   Size = 0x08_08
+	S16x8  Size = 0x10_08
+	S8x16  Size = 0x08_10
+	S16x16 Size = 0x10_10
+	S32x8  Size = 0x20_08
+	S8x32  Size = 0x08_20
+	S32x32 Size = 0x20_20
+	S32x16 Size = 0x20_10
+	S16x32 Size = 0x10_20
+	S64x64 Size = 0x40_40
+	S64x32 Size = 0x40_20
+	S32x64 Size = 0x20_40
 )
 
 // NewSize creates a new Size from a string
@@ -123,7 +123,7 @@ type Meta struct {
 func NewMeta(img image.Image, pal color.Palette, size Size) *Meta {
 	var tiles []image.Image
 	gbaimg.WalkN(img, image.Point{X: 8, Y: 8}, func(x, y int) {
-		tile := gbaimg.NewRGB16(image.Rect(0, 0, 8, 8))
+		tile := image.NewRGBA(image.Rect(0, 0, 8, 8))
 		gbaimg.Copy(gbaimg.SubImage(img, image.Rect(x, y, x+8, y+8)), tile)
 
 		tiles = append(tiles, tile)
@@ -190,7 +190,7 @@ func (m *Meta) Bytes() []byte {
 	if len(m.Pal) <= 16 {
 		var nibbles []byte
 		for i := 0; i < len(data); i += 2 {
-			nibbles = append(nibbles, data[i]<<4|data[i+1])
+			nibbles = append(nibbles, data[i+1]<<4|data[i])
 		}
 		data = nibbles
 	}
@@ -207,7 +207,7 @@ func NewMetaSlice(img image.Image, pal color.Palette, size Size) []*Meta {
 
 	var metas []*Meta
 	gbaimg.WalkN(img, pt, func(x, y int) {
-		tile := gbaimg.NewRGB16(image.Rect(0, 0, pt.X, pt.Y))
+		tile := image.NewRGBA(image.Rect(0, 0, pt.X, pt.Y))
 		gbaimg.Copy(gbaimg.SubImage(img, image.Rect(x, y, x+pt.X, y+pt.Y)), tile)
 
 		metas = append(metas, NewMeta(tile, pal, size))

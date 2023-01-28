@@ -89,16 +89,11 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	raw = append(raw, 0, 0) // preserver alignment
 
 	raw = append(raw, byteconv.Itoa(uint32(dx))...)
-	fmt.Println("Width: ", dx)
 	raw = append(raw, byteconv.Itoa(uint32(dy))...)
-	fmt.Println("Height: ", dy)
 	raw = append(raw, byteconv.Itoa(uint32(tileCount))...)
-	fmt.Println("TileCount: ", tileCount)
 
-	fmt.Println("Pal")
 	for _, p := range pal {
 		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
-		fmt.Printf("0x%X\n", uint16(p16))
 		raw = append(raw, p16.Bytes()...)
 	}
 

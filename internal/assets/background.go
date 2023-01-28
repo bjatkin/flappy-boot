@@ -5,7 +5,7 @@ import (
 	"unsafe"
 )
 
-//go:embed grass_sky_bg_2.gb4
+//go:embed grass_sky_bg.gb4
 var grassSkyBG []byte
 
 type Palette []uint16
@@ -20,6 +20,7 @@ type Asset struct {
 }
 
 func NewBG() *Asset {
+	bitsPerTile := uint32((grassSkyBG[0] / 4) * grassSkyBG[1])
 	width := *(*uint32)(unsafe.Pointer(&grassSkyBG[4]))
 	height := *(*uint32)(unsafe.Pointer(&grassSkyBG[8]))
 	tileCount := *(*uint32)(unsafe.Pointer(&grassSkyBG[12]))
@@ -32,11 +33,11 @@ func NewBG() *Asset {
 			16,
 		),
 		Tiles: unsafe.Slice(
-			(*uint16)(unsafe.Pointer(&grassSkyBG[32])),
-			tileCount,
+			(*uint16)(unsafe.Pointer(&grassSkyBG[48])),
+			tileCount*bitsPerTile,
 		),
 		TileMap: unsafe.Slice(
-			(*Tile)(unsafe.Pointer(&grassSkyBG[32+tileCount*2])),
+			(*Tile)(unsafe.Pointer(&grassSkyBG[48+tileCount*bitsPerTile])),
 			width*height,
 		),
 	}

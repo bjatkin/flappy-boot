@@ -63,7 +63,7 @@ func Copy(src image.Image, dest MutImage) {
 // share any underlying data
 func SubImage(img image.Image, r image.Rectangle) image.Image {
 	min := r.Bounds().Min
-	cpy := NewRGB16(image.Rect(0, 0, r.Bounds().Dx(), r.Bounds().Dy()))
+	cpy := image.NewRGBA(image.Rect(0, 0, r.Bounds().Dx(), r.Bounds().Dy()))
 
 	Walk(cpy, func(x, y int) {
 		cpy.Set(x, y, img.At(min.X+x, min.Y+y))
@@ -76,7 +76,7 @@ func SubImage(img image.Image, r image.Rectangle) image.Image {
 // the returned image is a copy and does not share any data with the original image
 // the image can be flipped horizontally, vertically or both
 func Flip(img image.Image, h, v bool) image.Image {
-	cpy := NewRGB16(img.Bounds())
+	cpy := image.NewRGBA(img.Bounds())
 	Copy(img, cpy)
 
 	switch {

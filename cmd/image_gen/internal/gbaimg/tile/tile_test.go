@@ -2,7 +2,6 @@ package tile
 
 import (
 	"crypto/md5"
-	"fmt"
 	"image"
 	"image/color"
 	"reflect"
@@ -10,22 +9,15 @@ import (
 	"testing"
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
 	"github.com/go-test/deep"
 )
 
 var (
 	white = color.RGBA{0xFF, 0xFF, 0xFF, 0xFF}
-	black = color.RGBA{}
+	black = color.RGBA{0x00, 0x00, 0x00, 0xFF}
 	red   = color.RGBA{0xFF, 0x00, 0x00, 0xFF}
 	green = color.RGBA{0x00, 0xFF, 0x00, 0xFF}
 	blue  = color.RGBA{0x00, 0x00, 0xFF, 0xff}
-
-	white16 = gbacol.NewRGB15(white)
-	black16 = gbacol.NewRGB15(black)
-	red16   = gbacol.NewRGB15(red)
-	green16 = gbacol.NewRGB15(green)
-	blue16  = gbacol.NewRGB15(blue)
 )
 
 func newImage(width, height int, pixels []color.Color) image.Image {
@@ -243,7 +235,6 @@ func TestUnique(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got := Unique(tt.args.tiles)
-			fmt.Println("LEN: ", len(got))
 			if diff := deep.Equal(got, tt.want); len(diff) > 0 {
 				t.Errorf("Unique() diffs(%d): %s\n", len(diff), strings.Join(diff, "\n"))
 			}
@@ -316,6 +307,66 @@ func TestMeta_Hash(t *testing.T) {
 			}
 			if got := m.Hash(); !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("Meta.Hash() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestMeta_Bytes(t *testing.T) {
+	img := newImage(8, 8, []color.Color{
+		white, blue, white, blue, red, green, red, green,
+		blue, white, blue, white, green, red, green, red,
+		white, blue, white, blue, red, green, red, green,
+		blue, white, blue, white, green, red, green, red,
+
+		white, black, white, black, white, blue, white, blue,
+		black, white, black, white, blue, white, blue, white,
+		white, black, white, black, white, blue, white, blue,
+		black, white, black, white, blue, white, blue, white,
+	})
+	pal := color.Palette{red, green, blue, white, black}
+
+	type fields struct {
+		Size  Size
+		Img   image.Image
+		Pal   color.Palette
+		Tiles []image.Image
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   []byte
+	}{
+		{
+			"8x8 meta tile",
+			fields{
+				Size:  S8x8,
+				Img:   img,
+				Pal:   pal,
+				Tiles: []image.Image{img},
+			},
+			[]byte{
+				0x32, 0x32, 0x01, 0x01,
+				0x23, 0x23, 0x10, 0x10,
+				0x32, 0x32, 0x01, 0x01,
+				0x23, 0x23, 0x10, 0x10,
+				0x34, 0x34, 0x32, 0x32,
+				0x43, 0x43, 0x23, 0x23,
+				0x34, 0x34, 0x32, 0x32,
+				0x43, 0x43, 0x23, 0x23,
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Meta{
+				Size:  tt.fields.Size,
+				Img:   tt.fields.Img,
+				Pal:   tt.fields.Pal,
+				Tiles: tt.fields.Tiles,
+			}
+			if got := m.Bytes(); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Meta.Bytes() = \n%v, want \n%v", got, tt.want)
 			}
 		})
 	}
