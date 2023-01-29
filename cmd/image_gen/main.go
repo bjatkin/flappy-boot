@@ -77,7 +77,8 @@ func main() {
 			return
 		}
 
-		err = gb4.Encode(file, c.Img, &gb4.Options{TileSize: &c.TileSize, Transparent: transparent})
+		fmt.Println("to convert: ", c, c.Img.Bounds(), c.Img.At(0, 255))
+		err = gb4.Encode(file, c.Img, &gb4.Options{TileSize: &c.TileSize, Transparent: transparent, IncludeMap: c.TileSize == tile.S8x8})
 		if err != nil {
 			fmt.Printf("%s failed to encode .gb4 file", err)
 			return
@@ -91,16 +92,16 @@ func ExtractFlags(args []string) ([]string, error) {
 	var newArgs []string
 	for _, arg := range args {
 		switch {
-		case arg == "p256":
+		case arg == "-p256":
 			p256 = true
-		case strings.HasPrefix(arg, "transparent"):
-			col, err := ParseHexColor(strings.TrimPrefix(arg, "transparent"))
+		case strings.HasPrefix(arg, "-transparent="):
+			col, err := ParseHexColor(strings.TrimPrefix(arg, "-transparent="))
 			if err != nil {
 				return nil, fmt.Errorf("invalid hex color format for flag %s", arg)
 			}
 			transparent = &col
-		case strings.HasPrefix(arg, "t"):
-			col, err := ParseHexColor(strings.TrimPrefix(arg, "t"))
+		case strings.HasPrefix(arg, "-t="):
+			col, err := ParseHexColor(strings.TrimPrefix(arg, "-t="))
 			if err != nil {
 				return nil, fmt.Errorf("invalid hex color format for flag %s", arg)
 			}

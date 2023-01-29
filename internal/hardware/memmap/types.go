@@ -1,6 +1,8 @@
 package memmap
 
-type Reg interface {
+// TODO: move this into a register package?
+
+type reg interface {
 	AudioStat | DSControll |
 		DisplayControll | DisplayStat | BGControll |
 		Input | InputControll

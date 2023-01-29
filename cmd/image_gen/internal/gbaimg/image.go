@@ -106,16 +106,14 @@ func Flip(img image.Image, h, v bool) image.Image {
 func NewPal(m image.Image) color.Palette {
 	colorMap := make(map[gbacol.RGB15]struct{}, 256)
 	var transparent gbacol.RGB15
-	for y := 0; y < m.Bounds().Dx(); y++ {
-		for x := 0; x < m.Bounds().Dy(); x++ {
-			c := m.At(x, y)
-			rgb15 := rgb15Model(c).(gbacol.RGB15)
-			if x == 0 && y == 0 {
-				transparent = rgb15
-			}
-			colorMap[rgb15] = struct{}{}
+	Walk(m, func(x, y int) {
+		c := m.At(x, y)
+		rgb15 := rgb15Model(c).(gbacol.RGB15)
+		if x == 0 && y == 0 {
+			transparent = rgb15
 		}
-	}
+		colorMap[rgb15] = struct{}{}
+	})
 
 	pal := maps.Keys(colorMap)
 	for i, color := range pal {

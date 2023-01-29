@@ -75,7 +75,8 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 		size = *o.TileSize
 	}
 
-	if o.IncludeMap && size != tile.S8x8 {
+	includeMap := o.IncludeMap
+	if includeMap && size != tile.S8x8 {
 		return fmt.Errorf("tile size must be 8x8 if a tile map is included")
 	}
 
@@ -90,7 +91,7 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	tileCount := len(uniqueTiles)
 
 	raw = append(raw, size.Bytes()...)
-	raw = append(raw, 0, 0) // preserver alignment
+	raw = append(raw, 0, 0) // preserve alignment
 
 	raw = append(raw, byteconv.Itoa(uint32(dx))...)
 	raw = append(raw, byteconv.Itoa(uint32(dy))...)
@@ -105,24 +106,30 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 		raw = append(raw, tile.Bytes()...)
 	}
 
-	// only include the map data if the tile size is 8x8
-	vFlip := uint16(0x0800)
-	hFlip := uint16(0x0400)
-	for _, tile := range tiles {
-		for i, match := range uniqueTiles {
-			switch {
-			case gbaimg.Match(tile.Img, match.Img):
-				raw = append(raw, byteconv.Itoa(uint16(i))...)
-				break
-			case gbaimg.Match(gbaimg.Flip(tile.Img, true, false), match.Img):
-				raw = append(raw, byteconv.Itoa(uint16(i)|hFlip)...)
-				break
-			case gbaimg.Match(gbaimg.Flip(tile.Img, false, true), match.Img):
-				raw = append(raw, byteconv.Itoa(uint16(i)|vFlip)...)
-				break
-			case gbaimg.Match(gbaimg.Flip(tile.Img, true, true), match.Img):
-				raw = append(raw, byteconv.Itoa(uint16(i)|hFlip|vFlip)...)
-				break
+	// only include the map data if the tile size is 8x8 and saving map data was requested
+	if includeMap {
+		vFlip := uint16(0x0800)
+		hFlip := uint16(0x0400)
+		for _, tile := range tiles {
+			for i, match := range uniqueTiles {
+				var found bool
+				switch {
+				case gbaimg.Match(tile.Img, match.Img):
+					raw = append(raw, byteconv.Itoa(uint16(i))...)
+					found = true
+				case gbaimg.Match(gbaimg.Flip(tile.Img, true, false), match.Img):
+					raw = append(raw, byteconv.Itoa(uint16(i)|hFlip)...)
+					found = true
+				case gbaimg.Match(gbaimg.Flip(tile.Img, false, true), match.Img):
+					raw = append(raw, byteconv.Itoa(uint16(i)|vFlip)...)
+					found = true
+				case gbaimg.Match(gbaimg.Flip(tile.Img, true, true), match.Img):
+					raw = append(raw, byteconv.Itoa(uint16(i)|hFlip|vFlip)...)
+					found = true
+				}
+				if found {
+					break
+				}
 			}
 		}
 	}

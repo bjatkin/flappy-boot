@@ -159,7 +159,7 @@ func (m *Meta) Hash() [md5.Size]byte {
 		hash(gbaimg.Flip(m.Img, true, true)),
 	}
 
-	sum := func(data []byte) int {
+	sum := func(data [16]byte) int {
 		var total int
 		for _, d := range data {
 			total += int(d)
@@ -168,7 +168,7 @@ func (m *Meta) Hash() [md5.Size]byte {
 	}
 
 	sort.Slice(hashes, func(i, j int) bool {
-		return sum(hashes[i][:]) > sum(hashes[j][:])
+		return sum(hashes[i]) > sum(hashes[j])
 	})
 
 	return hashes[0]
@@ -224,5 +224,20 @@ func Unique(tiles []*Meta) []*Meta {
 		unique[tile.Hash()] = tile
 	}
 
-	return maps.Values(unique)
+	uniqueTiles := maps.Values(unique)
+
+	sum := func(data [16]byte) int {
+		var total int
+		for _, d := range data {
+			total += int(d)
+		}
+		return total
+	}
+
+	// sort the tiles slice for consistent indexes
+	sort.Slice(uniqueTiles, func(i, j int) bool {
+		return sum(uniqueTiles[i].Hash()) > sum(uniqueTiles[j].Hash())
+	})
+
+	return uniqueTiles
 }

@@ -5,10 +5,10 @@ import (
 
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
-	"github.com/bjatkin/flappy_boot/internal/hardware/display"
+	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 	"github.com/bjatkin/flappy_boot/internal/mode0"
-	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
 // Demo is a test node used for prototyping basic mechanics
@@ -23,44 +23,21 @@ func NewDemo(assets embed.FS) *Demo {
 }
 
 func (d *Demo) Init() error {
-	// TODO: why does map data look weirdly like sprite data?
-	// TODO: why does the screen block data not seem to match up with the map data even when the screen block seems to be configured correctly
-	//
-	mode0.Enable(mode0.WithBG(true, true, true, true))
-	memmap.SetReg(display.BG0Controll, 1<<display.SBBShift)
+	mode0.Enable(
+		mode0.WithBG(true, false, false, false),
+		mode0.With1DSprites(),
+	)
+	memmap.SetReg(hw_display.BG0Controll, 1<<hw_display.SBBShift|hw_display.Priority3)
 
-	test := assets.NewBG()
-	for i := range test.Palette {
-		memmap.Palette[i] = memmap.PaletteValue(test.Palette[i])
-	}
+	tile := assets.NewBackground()
+	tile.LoadMap(64)
 
-	for i := range test.Tiles {
-		memmap.VRAM[i] = memmap.VRAMValue(test.Tiles[i])
-	}
+	player := assets.NewPlayer()
+	player.Load()
 
-	for i := range test.TileMap {
-		memmap.VRAM[i+memmap.ScreenBlockOffset*4] = memmap.VRAMValue(test.TileMap[i])
-	}
-
-	// Load in the sprite palettes
-	err := sprite.LoadPalette16(d.assets, "assets/gba/palette_0.p16", 0)
-	if err != nil {
-		return err
-	}
-
-	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_1.p16", 1)
-	if err != nil {
-		return err
-	}
-
-	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_2.p16", 2)
-	if err != nil {
-		return err
-	}
-
-	err = sprite.LoadPalette16(d.assets, "assets/gba/palette_3.p16", 3)
-	if err != nil {
-		return err
+	hw_sprite.OAM[0] = hw_sprite.Attrs{
+		Attr0: hw_sprite.Square | hw_sprite.Color16 | hw_sprite.Normal | 0xA,
+		Attr1: hw_sprite.Medium | 0xA,
 	}
 
 	return nil

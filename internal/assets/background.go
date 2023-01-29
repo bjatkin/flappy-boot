@@ -3,41 +3,36 @@ package assets
 import (
 	_ "embed"
 	"unsafe"
+
+	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
-//go:embed grass_sky_bg.gb4
-var grassSkyBG []byte
+//go:embed background.gb4
+var background []byte
 
-// TODO: should these be VRAM values? Or a more specific type?
-type Palette []uint16
-
-type Asset struct {
-	Width   uint32
-	Height  uint32
-	Tiles   []uint16
-	TileMap []uint16
-	Palette Palette
-}
-
-func NewBG() *Asset {
-	bitsPerTile := uint32((grassSkyBG[0] / 4) * grassSkyBG[1])
-	width := *(*uint32)(unsafe.Pointer(&grassSkyBG[4]))
-	height := *(*uint32)(unsafe.Pointer(&grassSkyBG[8]))
-	tileCount := *(*uint32)(unsafe.Pointer(&grassSkyBG[12]))
+func NewBackground() *Asset {
+	// 4 because this is a gb4 file
+	u16PerTile := uint32((background[0] / 4) * background[1])
+	width := *(*uint32)(unsafe.Pointer(&background[4]))
+	height := *(*uint32)(unsafe.Pointer(&background[8]))
+	tileCount := *(*uint32)(unsafe.Pointer(&background[12]))
 
 	return &Asset{
 		Width:  width,
 		Height: height,
 		Palette: unsafe.Slice(
-			(*uint16)(unsafe.Pointer(&grassSkyBG[16])),
-			16, // 16 is hard coded becuase a gb4 always has a 16 color palette
+			(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
+			16, // 16 is hard coded because a gb4 always has a 16 color palette
 		),
+
+		// TODO: looks like this is loading in too much data?
+		// why does it look like it's loading part of the map data?
 		Tiles: unsafe.Slice(
-			(*uint16)(unsafe.Pointer(&grassSkyBG[48])),
-			tileCount*bitsPerTile,
+			(*memmap.VRAMValue)(unsafe.Pointer(&grassSkyBG[48])),
+			tileCount*u16PerTile,
 		),
 		TileMap: unsafe.Slice(
-			(*uint16)(unsafe.Pointer(&grassSkyBG[48+tileCount*bitsPerTile])),
+			(*memmap.VRAMValue)(unsafe.Pointer(&grassSkyBG[48+tileCount*u16PerTile*2])),
 			(width/8)*(height/8), // divide by 8 since tilemaps must use 8x8 pixel tiles
 		),
 	}

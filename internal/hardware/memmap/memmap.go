@@ -12,13 +12,16 @@ import (
 
 const (
 	// HalfKByte is the size of a kilobyte in uint16's
-	HalfKByte = 0x200
+	HalfKByte = 0x0200
 
 	// CharBlockOffset is the size of a vram charblock in HalfKBytes
-	CharBlockOffset = 8 * HalfKByte
+	CharBlockOffset = 16 * HalfKByte
 
 	// ScreenBlockOffset is the size of a vram screen block in HalfKBytes
-	ScreenBlockOffset = HalfKByte
+	ScreenBlockOffset = 2 * HalfKByte
+
+	// PaletteOffset is the size of a 16 color palette in 16 bit chunks
+	PaletteOffset = 16
 )
 
 const (
@@ -72,13 +75,13 @@ type values interface {
 }
 
 // GetReg returns the volatile value of a 16 bit regiter
-func GetReg[T Reg](reg *T) T {
+func GetReg[T reg](reg *T) T {
 	v := C.GetReg((*C.ushort)(unsafe.Pointer(reg)))
 	return T(v)
 }
 
 // SetReg sets the value of a 16 bit volitile register
-func SetReg[T Reg](reg *T, value T) {
+func SetReg[T reg](reg *T, value T) {
 	C.SetReg((*C.ushort)(unsafe.Pointer(reg)), C.ushort(value))
 }
 

@@ -4,6 +4,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/display"
 	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/mode3"
+	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
 // Node is an interface that includes an Init, Update, and Draw function
@@ -21,6 +22,8 @@ type Updater interface {
 
 // Run starts a game by running the Node interface
 func Run(node Node) {
+	sprite.Reset()
+
 	for {
 		err := node.Init()
 		if err != nil {
@@ -55,7 +58,7 @@ func Run(node Node) {
 
 			// unload this Node and then load the next one
 			if next != nil {
-				// sprite.Reset()
+				sprite.Reset()
 				node.Unload()
 				node = next
 				break
