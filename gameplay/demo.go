@@ -27,10 +27,11 @@ func (d *Demo) Init() error {
 		mode0.WithBG(true, false, false, false),
 		mode0.With1DSprites(),
 	)
-	memmap.SetReg(hw_display.BG0Controll, 1<<hw_display.SBBShift|hw_display.Priority3)
+	screenBaseBlock := memmap.BGControll(4)
+	memmap.SetReg(hw_display.BG0Controll, screenBaseBlock<<hw_display.SBBShift|hw_display.Priority3|hw_display.BGSizeWide)
 
 	tile := assets.NewBackground()
-	tile.LoadMap(64)
+	tile.LoadMap(screenBaseBlock, 64)
 
 	player := assets.NewPlayer()
 	player.Load()

@@ -28,11 +28,12 @@ func NewBackground() *Asset {
 		// TODO: looks like this is loading in too much data?
 		// why does it look like it's loading part of the map data?
 		Tiles: unsafe.Slice(
-			(*memmap.VRAMValue)(unsafe.Pointer(&grassSkyBG[48])),
+			(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
 			tileCount*u16PerTile,
 		),
+
 		TileMap: unsafe.Slice(
-			(*memmap.VRAMValue)(unsafe.Pointer(&grassSkyBG[48+tileCount*u16PerTile*2])),
+			(*memmap.VRAMValue)(unsafe.Pointer(&background[48+tileCount*u16PerTile*2])),
 			(width/8)*(height/8), // divide by 8 since tilemaps must use 8x8 pixel tiles
 		),
 	}

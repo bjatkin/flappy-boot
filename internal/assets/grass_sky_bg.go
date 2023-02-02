@@ -45,7 +45,7 @@ func NewBG() *Asset {
 	}
 }
 
-func (a *Asset) LoadMap(bgWidth int) {
+func (a *Asset) LoadMap(screenBaseBlock memmap.BGControll, pitch int) {
 	for i := range a.Palette {
 		memmap.Palette[i] = a.Palette[i]
 	}
@@ -54,10 +54,7 @@ func (a *Asset) LoadMap(bgWidth int) {
 		memmap.VRAM[i] = a.Tiles[i]
 	}
 
-	// 8 because the tiles are 8x8
-	// tileWidth := a.Width / 8
-	// for i := range a.TileMap {
-	// 	// 32 because the background size is 32x32
-	// 	memmap.VRAM[memmap.ScreenBlockOffset+((i/int(tileWidth))*bgWidth)+(i%8)] = a.TileMap[i]
-	// }
+	for i := range a.TileMap {
+		memmap.VRAM[memmap.ScreenBlockOffset*int(screenBaseBlock)+i] = a.TileMap[i]
+	}
 }

@@ -289,13 +289,13 @@ const (
 	BGSizeSmall memmap.BGControll = 0x0000
 
 	// BGSizeWide sets the background size to 512 x 256 pixels
-	BGSizeWide memmap.BGControll = 0x0000
+	BGSizeWide memmap.BGControll = 0x4000
 
 	// BGSizeTall sets the background size to 256 x 512 pixels
-	BGSizeTall memmap.BGControll = 0x0000
+	BGSizeTall memmap.BGControll = 0x8000
 
 	// BGSizeLarge sets the background size to 512 x 512 pixels
-	BGSizeLarge memmap.BGControll = 0x0000
+	BGSizeLarge memmap.BGControll = 0xC000
 
 	// SBBShift shifts a number into the correct bits to set the screen base block
 	SBBShift memmap.BGControll = 0x0008

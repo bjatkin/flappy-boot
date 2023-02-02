@@ -51,26 +51,9 @@ type Options struct {
 // Any larger and the function will return an error
 func Encode(w io.Writer, m image.Image, o *Options) error {
 	dx, dy := m.Bounds().Dx(), m.Bounds().Dy()
+	var raw []byte
 
-	// 16 colors at two bytes each
-	palSize := 16 * 2
-
-	// this is the worst case tile size where every tile is toally unique so every pixel in the image stored
-	tileSize := dx * dy
-
-	// this is the worst case tile size where every tile is totally unique so every index will also be unique
-	// each tile is at the smallest 8x8 pixles or 64 pixels in total which is why this number is divided by 64
-	indexSize := (dx * dy) / 64
-
-	// 4 bytes for the tile size
-	// 4 byte for the width of the final image in tile
-	// 4 byte for the height of the final image in tiles
-	// 4 bytes for the number of unique tiles
-	headerSize := 16
-
-	raw := make([]byte, 0, headerSize+palSize+tileSize+indexSize)
-
-	var size tile.Size // defaults to 8x8
+	size := tile.S8x8
 	if o != nil {
 		size = *o.TileSize
 	}
@@ -86,54 +69,100 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	}
 
 	tiles := tile.NewMetaSlice(m, pal, size)
-
 	uniqueTiles := tile.Unique(tiles)
-	tileCount := len(uniqueTiles)
 
-	raw = append(raw, size.Bytes()...)
-	raw = append(raw, 0, 0) // preserve alignment
+	raw = append(raw, generateHeader(size, dx, dy, len(uniqueTiles))...)
+	raw = append(raw, rawPalette(pal)...)
+	raw = append(raw, rawTiles(uniqueTiles)...)
 
-	raw = append(raw, byteconv.Itoa(uint32(dx))...)
-	raw = append(raw, byteconv.Itoa(uint32(dy))...)
-	raw = append(raw, byteconv.Itoa(uint32(tileCount))...)
-
-	for _, p := range pal {
-		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
-		raw = append(raw, p16.Bytes()...)
-	}
-
-	for _, tile := range uniqueTiles {
-		raw = append(raw, tile.Bytes()...)
-	}
-
-	// only include the map data if the tile size is 8x8 and saving map data was requested
 	if includeMap {
-		vFlip := uint16(0x0800)
-		hFlip := uint16(0x0400)
-		for _, tile := range tiles {
-			for i, match := range uniqueTiles {
-				var found bool
-				switch {
-				case gbaimg.Match(tile.Img, match.Img):
-					raw = append(raw, byteconv.Itoa(uint16(i))...)
-					found = true
-				case gbaimg.Match(gbaimg.Flip(tile.Img, true, false), match.Img):
-					raw = append(raw, byteconv.Itoa(uint16(i)|hFlip)...)
-					found = true
-				case gbaimg.Match(gbaimg.Flip(tile.Img, false, true), match.Img):
-					raw = append(raw, byteconv.Itoa(uint16(i)|vFlip)...)
-					found = true
-				case gbaimg.Match(gbaimg.Flip(tile.Img, true, true), match.Img):
-					raw = append(raw, byteconv.Itoa(uint16(i)|hFlip|vFlip)...)
-					found = true
-				}
-				if found {
-					break
-				}
-			}
-		}
+		raw = append(raw, rawMapData(tiles, uniqueTiles, dx, dy)...)
 	}
 
 	_, err = w.Write(raw)
 	return err
+}
+
+// generateHeader generates raw header data for a .gb4 image
+func generateHeader(size tile.Size, dx, dy, tileCount int) []byte {
+	var header []byte
+	header = append(header, size.Bytes()...)
+
+	// preserve alignment since a tile size is only 2 bytes in length
+	header = append(header, 0, 0)
+
+	header = append(header, byteconv.Itoa(uint32(((256+dx)/246)*256))...)
+	header = append(header, byteconv.Itoa(uint32(dy))...)
+	header = append(header, byteconv.Itoa(uint32(tileCount))...)
+
+	return header
+}
+
+// rawPalette converts a color.Palette into a byte slices for a .gb4 image
+func rawPalette(pal color.Palette) []byte {
+	var raw []byte
+	for _, p := range pal {
+		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
+		raw = append(raw, p16.Bytes()...)
+	}
+	return raw
+}
+
+// rawTiles converts a slice of tile.Meta tiles to a raw byte slice for a .gb4 image
+func rawTiles(tiles []*tile.Meta) []byte {
+	var raw []byte
+	for _, tile := range tiles {
+		raw = append(raw, tile.Bytes()...)
+	}
+	return raw
+}
+
+// rawMapData converts map data for a .gb4 image into a raw byte slice.
+// tiles are mapped using 32x32 tile screen base blocks.
+func rawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte {
+	// pitch is the number of tiles per horizontal row
+	pitch := ((256 + dx) / 256) * 32
+	raw := make([]byte, pitch*dy)
+
+	// vFlip is used to indicate that the tile should be flipped vertically when drawn
+	vFlip := uint16(0x0800)
+	// hFlip is used to indicate that the tile should be flipped horzontally when drawn
+	hFlip := uint16(0x0400)
+
+	for i, tile := range tiles {
+		for ii, match := range uniqueTiles {
+			var found bool
+			var add uint16
+
+			// all flipped orientations need to be checked since the unique tile set may be optimized to
+			// take advantage of flip bits
+			switch {
+			case gbaimg.Match(tile.Img, match.Img):
+				add = uint16(ii)
+				found = true
+			case gbaimg.Match(gbaimg.Flip(tile.Img, true, false), match.Img):
+				add = uint16(ii) | hFlip
+				found = true
+			case gbaimg.Match(gbaimg.Flip(tile.Img, false, true), match.Img):
+				add = uint16(ii) | vFlip
+				found = true
+			case gbaimg.Match(gbaimg.Flip(tile.Img, true, true), match.Img):
+				add = uint16(ii) | hFlip | vFlip
+				found = true
+			}
+
+			if found {
+				tileX, tileY := i%(dx/8), i/(dx/8)
+				screenBaseBlock := (tileY/32)*(pitch/32) + (tileX / 32)
+				index := (screenBaseBlock*1024 + (tileY%32)*32 + tileX%32) * 2
+				fmt.Println("\t-", tileX, tileY, "|", index)
+				tBytes := byteconv.Itoa(add)
+				raw[index] = tBytes[0]
+				raw[index+1] = tBytes[1]
+				break
+			}
+		}
+	}
+
+	return raw
 }
