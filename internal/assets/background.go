@@ -25,8 +25,6 @@ func NewBackground() *Asset {
 			16, // 16 is hard coded because a gb4 always has a 16 color palette
 		),
 
-		// TODO: looks like this is loading in too much data?
-		// why does it look like it's loading part of the map data?
 		Tiles: unsafe.Slice(
 			(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
 			tileCount*u16PerTile,

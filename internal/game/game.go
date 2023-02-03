@@ -32,8 +32,8 @@ func Run(node Node) {
 
 		var frame uint
 		for {
-
 			key.KeyPoll()
+			next := (Node)(nil)
 			next, err := node.Update(frame)
 			if err != nil {
 				exit(err)
@@ -74,8 +74,8 @@ func exit(err error) {
 	mode3.Enable()
 
 	// Draw red to the screen so we can tell there was an error
-	red := display.RGB15(31, 0, 0)
-	for i := 0; i < 240*160; i++ {
+	red := display.RGB15(0, 0, 31)
+	for i := 10; i < 240*160; i++ {
 		mode3.ScreenData[i] = red
 	}
 

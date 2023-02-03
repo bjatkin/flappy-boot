@@ -1,30 +1,33 @@
 package memmap
 
-// TODO: move this into a register package?
+// TODO: should this be moved into it's own register package?
 
 type reg interface {
 	AudioStat | DSControll |
-		DisplayControll | DisplayStat | BGControll |
+		DisplayControll | DisplayStat | BGControll | DisplayVCount |
 		Input | InputControll
 }
 
-// AudioStat is the type used for the audio stats register. See Stat for more information on using this type
+// AudioStat is the type used for the audio stats register. See audio.Stat for more information on using this type
 type AudioStat uint16
 
-// DSControll is the type used for the direct sound controll register. See DSControll for more infromation on using this type
+// DSControll is the type used for the direct sound controll register. See audio.DSControll for more infromation on using this type
 type DSControll uint16
 
-// DisplayControll is the type used for the display controll register, see Controll for more information on useing this type
+// DisplayControll is the type used for the display controll register, see display.Controll for more information on useing this type
 type DisplayControll uint16
 
-// DisplayStatReg is the type used for the display stats register, see Stat for more information on using this type
+// DisplayStatReg is the type used for the display stats register, see display.Stat for more information on using this type
 type DisplayStat uint16
 
-// BGControll is the type used for the background controll registers, see BG#Controll for more information on using this type
+// DisplayVCount is the type used for the display vertical line count register, see display.VCount for more information on using this type
+type DisplayVCount uint16
+
+// BGControll is the type used for the background controll registers, see display.BG#Controll for more information on using this type
 type BGControll uint16
 
-// Input is the type used for the input register, see Input for more information on using this type
+// Input is the type used for the input register, see key.Input for more information on using this type
 type Input uint16
 
-// InputControll is the type used for the input register, see Controll for more information on using this type
+// InputControll is the type used for the input register, see key.Controll for more information on using this type
 type InputControll uint16

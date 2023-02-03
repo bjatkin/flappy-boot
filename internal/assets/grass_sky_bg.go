@@ -45,16 +45,16 @@ func NewBG() *Asset {
 	}
 }
 
-func (a *Asset) LoadMap(screenBaseBlock memmap.BGControll, pitch int) {
+func (a *Asset) LoadMap(palBase int, charBase, screenBaseBlock memmap.BGControll, pitch int) {
 	for i := range a.Palette {
-		memmap.Palette[i] = a.Palette[i]
+		memmap.Palette[i+palBase*memmap.PaletteOffset] = a.Palette[i]
 	}
 
 	for i := range a.Tiles {
-		memmap.VRAM[i] = a.Tiles[i]
+		memmap.VRAM[i+int(charBase)*memmap.CharBlockOffset] = a.Tiles[i]
 	}
 
 	for i := range a.TileMap {
-		memmap.VRAM[memmap.ScreenBlockOffset*int(screenBaseBlock)+i] = a.TileMap[i]
+		memmap.VRAM[memmap.ScreenBlockOffset*int(screenBaseBlock)+i] = (memmap.VRAMValue(palBase) << 0x000C) | a.TileMap[i]
 	}
 }

@@ -18,7 +18,9 @@ const (
 // The register is R/W with the exception of bit 3 and has the following bit layout.
 //
 // [0 - 2] Display Mode - Used to change the GBA's video mode
+//
 // [3] GBC - set to true if the game is a game boy color game (read only)
+//
 // [4] Active Page - Used to swap the active video page in mode 4 and 5
 //   - PageA - The default video page in memory
 //   - PageB - The secondary video page in memory
@@ -110,6 +112,9 @@ const (
 	// to a 2d matrix consisting of 32x32 sprite tiles.
 	Sprite2D memmap.DisplayControll = 0x0000
 
+	// ForceBlank forces the screen to blank while it's set
+	ForceBlank memmap.DisplayControll = 0x0040
+
 	// BG0 enables background 0
 	BG0 memmap.DisplayControll = 0x0100
 
@@ -139,8 +144,11 @@ const (
 // line interrupts. It is R/W with the exception of bits 0-3 which are read only.
 //
 // [0] VBlank Flag - The hardware will set this to 1 when the screen is in a VBlank (read-only)
+//
 // [1] HBlank Flag - The hardware will set this to 1 when the screen is in an HBlank (read-only)
+//
 // [2] VCount Flag - The hardware will set this to 1 if the VCount setting matches the current vertical scan line
+//
 // [3] VBlank Interrupt - Enables the VBlank interrupt
 //   - VBlankIRQ - Enables the VBlank interrupt
 //
@@ -176,12 +184,21 @@ const (
 	VCountShift memmap.DisplayStat = 0x0009
 )
 
+// VCount is the register that tracks the current vertical line being drawn by the hardware.
+// Lines 0-159 are drawn on the screen and lines 160-227 are used to represent the v-blank period.
+// This register is read only
+//
+// [0 - 7] VCount - The current vertical line being drawn by the hardware.
+var VCount = (*memmap.DisplayVCount)(unsafe.Pointer(memmap.IOAddr + 0x0006))
+
 var (
 	// BG0Controll is the background 0 controll registers, it can be used to control various aspects
 	// of background layer 0, background 0 can only be a regular background
 	//
 	// [0 - 1] Background Priority - Sets the Background 0 priority. 0 is the top priority and 3 is the lowest
+	//
 	// [2 - 3] Character Base Block - Sets the character base block for tiled background modes
+	//
 	// [6] Mosaic - Enables Mosaic Mode for background 0
 	//   - Mosaic - Enable the mosaic mode for background 0
 	//
@@ -190,6 +207,7 @@ var (
 	//   - Color256 - Use 256 bit color for background 0
 	//
 	// [8 - C] Screen Base Block - Sets the screen base block for tiled background modes (0 - 31)
+	//
 	// [E - F] Background Size - Sets the size for background 0
 	//   - BGSizeSmall - 256 x 256 pixels
 	//   - BGSizeWide - 512 x 256 pixels
@@ -201,7 +219,9 @@ var (
 	// of background layer 1, background 1 can only be a regular background
 	//
 	// [0 - 1] Background Priority - Sets the Background 1 priority. 0 is the top priority and 3 is the lowest
+	//
 	// [2 - 3] Character Base Block - Sets the character base block for tiled background modes
+	//
 	// [6] Mosaic - Enables Mosaic Mode for background 1
 	//   - Mosaic - Enable the mosaic mode for background 1
 	//
@@ -210,6 +230,7 @@ var (
 	//   - Color256 - Use 256 bit color for background 1
 	//
 	// [8 - C] Screen Base Block - Sets the screen base block for tiled background modes (0 - 31)
+	//
 	// [E - F] Background Size - Sets the size for background 1
 	//   - BGSizeSmall - 256 x 256 pixels
 	//   - BGSizeWide - 512 x 256 pixels
@@ -222,7 +243,9 @@ var (
 	// layer used by the non-tiled display modes
 	//
 	// [0 - 1] Background Priority - Sets the Background 2 priority. 0 is the top priority and 3 is the lowest
+	//
 	// [2 - 3] Character Base Block - Sets the character base block for tiled background modes
+	//
 	// [6] Mosaic - Enables Mosaic Mode for background 2
 	//   - Mosaic - Enable the mosaic mode for background 2
 	//
@@ -231,6 +254,7 @@ var (
 	//   - Color256 - Use 256 bit color for background 2
 	//
 	// [8 - C] Screen Base Block - Sets the screen base block for tiled background modes (0 - 31)
+	//
 	// [E - F] Background Size - Sets the size for background 2
 	//   - BGSizeSmall - 256 x 256 pixels
 	//   - BGSizeWide - 512 x 256 pixels
@@ -242,7 +266,9 @@ var (
 	// of background layer 3, background 3 can be either an affine or a regular background
 	//
 	// [0 - 1] Background Priority - Sets the Background 3 priority. 0 is the top priority and 3 is the lowest
+	//
 	// [2 - 3] Character Base Block - Sets the character base block for tiled background modes
+	//
 	// [6] Mosaic - Enables Mosaic Mode for background 3
 	//   - Mosaic - Enable the mosaic mode for background 3
 	//
@@ -251,6 +277,7 @@ var (
 	//   - Color256 - Use 256 bit color for background 3
 	//
 	// [8 - C] Screen Base Block - Sets the screen base block for tiled background modes (0 - 31)
+	//
 	// [E - F] Background Size - Sets the size for background 3
 	//   - BGSizeSmall - 256 x 256 pixels
 	//   - BGSizeWide - 512 x 256 pixels
@@ -299,4 +326,7 @@ const (
 
 	// SBBShift shifts a number into the correct bits to set the screen base block
 	SBBShift memmap.BGControll = 0x0008
+
+	// CBBShift shifts a number into the correct bits to set the char base block
+	CBBShift memmap.BGControll = 0x0002
 )

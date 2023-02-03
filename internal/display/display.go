@@ -8,7 +8,7 @@ import (
 // VCount returns the vertical scan line that is currently being drawn. It treats the value as
 // volitile so it is safe to use in tight loops
 func VCount() int {
-	return int(memmap.GetReg(hw_display.Stat) >> hw_display.VCountShift)
+	return int(memmap.GetReg(hw_display.VCount))
 }
 
 // Color represents a 15 bit RGB(grb) color

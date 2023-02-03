@@ -91,7 +91,8 @@ func generateHeader(size tile.Size, dx, dy, tileCount int) []byte {
 	// preserve alignment since a tile size is only 2 bytes in length
 	header = append(header, 0, 0)
 
-	header = append(header, byteconv.Itoa(uint32(((256+dx)/246)*256))...)
+	// dx must be padded to take into account the full width of a screen block
+	header = append(header, byteconv.Itoa(uint32(paddedPitch(dx)*8))...)
 	header = append(header, byteconv.Itoa(uint32(dy))...)
 	header = append(header, byteconv.Itoa(uint32(tileCount))...)
 
@@ -121,8 +122,9 @@ func rawTiles(tiles []*tile.Meta) []byte {
 // tiles are mapped using 32x32 tile screen base blocks.
 func rawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte {
 	// pitch is the number of tiles per horizontal row
-	pitch := ((256 + dx) / 256) * 32
-	raw := make([]byte, pitch*dy)
+	pitch := paddedPitch(dx)
+	tileDy := dy / 8
+	raw := make([]byte, pitch*tileDy*2) // multiply by 2 since each index will take 2 bytes
 
 	// vFlip is used to indicate that the tile should be flipped vertically when drawn
 	vFlip := uint16(0x0800)
@@ -155,8 +157,8 @@ func rawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte
 				tileX, tileY := i%(dx/8), i/(dx/8)
 				screenBaseBlock := (tileY/32)*(pitch/32) + (tileX / 32)
 				index := (screenBaseBlock*1024 + (tileY%32)*32 + tileX%32) * 2
-				fmt.Println("\t-", tileX, tileY, "|", index)
 				tBytes := byteconv.Itoa(add)
+
 				raw[index] = tBytes[0]
 				raw[index+1] = tBytes[1]
 				break
@@ -165,4 +167,10 @@ func rawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte
 	}
 
 	return raw
+}
+
+// paddedPitch returns the pitch of the image in tiles.
+// it is padded to the nearest screen block
+func paddedPitch(dx int) int {
+	return ((255 + dx) / 256) * 32
 }
