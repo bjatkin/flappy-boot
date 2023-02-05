@@ -4,7 +4,7 @@ package memmap
 
 type reg interface {
 	AudioStat | DSControll |
-		DisplayControll | DisplayStat | BGControll | DisplayVCount |
+		DisplayControll | DisplayStat | BGControll | DisplayVCount | uint16 |
 		Input | InputControll
 }
 

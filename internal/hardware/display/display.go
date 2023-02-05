@@ -215,6 +215,16 @@ var (
 	//   - BGSizeLarge - 512 x 512 pixels
 	BG0Controll = (*memmap.BGControll)(unsafe.Pointer(memmap.IOAddr + 0x0008))
 
+	// BG0HOffset is the horizontal offset controll register for background 0. It can be any value between 0 - 511
+	//
+	// [0 - 8] Horizontal Offset - the horizontal offset of the background layer. Can be any value between 0 - 511
+	BG0HOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x0010))
+
+	// BG0VOffset is the vertical offset controll register from background 0. It can be any value between 0 - 511
+	//
+	// [0 - 8] Vertical Offset - the vertical offset of the background layer. Can be any value between 0 - 511
+	BG0VOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x0012))
+
 	// BG1Controll is the background 1 controll registers, it can be used to control various aspects
 	// of background layer 1, background 1 can only be a regular background
 	//
@@ -237,6 +247,16 @@ var (
 	//   - BGSizeTall - 256 x 512 pixels
 	//   - BGSizeLarge - 512 x 512 pixels
 	BG1Controll = (*memmap.BGControll)(unsafe.Pointer(memmap.IOAddr + 0x000A))
+
+	// BG1HOffset is the horizontal offset controll register for background 1. It can be any value between 0 - 511
+	//
+	// [0 - 8] Horizontal Offset - the horizontal offset of the background layer. Can be any value between 0 - 511
+	BG1HOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x0014))
+
+	// BG1VOffset is the vertical offset controll register from background 1. It can be any value between 0 - 511
+	//
+	// [0 - 8] Vertical Offset - the vertical offset of the background layer. Can be any value between 0 - 511
+	BG1VOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x0016))
 
 	// BG2Controll is the background 2 controll registers, it can be used to control various aspects
 	// of the background layer 2, background 2 can be either an affine or a regular background, it is also
@@ -262,6 +282,16 @@ var (
 	//   - BGSizeLarge - 512 x 512 pixels
 	BG2Controll = (*memmap.BGControll)(unsafe.Pointer(memmap.IOAddr + 0x000C))
 
+	// BG2HOffset is the horizontal offset controll register for background 2. It can be any value between 0 - 511
+	//
+	// [0 - 8] Horizontal Offset - the horizontal offset of the background layer. Can be any value between 0 - 511
+	BG2HOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x0018))
+
+	// BG2VOffset is the vertical offset controll register from background 2. It can be any value between 0 - 511
+	//
+	// [0 - 8] Vertical Offset - the vertical offset of the background layer. Can be any value between 0 - 511
+	BG2VOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x001A))
+
 	// BG3Controll is the background 3 controll registers, it can be used to control various assets
 	// of background layer 3, background 3 can be either an affine or a regular background
 	//
@@ -284,6 +314,16 @@ var (
 	//   - BGSizeTall - 256 x 512 pixels
 	//   - BGSizeLarge - 512 x 512 pixels
 	BG3Controll = (*memmap.BGControll)(unsafe.Pointer(memmap.IOAddr + 0x000E))
+
+	// BG3HOffset is the horizontal offset controll register for background 3. It can be any value between 0 - 511
+	//
+	// [0 - 8] Horizontal Offset - the horizontal offset of the background layer. Can be any value between 0 - 511
+	BG3HOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x001C))
+
+	// BG3VOffset is the vertical offset controll register from background 3. It can be any value between 0 - 511
+	//
+	// [0 - 8] Vertical Offset - the vertical offset of the background layer. Can be any value between 0 - 511
+	BG3VOffset = (*uint16)(unsafe.Pointer(memmap.IOAddr + 0x001E))
 )
 
 const (

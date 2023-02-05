@@ -4,7 +4,9 @@ import (
 	"embed"
 
 	"github.com/bjatkin/flappy_boot/internal/assets"
+	"github.com/bjatkin/flappy_boot/internal/fix"
 	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
@@ -12,22 +14,23 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/mode0"
 )
 
-const (
+var (
 	// gravity influences how quickly the boot falls
-	gravity = 20
+	gravity = fix.New(0, 64)
 
-	// maxDy is the terminal velocity for the boot
-	maxDy = 512
+	// jump influences how powerful each jump is
+	jump = fix.New(-4, 0)
 
 	// grassY is the y level that the grass ground sits at
-	grassY = 144
+	grassY = fix.New(131, 0)
 )
 
 // Demo is a test node used for prototyping basic mechanics
 type Demo struct {
 	assets embed.FS
-	dy     int32
-	booty  int32
+	bootDy fix.P8
+	bootY  fix.P8
+	scroll int
 }
 
 func NewDemo(assets embed.FS) *Demo {
@@ -61,7 +64,7 @@ func (d *Demo) Init() error {
 	// TODO: this should be managed through a sprite package
 	hw_sprite.OAM[0] = hw_sprite.Attrs{
 		Attr0: hw_sprite.Square | hw_sprite.Color16 | hw_sprite.Normal | 72,
-		Attr1: hw_sprite.Medium | hw_sprite.Attr1(20),
+		Attr1: hw_sprite.Medium | 40,
 	}
 
 	mode0.Enable(
@@ -74,25 +77,35 @@ func (d *Demo) Init() error {
 
 func (d *Demo) Update(frame uint) (game.Node, error) {
 	if key.Pressed(key.A) {
-		d.dy -= 10
-	}
-	if d.dy < maxDy {
-		d.dy += gravity
+		d.bootDy = jump
 	}
 
-	d.booty += d.dy
+	d.bootDy += gravity
+	d.bootY += d.bootDy
 
-	if d.booty > grassY<<8 {
-		d.booty = grassY << 8
+	if d.bootY > grassY {
+		d.bootY = grassY
+		d.bootDy = 0
 	}
+
+	if d.bootY < 0 {
+		d.bootY = 0
+		d.bootDy = 0
+	}
+
+	// scroll the background
+	d.scroll++
+	memmap.SetReg(display.BG0HOffset, uint16(d.scroll))
+	memmap.SetReg(display.BG1HOffset, uint16(d.scroll>>2))
 
 	return nil, nil
 }
 
 func (d *Demo) Draw() error {
+	// TODO: this shouldn't be nessisary since the game.Run function should just copy the sprite data automatically
 	hw_sprite.OAM[0] = hw_sprite.Attrs{
-		Attr0: hw_sprite.Square | hw_sprite.Color16 | hw_sprite.Normal | hw_sprite.Attr0(d.booty>>8),
-		Attr1: hw_sprite.Medium | 8,
+		Attr0: hw_sprite.Square | hw_sprite.Color16 | hw_sprite.Normal | hw_sprite.Attr0(d.bootY.Int()),
+		Attr1: hw_sprite.Medium | 40,
 	}
 	return nil
 }
