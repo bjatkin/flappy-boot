@@ -1,49 +1,126 @@
 package game
 
 import (
+	"fmt"
+
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
-
-// spriteBlocSize is the size of each VRAM sprite block in 8x8 tiles
-const spriteBlockSize = 4
 
 // Engine is the core game engine
 type Engine struct {
 	// activeSprites are the sprites tha need to be drawn each frame
 	activeSprites map[*Sprite]struct{}
 
-	// spriteBlocks indicates which sprite block are free and which are in use
-	spriteBlocks []bool
+	// activeBackgrounds are the backgrounds that need to be drawn each frame
+	activeBackgrounds [4]bool
 
-	// spritePalettes indicates which sprite palettes are free and which are in use
-	spritePalettes []bool
+	// spritePtr points to the next available sprite tile in VRAM
+	spritePtr int
+
+	// spritePalPtr points to the next available sprite palette in palette memory
+	spritePalPtr int
+
+	// bgPtr points to the next available background tile in VRAM
+	bgPtr int
+
+	// bgPalPtr points to the next available background palette in palette memory
+	bgPalPtr int
+
+	// screenBlockPtr points to the next available screen block
+	screenBlockPtr int
 }
 
 // NewEngine creates a new instances of a game engine
 func NewEngine() *Engine {
 	return &Engine{
 		activeSprites:  make(map[*Sprite]struct{}, 128),
-		spriteBlocks:   make([]bool, 1024/spriteBlockSize),
-		spritePalettes: make([]bool, 16),
+		spritePtr:      2048,
+		spritePalPtr:   16,
+		screenBlockPtr: 24,
 	}
 }
 
-// loadSprite loads a sprites assets into VRAM, and it's palette into palette memory
+// loadSpriteTileSet loads a tileset into object VRAM, and it's palette into object palette memory
 // if there is not enough memory for either the palette or the graphics, an error is returned
-func (e *Engine) loadSprite(sprite *Sprite) error {
-	// TODO: load the palette
+func (e *Engine) loadSpriteTileSet(tileSet *TileSet) error {
+	err := tileSet.Load(e.spritePalPtr, e.spritePtr)
+	if err != nil {
+		return err
+	}
 
-	// TODO: load the sprite tiles
+	e.spritePalPtr++
+	e.spritePtr += int(tileSet.Count)
+
 	return nil
 }
 
-func (e *Engine) freeSprite() {
+// loadBGTileSet loads a tileset into background VRAM, and it's palette into background palette memory
+// if there is not enough memory for either the palette or the graphics, an error is returned
+func (e *Engine) loadBGTileSet(tileSet *TileSet) error {
+	err := tileSet.Load(e.bgPalPtr, e.bgPtr)
+	if err != nil {
+		return err
+	}
 
+	e.bgPalPtr++
+	e.bgPtr += int(tileSet.Count)
+
+	return nil
+}
+
+// loadTileMap loads a tilemap into background VRAM. if there is not enought memory for either
+// the palette or the graphics, an error is returned
+func (e *Engine) loadTileMap(tileMap *TileMap) error {
+	if e.screenBlockPtr > 32 {
+		return fmt.Errorf("OOM: not enough screen blocks for a new map")
+	}
+
+	// TODO: should tilemap load itself?
+	// TODO: should tilemap be a part of the tileset? (probably no)
+	for i := range *tileMap {
+		memmap.VRAM[i+memmap.ScreenBlockOffset*e.screenBlockPtr] = (*tileMap)[i]
+	}
+
+	e.screenBlockPtr += ((len(*tileMap) - 1) / 1024) + 1
+
+	return nil
+}
+
+// addBG adds a new background to the list of active backgrounds
+func (e *Engine) addBG(background *Background) error {
+	unused := -1
+	for i := range e.activeBackgrounds {
+		if !e.activeBackgrounds[i] {
+			unused = i
+		}
+	}
+
+	switch unused {
+	case 0:
+		*display.BG0Controll = background.controll
+	case 1:
+		*display.BG0Controll = background.controll
+	case 2:
+		*display.BG0Controll = background.controll
+	case 3:
+		*display.BG0Controll = background.controll
+	default:
+		return fmt.Errorf("OOM: no unused backgrounds available")
+	}
+
+	e.activeBackgrounds[unused] = true
+
+	return nil
 }
 
 // NewBackground returns a new Background
-func (e *Engine) NewBackground() *Background {
-	return &Background{}
+func (e *Engine) NewBackground(tileSet *TileSet, tilemap *TileMap) *Background {
+	return &Background{
+		engine:  e,
+		tileMap: tilemap,
+		tileSet: tileSet,
+	}
 }
 
 // NewSprite returns a new Sprite
@@ -58,13 +135,36 @@ type Background struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
-	// loaded is true if the sprites associated graphics have been loaded into memory
 	loaded bool
+
+	tileSet *TileSet
+
+	tileMap *TileMap
+
+	controll memmap.BGControll
+	hScroll  uint16
+	vScroll  uint16
 }
 
 // Load loads a backgrounds data into memory
 // if there is not enough free VRAM to accommodate this background an error will be returned
 func (b *Background) Load() error {
+	if !b.tileSet.loaded {
+		err := b.engine.loadBGTileSet(b.tileSet)
+		if err != nil {
+			return err
+		}
+	}
+
+	if !b.loaded {
+		err := b.engine.loadTileMap(b.tileMap)
+		if err != nil {
+			return err
+		}
+	}
+
+	b.loaded = true
+
 	return nil
 }
 
@@ -73,6 +173,11 @@ func (b *Background) Load() error {
 // all active backgrounds are drawn every frame, if the maximum number of backgrounds are already
 // active an error will be returned
 func (b *Background) Add() error {
+	err := b.Load()
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -80,28 +185,68 @@ func (b *Background) Add() error {
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (b *Background) Remove() {}
 
-// Unload removes all the backgrounds assets from VRAM.
-// if the background is currently active Unload will first deactivate the background
-func (b *Background) Unload() {}
+// TileMap is tilemap data for a background
+type TileMap []memmap.VRAMValue
 
 // Sprite is a game engine sprite
 type Sprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
-	// loaded is true if the sprites associated graphics have been loaded into memory
+	tileSet *TileSet
+}
+
+// TileSet is a set of 8x8 tiles that can be loaded into VRAM for use by a background or sprite
+type TileSet struct {
+	// loaded is true if this tileset has been loaded into VRAM
 	loaded bool
+
+	// the number of 8x8 tiles in this tileset
+	Count uint32
+
+	// tiles is the pixel data for the tile set
+	Tiles     []memmap.VRAMValue
+	TileIndex int
+
+	// palette is the palette data for the tileset
+	Palette      *Palette
+	PaletteIndex int
+}
+
+func (ts *TileSet) Load(palBase, tileBase int) error {
+	// TODO: get rid of these magic numbers
+	if palBase > 32 {
+		return fmt.Errorf("OOM: invalid palette base %d", palBase)
+	}
+
+	// TODO: get rid of these magic numbers
+	if tileBase > 512*6 {
+		return fmt.Errorf("OOM: invalid tile base %d", tileBase)
+	}
+
+	ts.PaletteIndex = palBase
+	for i := range *ts.Palette {
+		memmap.Palette[i+memmap.PaletteOffset*palBase] = (*ts.Palette)[i]
+	}
+
+	ts.TileIndex = tileBase
+	for i := range ts.Tiles {
+		memmap.VRAM[i+tileBase] = ts.Tiles[i]
+	}
+
+	ts.loaded = true
+
+	return nil
 }
 
 // Load loads a sprites graphics data into memory
 // if there is not enough free VRAM to accomodate the sprite an error will be returned
 func (s *Sprite) Load() error {
-	if s.loaded {
+	if !s.tileSet.loaded {
 		return nil
 	}
 
-	s.loaded = true
-	return nil
+	return s.engine.loadSpriteTileSet(s.tileSet)
 }
 
 // Add adds the sprite to the list of active sprites.
@@ -119,14 +264,5 @@ func (s *Sprite) Remove() {
 	delete(s.engine.activeSprites, s)
 }
 
-// Unload removes all the sprits graphis from VRAM.
-// if the sprite is currently active Unload will first ensure deactivate the sprite
-func (s *Sprite) Unload() {
-	s.Remove()
-}
-
 // Paletet is a 16 color palette
-type Palette struct {
-	id     uint32
-	colors [16]memmap.PaletteValue
-}
+type Palette []memmap.PaletteValue

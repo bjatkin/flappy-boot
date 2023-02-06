@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"unsafe"
 
+	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -36,3 +37,23 @@ func NewBackground() *Asset {
 		),
 	}
 }
+
+var pal game.Palette = unsafe.Slice(
+	(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
+	16, // 16 is hard coded because a gb4 always has a 16 color palette
+)
+
+var BackgroundTileSet = &game.TileSet{
+	Count: *(*uint32)(unsafe.Pointer(&background[12])),
+	Tiles: unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
+		*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1]),
+	),
+	Palette: &pal,
+}
+
+// TODO: this should be a pointer
+var BackgroundTileMap game.TileMap = unsafe.Slice(
+	(*memmap.VRAMValue)(unsafe.Pointer(&background[48+*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1])*2])),
+	(*(*uint32)(unsafe.Pointer(&background[4]))/8)*(*(*uint32)(unsafe.Pointer(&background[8]))/8),
+)
