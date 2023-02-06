@@ -3,8 +3,9 @@ package memmap
 // TODO: should this be moved into it's own register package?
 
 type reg interface {
-	AudioStat | DSControll |
-		DisplayControll | DisplayStat | BGControll | DisplayVCount | uint16 |
+	uint16 |
+		AudioStat | DSControll |
+		DisplayControll | DisplayStat | BGControll | DisplayVCount |
 		Input | InputControll
 }
 

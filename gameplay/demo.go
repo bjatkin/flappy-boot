@@ -59,12 +59,36 @@ func (d *Demo) Init() error {
 	sky.LoadMap(1, charBase, screenBaseBlock, 64)
 
 	player := assets.NewPlayer()
-	player.Load()
+	player.Load(0, 0)
 
 	// TODO: this should be managed through a sprite package
 	hw_sprite.OAM[0] = hw_sprite.Attrs{
 		Attr0: hw_sprite.Square | hw_sprite.Color16 | hw_sprite.Normal | 72,
 		Attr1: hw_sprite.Medium | 40,
+	}
+
+	pillars := assets.NewPillars()
+	pillars.Load(1, 1)
+
+	// TOP
+	hw_sprite.OAM[1] = hw_sprite.Attrs{
+		Attr0: hw_sprite.Wide | hw_sprite.Color16 | hw_sprite.Normal | 50,
+		Attr1: hw_sprite.Medium | 50,
+		Attr2: 0x0200 | 0x1<<0xC,
+	}
+
+	// BOTTOM
+	hw_sprite.OAM[2] = hw_sprite.Attrs{
+		Attr0: hw_sprite.Wide | hw_sprite.Color16 | hw_sprite.Normal | 80,
+		Attr1: hw_sprite.Medium | 50,
+		Attr2: 0x0204 | 0x1<<0xC,
+	}
+
+	// MIDLE
+	hw_sprite.OAM[3] = hw_sprite.Attrs{
+		Attr0: hw_sprite.Wide | hw_sprite.Color16 | hw_sprite.Normal | 50,
+		Attr1: hw_sprite.Medium | 80,
+		Attr2: 0x0208 | 0x1<<0xC,
 	}
 
 	mode0.Enable(

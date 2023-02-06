@@ -94,6 +94,7 @@ type Attrs struct {
 	// Attr0 has the following format
 	//
 	// [0 - 7] Y Position - y position of the top left corner of the sprite (0 - 255)
+	//
 	// [8 - 9] Sprite Mode - Set the draw mode of the sprite
 	//   - Normal - Sprite is rendered normally (default)
 	//   - Affine - Sprite is affine and rendered using the affine matrix
@@ -138,9 +139,13 @@ type Attrs struct {
 	// Attr1 has the following format
 	//
 	// [0 - 8] X - The position of the top left corner of the sprite (0 - 511)
+	//
 	// [9 - D] Affine Index - The index for affine sprite data (0 - 32), only used if Attr0 is set to use affine attributes
+	//
 	// [C] Horizontal Mirrior - if set, the sprite is mirriored horizontally
+	//
 	// [D] Vertical Mirrior - if set, the sprite is mirriored vertically
+	//
 	// [E - F] Sprite Size - the size of the sprite, combined with the sprite size to get the final sprite size
 	//   - Small - a small sprite, 8px to 16px in width and height
 	//   - Medium - a medium sprite, 8px to 32px in width and height
@@ -168,11 +173,13 @@ type Attrs struct {
 	// Attr2 has the following format
 	//
 	// [0 - 9] Tile Index - the index of the base tile for the sprite, starts at 512 in bit map modes(0 - 1024)
+	//
 	// [A - B] Priority - sets the priority/ layer of the sprites
 	//   - priority0 - the highest sprite priorty, will be drawn above all other sprites
 	//   - Priority1 - priority 1, will be drawn above priority 2 & 3 and below prioritiy 0
 	//   - Priority2 - priority 2, will be drawn above priorities 3 and below priorities 0 & 1
 	//   - Priority3 - the lowest priority, will be drawing below all other sprites
+	//
 	// [C - F] Palette Bank - the index of the 16 bit palette to use for the sprite, this will be ignored if the sprite is using 256 colors (0 - 16)
 	Attr2 Attr2
 

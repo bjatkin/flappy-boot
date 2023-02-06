@@ -17,7 +17,6 @@ type SpriteSheet struct {
 }
 
 func NewPlayer() *SpriteSheet {
-	// fmt.Println("len: ", len(playerData))
 	// 4 because this is a gb4 file
 	u16PerTile := uint32((playerData[0] / 4) * playerData[1])
 	tileCount := *(*uint32)(unsafe.Pointer(&playerData[12]))
@@ -35,12 +34,13 @@ func NewPlayer() *SpriteSheet {
 	}
 }
 
-func (s *SpriteSheet) Load() {
+func (s *SpriteSheet) Load(palBase, charBase int) {
 	for i := range s.Palette {
-		memmap.Palette[i+memmap.PaletteOffset*16] = s.Palette[i]
+		// TODO: should use different object and background sprites
+		memmap.Palette[i+memmap.PaletteOffset*(16+palBase)] = s.Palette[i]
 	}
 
 	for i := range s.Sprites {
-		memmap.VRAM[i+memmap.CharBlockOffset*4] = s.Sprites[i]
+		memmap.VRAM[i+memmap.CharBlockOffset*(4+charBase)] = s.Sprites[i]
 	}
 }
