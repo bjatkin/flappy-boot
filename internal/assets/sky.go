@@ -40,15 +40,15 @@ func NewSky() *Asset {
 }
 
 var SkyPal game.Palette = unsafe.Slice(
-	(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
+	(*memmap.PaletteValue)(unsafe.Pointer(&sky[16])),
 	16,
 )
 
 var SkyTileSet = &game.TileSet{
 	Count: *(*uint32)(unsafe.Pointer(&sky[12])),
 	Tiles: unsafe.Slice(
-		(*memmap.VRAMValue)(unsafe.Pointer(&sky[48+*(*uint32)(unsafe.Pointer(&sky[12]))*uint32((sky[0]/4)*sky[1])*2])),
-		(*(*uint32)(unsafe.Pointer(&sky[4]))/8)*(*(*uint32)(unsafe.Pointer(&sky[8]))/8),
+		(*memmap.VRAMValue)(unsafe.Pointer(&sky[48])),
+		*(*uint32)(unsafe.Pointer(&sky[12]))*uint32((sky[0]/4)*sky[1]),
 	),
 	Palette: &SkyPal,
 }

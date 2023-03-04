@@ -6,6 +6,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/display"
 	"github.com/bjatkin/flappy_boot/internal/game"
+	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/mode3"
 )
 
@@ -16,20 +17,24 @@ func main() {
 	// game.Run(gameplay.NewDemo(assetFS))
 	// mode0.Enable(mode0.With1DSprites(), mode0.WithBG(true, true, true, true))
 
+	// debug()
+	// return
+
+	var err error //remove
 	engine := game.NewEngine()
-	// grassBG := engine.NewBackground(assets.BackgroundTileSet, assets.BackgroundTileMap)
-	// err := grassBG.Load()
-	// if err != nil {
-	// 	exit(err)
-	// }
+	grassBG := engine.NewBackground(assets.BackgroundTileSet, assets.BackgroundTileMap, hw_display.Priority2)
+	err = grassBG.Load()
+	if err != nil {
+		exit(err)
+	}
 
-	// err = grassBG.Add()
-	// if err != nil {
-	// 	exit(err)
-	// }
+	err = grassBG.Add()
+	if err != nil {
+		exit(err)
+	}
 
-	skyBG := engine.NewBackground(assets.SkyTileSet, assets.SkyTileMap)
-	err := skyBG.Load()
+	skyBG := engine.NewBackground(assets.SkyTileSet, assets.SkyTileMap, hw_display.Priority3)
+	err = skyBG.Load()
 	if err != nil {
 		exit(err)
 	}
@@ -42,6 +47,11 @@ func main() {
 	for {
 	}
 }
+
+// func debug() {
+// 	bg := assets.NewSky()
+// 	fmt.Println("width:", bg.Height, "height:", bg.Height)
+// }
 
 // exit exits the game loop and draws error infromation to the screen
 func exit(err error) {

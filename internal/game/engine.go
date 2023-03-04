@@ -65,7 +65,7 @@ func (e *Engine) loadBGTileSet(tileSet *TileSet) error {
 	}
 
 	e.bgPalPtr++
-	e.bgPtr += int(tileSet.Count)
+	e.bgPtr += len(tileSet.Tiles)
 
 	return nil
 }
@@ -129,7 +129,7 @@ func (e *Engine) addBG(background *Background) error {
 }
 
 // NewBackground returns a new Background
-func (e *Engine) NewBackground(tileSet *TileSet, tilemap *TileMap) *Background {
+func (e *Engine) NewBackground(tileSet *TileSet, tilemap *TileMap, priority memmap.BGControll) *Background {
 	return &Background{
 		engine:  e,
 		tileMap: tilemap,
@@ -175,9 +175,6 @@ func (b *Background) Load() error {
 		if err != nil {
 			return err
 		}
-
-		// TODO: move this to addBG code
-		//b.controll |= memmap.BGControll(i) << display.SBBShift
 	}
 
 	b.loaded = true
