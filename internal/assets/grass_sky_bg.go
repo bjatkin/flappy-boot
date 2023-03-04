@@ -13,11 +13,12 @@ var grassSkyBG []byte
 type Palette []memmap.PaletteValue
 
 type Asset struct {
-	Width   uint32
-	Height  uint32
-	Tiles   []memmap.VRAMValue
-	TileMap []memmap.VRAMValue
-	Palette Palette
+	Width     uint32
+	Height    uint32
+	TileCount uint32
+	Tiles     []memmap.VRAMValue
+	TileMap   []memmap.VRAMValue
+	Palette   Palette
 }
 
 func NewBG() *Asset {

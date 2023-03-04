@@ -4,6 +4,8 @@ import (
 	_ "embed"
 	"unsafe"
 
+	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -35,4 +37,26 @@ func NewSky() *Asset {
 			(width/8)*(height/8), // divide by 8 since tilemaps must use 8x8 pixel tiles
 		),
 	}
+}
+
+var SkyPal game.Palette = unsafe.Slice(
+	(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
+	16,
+)
+
+var SkyTileSet = &game.TileSet{
+	Count: *(*uint32)(unsafe.Pointer(&sky[12])),
+	Tiles: unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&sky[48+*(*uint32)(unsafe.Pointer(&sky[12]))*uint32((sky[0]/4)*sky[1])*2])),
+		(*(*uint32)(unsafe.Pointer(&sky[4]))/8)*(*(*uint32)(unsafe.Pointer(&sky[8]))/8),
+	),
+	Palette: &SkyPal,
+}
+
+var SkyTileMap = &game.TileMap{
+	ScreenSize: display.BGSizeWide,
+	Data: unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&sky[48+*(*uint32)(unsafe.Pointer(&sky[12]))*uint32((sky[0]/4)*sky[1])*2])),
+		(*(*uint32)(unsafe.Pointer(&sky[4]))/8)*(*(*uint32)(unsafe.Pointer(&sky[8]))/8),
+	),
 }

@@ -5,6 +5,7 @@ import (
 	"unsafe"
 
 	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -19,8 +20,9 @@ func NewBackground() *Asset {
 	tileCount := *(*uint32)(unsafe.Pointer(&background[12]))
 
 	return &Asset{
-		Width:  width,
-		Height: height,
+		Width:     width,
+		Height:    height,
+		TileCount: tileCount,
 		Palette: unsafe.Slice(
 			(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
 			16, // 16 is hard coded because a gb4 always has a 16 color palette
@@ -38,7 +40,7 @@ func NewBackground() *Asset {
 	}
 }
 
-var pal game.Palette = unsafe.Slice(
+var Pal game.Palette = unsafe.Slice(
 	(*memmap.PaletteValue)(unsafe.Pointer(&background[16])),
 	16, // 16 is hard coded because a gb4 always has a 16 color palette
 )
@@ -49,11 +51,13 @@ var BackgroundTileSet = &game.TileSet{
 		(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
 		*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1]),
 	),
-	Palette: &pal,
+	Palette: &Pal,
 }
 
-// TODO: this should be a pointer
-var BackgroundTileMap game.TileMap = unsafe.Slice(
-	(*memmap.VRAMValue)(unsafe.Pointer(&background[48+*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1])*2])),
-	(*(*uint32)(unsafe.Pointer(&background[4]))/8)*(*(*uint32)(unsafe.Pointer(&background[8]))/8),
-)
+var BackgroundTileMap = &game.TileMap{
+	ScreenSize: display.BGSizeWide,
+	Data: unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&background[48+*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1])*2])),
+		(*(*uint32)(unsafe.Pointer(&background[4]))/8)*(*(*uint32)(unsafe.Pointer(&background[8]))/8),
+	),
+}

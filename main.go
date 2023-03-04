@@ -6,7 +6,6 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/display"
 	"github.com/bjatkin/flappy_boot/internal/game"
-	"github.com/bjatkin/flappy_boot/internal/mode0"
 	"github.com/bjatkin/flappy_boot/internal/mode3"
 )
 
@@ -14,20 +13,33 @@ import (
 var assetFS embed.FS
 
 func main() {
-	//game.Run(gameplay.NewDemo(assetFS))
-
-	mode0.Enable(mode0.With1DSprites())
+	// game.Run(gameplay.NewDemo(assetFS))
+	// mode0.Enable(mode0.With1DSprites(), mode0.WithBG(true, true, true, true))
 
 	engine := game.NewEngine()
-	grassBG := engine.NewBackground(assets.BackgroundTileSet, &assets.BackgroundTileMap)
-	err := grassBG.Load()
+	// grassBG := engine.NewBackground(assets.BackgroundTileSet, assets.BackgroundTileMap)
+	// err := grassBG.Load()
+	// if err != nil {
+	// 	exit(err)
+	// }
+
+	// err = grassBG.Add()
+	// if err != nil {
+	// 	exit(err)
+	// }
+
+	skyBG := engine.NewBackground(assets.SkyTileSet, assets.SkyTileMap)
+	err := skyBG.Load()
 	if err != nil {
 		exit(err)
 	}
 
-	err = grassBG.Add()
+	err = skyBG.Add()
 	if err != nil {
 		exit(err)
+	}
+
+	for {
 	}
 }
 

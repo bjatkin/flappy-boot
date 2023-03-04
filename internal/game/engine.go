@@ -33,6 +33,7 @@ type Engine struct {
 
 // NewEngine creates a new instances of a game engine
 func NewEngine() *Engine {
+	memmap.SetReg(display.Controll, display.Sprite1D|display.ForceBlank)
 	return &Engine{
 		activeSprites:  make(map[*Sprite]struct{}, 128),
 		spritePtr:      2048,
@@ -76,40 +77,53 @@ func (e *Engine) loadTileMap(tileMap *TileMap) error {
 		return fmt.Errorf("OOM: not enough screen blocks for a new map")
 	}
 
-	// TODO: should tilemap load itself?
-	// TODO: should tilemap be a part of the tileset? (probably no)
-	for i := range *tileMap {
-		memmap.VRAM[i+memmap.ScreenBlockOffset*e.screenBlockPtr] = (*tileMap)[i]
+	tileMap.Load(e.screenBlockPtr)
+	switch tileMap.ScreenSize {
+	case display.BGSizeSmall:
+		e.screenBlockPtr += 1
+	case display.BGSizeWide:
+		e.screenBlockPtr += 2
+	case display.BGSizeTall:
+		e.screenBlockPtr += 2
+	case display.BGSizeLarge:
+		e.screenBlockPtr += 4
 	}
-
-	e.screenBlockPtr += ((len(*tileMap) - 1) / 1024) + 1
 
 	return nil
 }
 
 // addBG adds a new background to the list of active backgrounds
 func (e *Engine) addBG(background *Background) error {
-	unused := -1
+	use := -1
 	for i := range e.activeBackgrounds {
 		if !e.activeBackgrounds[i] {
-			unused = i
+			use = i
+			break
 		}
 	}
 
-	switch unused {
+	sbb := memmap.BGControll(background.tileMap.screenBaseBlock) << display.SBBShift
+	cbb := memmap.BGControll(background.tileSet.charBaseBlock) << display.CBBShift
+	controll := background.controll | sbb | cbb | background.tileMap.ScreenSize
+
+	switch use {
 	case 0:
-		*display.BG0Controll = background.controll
+		memmap.SetReg(display.BG0Controll, controll)
+		memmap.SetReg(display.Controll, display.BG0)
 	case 1:
-		*display.BG0Controll = background.controll
+		memmap.SetReg(display.BG1Controll, controll)
+		memmap.SetReg(display.Controll, display.BG1)
 	case 2:
-		*display.BG0Controll = background.controll
+		memmap.SetReg(display.BG2Controll, controll)
+		memmap.SetReg(display.Controll, display.BG2)
 	case 3:
-		*display.BG0Controll = background.controll
+		memmap.SetReg(display.BG3Controll, controll)
+		memmap.SetReg(display.Controll, display.BG3)
 	default:
 		return fmt.Errorf("OOM: no unused backgrounds available")
 	}
 
-	e.activeBackgrounds[unused] = true
+	e.activeBackgrounds[use] = true
 
 	return nil
 }
@@ -161,6 +175,9 @@ func (b *Background) Load() error {
 		if err != nil {
 			return err
 		}
+
+		// TODO: move this to addBG code
+		//b.controll |= memmap.BGControll(i) << display.SBBShift
 	}
 
 	b.loaded = true
@@ -178,6 +195,11 @@ func (b *Background) Add() error {
 		return err
 	}
 
+	err = b.engine.addBG(b)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -185,15 +207,37 @@ func (b *Background) Add() error {
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (b *Background) Remove() {}
 
-// TileMap is tilemap data for a background
-type TileMap []memmap.VRAMValue
-
 // Sprite is a game engine sprite
 type Sprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
 	tileSet *TileSet
+}
+
+// Add adds the sprite to the list of active sprites.
+// if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
+// all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
+// sprites will be randomly flickered to ensure all sprites continue to be drawn
+func (s *Sprite) Add() {
+	s.Load()
+	s.engine.activeSprites[s] = struct{}{}
+}
+
+// Remove removes the sprites from the list of active sprites.
+// removing a sprites does not unload it's loaded assets from VRAM. To do that you must call Unload
+func (s *Sprite) Remove() {
+	delete(s.engine.activeSprites, s)
+}
+
+// Load loads a sprites graphics data into memory
+// if there is not enough free VRAM to accomodate the sprite an error will be returned
+func (s *Sprite) Load() error {
+	if !s.tileSet.loaded {
+		return nil
+	}
+
+	return s.engine.loadSpriteTileSet(s.tileSet)
 }
 
 // TileSet is a set of 8x8 tiles that can be loaded into VRAM for use by a background or sprite
@@ -207,6 +251,8 @@ type TileSet struct {
 	// tiles is the pixel data for the tile set
 	Tiles     []memmap.VRAMValue
 	TileIndex int
+
+	charBaseBlock int
 
 	// palette is the palette data for the tileset
 	Palette      *Palette
@@ -234,34 +280,29 @@ func (ts *TileSet) Load(palBase, tileBase int) error {
 		memmap.VRAM[i+tileBase] = ts.Tiles[i]
 	}
 
+	ts.charBaseBlock = tileBase / 512
 	ts.loaded = true
 
 	return nil
 }
 
-// Load loads a sprites graphics data into memory
-// if there is not enough free VRAM to accomodate the sprite an error will be returned
-func (s *Sprite) Load() error {
-	if !s.tileSet.loaded {
-		return nil
+// TileMap is tilemap data for a background
+type TileMap struct {
+	// loaded is true if this tilemap has been loaded into VRAM
+	loaded bool
+
+	screenBaseBlock int
+	ScreenSize      memmap.BGControll
+	Data            []memmap.VRAMValue
+}
+
+func (t *TileMap) Load(screenBlock int) {
+	for i := range t.Data {
+		memmap.VRAM[i+memmap.ScreenBlockOffset*screenBlock] = t.Data[i]
 	}
+	t.screenBaseBlock = screenBlock
 
-	return s.engine.loadSpriteTileSet(s.tileSet)
-}
-
-// Add adds the sprite to the list of active sprites.
-// if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
-// all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
-// sprites will be randomly flickered to ensure all sprites continue to be drawn
-func (s *Sprite) Add() {
-	s.Load()
-	s.engine.activeSprites[s] = struct{}{}
-}
-
-// Remove removes the sprites from the list of active sprites.
-// removing a sprites does not unload it's loaded assets from VRAM. To do that you must call Unload
-func (s *Sprite) Remove() {
-	delete(s.engine.activeSprites, s)
+	t.loaded = true
 }
 
 // Paletet is a 16 color palette
