@@ -10,3 +10,5 @@ func New(i int, frac byte) P8 {
 func (p P8) Int() int {
 	return int(p >> 8)
 }
+
+const One = 0x0100

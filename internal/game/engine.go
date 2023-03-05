@@ -1,12 +1,22 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 
+	"github.com/bjatkin/flappy_boot/internal/fix"
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
+	"github.com/bjatkin/flappy_boot/internal/key"
+	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
+
+type Runable interface {
+	Init(*Engine) error
+	Update(*Engine, int) error
+	Draw(*Engine) error
+	Done() (Runable, bool)
+}
 
 // Engine is the core game engine
 type Engine struct {
@@ -14,7 +24,7 @@ type Engine struct {
 	activeSprites map[*Sprite]struct{}
 
 	// activeBackgrounds are the backgrounds that need to be drawn each frame
-	activeBackgrounds [4]bool
+	activeBackgrounds [4]*Background
 
 	// spritePtr points to the next available sprite tile in VRAM
 	spritePtr int
@@ -37,9 +47,75 @@ func NewEngine() *Engine {
 	memmap.SetReg(display.Controll, display.Sprite1D|display.ForceBlank)
 	return &Engine{
 		activeSprites:  make(map[*Sprite]struct{}, 128),
-		spritePtr:      2048,
+		spritePtr:      memmap.CharBlockOffset * 4,
 		spritePalPtr:   16,
 		screenBlockPtr: 24,
+	}
+}
+
+func (e *Engine) Run(run Runable) error {
+	// enable sprites
+	memmap.SetReg(display.Controll, *display.Controll|display.Sprites)
+	sprite.Reset()
+
+	for {
+		err := run.Init(e)
+		if err != nil {
+			exit(err)
+		}
+
+		var frame int
+		for {
+			key.KeyPoll()
+			err := run.Update(e, frame)
+			if err != nil {
+				exit(err)
+			}
+
+			frame++
+
+			vSyncWait()
+
+			var i int
+			for s, _ := range e.activeSprites {
+				hw_sprite.OAM[i] = *s.attrs()
+				i++
+			}
+
+			for i := range e.activeBackgrounds {
+				if e.activeBackgrounds[i] == nil {
+					continue
+				}
+				controll := e.activeBackgrounds[i].Controll()
+
+				switch i {
+				case 0:
+					memmap.SetReg(display.BG0Controll, controll)
+					memmap.SetReg(display.Controll, *display.Controll|display.BG0)
+				case 1:
+					memmap.SetReg(display.BG1Controll, controll)
+					memmap.SetReg(display.Controll, *display.Controll|display.BG1)
+				case 2:
+					memmap.SetReg(display.BG2Controll, controll)
+					memmap.SetReg(display.Controll, *display.Controll|display.BG2)
+				case 3:
+					memmap.SetReg(display.BG3Controll, controll)
+					memmap.SetReg(display.Controll, *display.Controll|display.BG3)
+				default:
+				}
+			}
+
+			err = run.Draw(e)
+			if err != nil {
+				exit(err)
+			}
+
+			if next, ok := run.Done(); ok {
+				sprite.Reset()
+				run = next
+				break
+			}
+		}
 	}
 }
 
@@ -61,7 +137,7 @@ func (e *Engine) loadSprPal(data []memmap.PaletteValue) int {
 	}
 	e.spritePalPtr++
 
-	return palID
+	return palID - 16
 }
 
 func (e *Engine) loadCB(data []memmap.VRAMValue) (int, int) {
@@ -84,38 +160,30 @@ func (e *Engine) loadSB(data []memmap.VRAMValue, offset, palID int) int {
 	return screenID
 }
 
+func (e *Engine) loadSprite(data []memmap.VRAMValue) int {
+	tileOffset := e.spritePtr
+	for i := range data {
+		memmap.VRAM[i+tileOffset] = data[i]
+	}
+
+	e.spritePtr += len(data)
+	return tileOffset - memmap.CharBlockOffset*4
+}
+
 // addBG adds a new background to the list of active backgrounds
 func (e *Engine) addBG(background *Background) error {
-	use := -1
 	for i := range e.activeBackgrounds {
-		if !e.activeBackgrounds[i] {
-			use = i
-			break
+		if e.activeBackgrounds[i] == nil {
+			e.activeBackgrounds[i] = background
+			return nil
 		}
 	}
 
-	controll := background.Controll()
+	return fmt.Errorf("OOM: no unused backgrounds available")
+}
 
-	switch use {
-	case 0:
-		memmap.SetReg(display.BG0Controll, controll)
-		memmap.SetReg(display.Controll, *display.Controll|display.BG0)
-	case 1:
-		memmap.SetReg(display.BG1Controll, controll)
-		memmap.SetReg(display.Controll, *display.Controll|display.BG1)
-	case 2:
-		memmap.SetReg(display.BG2Controll, controll)
-		memmap.SetReg(display.Controll, *display.Controll|display.BG2)
-	case 3:
-		memmap.SetReg(display.BG3Controll, controll)
-		memmap.SetReg(display.Controll, *display.Controll|display.BG3)
-	default:
-		return fmt.Errorf("OOM: no unused backgrounds available")
-	}
-
-	e.activeBackgrounds[use] = true
-
-	return nil
+func (e *Engine) addSprite(sprite *Sprite) {
+	e.activeSprites[sprite] = struct{}{}
 }
 
 // NewBackground returns a new Background
@@ -128,9 +196,12 @@ func (e *Engine) NewBackground(tilemap *TileMap, priority memmap.BGControll) *Ba
 }
 
 // NewSprite returns a new Sprite
-func (e *Engine) NewSprite() *Sprite {
+func (e *Engine) NewSprite(tileSet *TileSet) *Sprite {
 	return &Sprite{
-		engine: e,
+		engine:  e,
+		tileSet: tileSet,
+		size:    hw_sprite.Medium,
+		shape:   hw_sprite.Square,
 	}
 }
 
@@ -196,16 +267,67 @@ type Sprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
+	Y         fix.P8
+	X         fix.P8
+	TileIndex int
+	Hide      bool
+	HFlip     bool
+	VFlip     bool
+	Priority  int
+	size      hw_sprite.Attr1
+	shape     hw_sprite.Attr0
+
 	tileSet *TileSet
+}
+
+func (s *Sprite) attrs() *hw_sprite.Attrs {
+	var hideAttr hw_sprite.Attr0
+	if s.Hide {
+		hideAttr = hw_sprite.Hide
+	}
+
+	var vFlipAttr hw_sprite.Attr1
+	if s.VFlip {
+		vFlipAttr = hw_sprite.HMirrior
+	}
+	var hFlipAttr hw_sprite.Attr1
+	if s.HFlip {
+		hFlipAttr = hw_sprite.VMirrior
+	}
+
+	var priorityAttr hw_sprite.Attr2
+	switch s.Priority {
+	case 0:
+		priorityAttr = hw_sprite.Priority0
+	case 1:
+		priorityAttr = hw_sprite.Priority1
+	case 2:
+		priorityAttr = hw_sprite.Priority2
+	case 3:
+		priorityAttr = hw_sprite.Priority3
+	}
+
+	return &hw_sprite.Attrs{
+		Attr0: hw_sprite.Attr0(s.Y.Int()) | s.shape | hideAttr,
+		Attr1: hw_sprite.Attr1(s.X.Int()) | vFlipAttr | hFlipAttr | s.size,
+		Attr2: hw_sprite.Attr2(s.TileIndex+s.tileSet.TileIndex) |
+			priorityAttr |
+			hw_sprite.Attr2(s.tileSet.PaletteIndex)<<hw_sprite.PalShift,
+	}
 }
 
 // Add adds the sprite to the list of active sprites.
 // if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
 // all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
 // sprites will be randomly flickered to ensure all sprites continue to be drawn
-func (s *Sprite) Add() {
-	s.Load()
-	s.engine.activeSprites[s] = struct{}{}
+func (s *Sprite) Add() error {
+	err := s.Load()
+	if err != nil {
+		return err
+	}
+
+	s.engine.addSprite(s)
+	return nil
 }
 
 // Remove removes the sprites from the list of active sprites.
@@ -217,12 +339,12 @@ func (s *Sprite) Remove() {
 // Load loads a sprites graphics data into memory
 // if there is not enough free VRAM to accomodate the sprite an error will be returned
 func (s *Sprite) Load() error {
-	if !s.tileSet.loaded {
-		return nil
+	err := s.tileSet.Load(s.engine)
+	if err != nil {
+		return err
 	}
 
-	// TODO: finish this
-	return errors.New("finish me")
+	return nil
 }
 
 // TileSet is a set of 8x8 tiles that can be loaded into VRAM for use by a background or sprite
@@ -238,6 +360,7 @@ type TileSet struct {
 	TileIndex int
 
 	charBaseBlock int
+	Sprite        bool
 
 	// palette is the palette data for the tileset
 	Palette      Palette
@@ -249,6 +372,16 @@ func (ts *TileSet) Load(e *Engine) error {
 		return nil
 	}
 
+	if ts.Sprite {
+		ts.PaletteIndex = e.loadSprPal(ts.Palette)
+
+		ts.TileIndex = e.loadSprite(ts.Tiles)
+	} else {
+		ts.PaletteIndex = e.loadBGPal(ts.Palette)
+
+		ts.charBaseBlock, ts.TileIndex = e.loadCB(ts.Tiles)
+	}
+
 	// // TODO: get rid of these magic numbers
 	// if palBase > 32 {
 	// 	return fmt.Errorf("OOM: invalid palette base %d", palBase)
@@ -258,9 +391,6 @@ func (ts *TileSet) Load(e *Engine) error {
 	// if tileBase > 512*6 {
 	// 	return fmt.Errorf("OOM: invalid tile base %d", tileBase)
 	// }
-	ts.PaletteIndex = e.loadBGPal(ts.Palette)
-
-	ts.charBaseBlock, ts.TileIndex = e.loadCB(ts.Tiles)
 	ts.loaded = true
 
 	return nil

@@ -33,7 +33,7 @@ func Run(node Node) {
 		var frame uint
 		for {
 			key.KeyPoll()
-			next := (Node)(nil)
+			var next Node
 			next, err := node.Update(frame)
 			if err != nil {
 				exit(err)

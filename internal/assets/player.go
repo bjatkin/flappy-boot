@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"unsafe"
 
+	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -43,4 +44,16 @@ func (s *SpriteSheet) Load(palBase, charBase int) {
 	for i := range s.Sprites {
 		memmap.VRAM[i+memmap.CharBlockOffset*(4+charBase)] = s.Sprites[i]
 	}
+}
+
+var Player = &game.TileSet{
+	Count: *(*uint32)(unsafe.Pointer(&playerData[12])),
+	Tiles: unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&playerData[48])),
+		*(*uint32)(unsafe.Pointer(&playerData[12]))*uint32((playerData[0]/4)*playerData[1])),
+	Palette: unsafe.Slice(
+		(*memmap.PaletteValue)(unsafe.Pointer(&playerData[16])),
+		16,
+	),
+	Sprite: true,
 }
