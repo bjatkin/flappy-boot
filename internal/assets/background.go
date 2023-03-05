@@ -45,20 +45,18 @@ var Pal game.Palette = unsafe.Slice(
 	16, // 16 is hard coded because a gb4 always has a 16 color palette
 )
 
-// TODO: make tileset a member of tilemap? So we know where the tileset is located?
-var BackgroundTileSet = &game.TileSet{
-	Count: *(*uint32)(unsafe.Pointer(&background[12])),
-	Tiles: unsafe.Slice(
-		(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
-		*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1]),
-	),
-	Palette: &Pal,
-}
-
 var BackgroundTileMap = &game.TileMap{
 	ScreenSize: display.BGSizeWide,
 	Data: unsafe.Slice(
 		(*memmap.VRAMValue)(unsafe.Pointer(&background[48+*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1])*2])),
 		(*(*uint32)(unsafe.Pointer(&background[4]))/8)*(*(*uint32)(unsafe.Pointer(&background[8]))/8),
 	),
+	TileSet: &game.TileSet{
+		Count: *(*uint32)(unsafe.Pointer(&background[12])),
+		Tiles: unsafe.Slice(
+			(*memmap.VRAMValue)(unsafe.Pointer(&background[48])),
+			*(*uint32)(unsafe.Pointer(&background[12]))*uint32((background[0]/4)*background[1]),
+		),
+		Palette: Pal,
+	},
 }

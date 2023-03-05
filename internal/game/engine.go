@@ -1,6 +1,7 @@
 package game
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
@@ -42,54 +43,45 @@ func NewEngine() *Engine {
 	}
 }
 
-// loadSpriteTileSet loads a tileset into object VRAM, and it's palette into object palette memory
-// if there is not enough memory for either the palette or the graphics, an error is returned
-func (e *Engine) loadSpriteTileSet(tileSet *TileSet) error {
-	err := tileSet.Load(e.spritePalPtr, e.spritePtr)
-	if err != nil {
-		return err
+func (e *Engine) loadBGPal(data []memmap.PaletteValue) int {
+	palID := e.bgPalPtr
+	for i := range data {
+		memmap.Palette[i+(memmap.PaletteOffset*palID)] = data[i]
 	}
 
+	e.bgPalPtr += 1
+
+	return palID
+}
+
+func (e *Engine) loadSprPal(data []memmap.PaletteValue) int {
+	palID := e.spritePalPtr
+	for i := range data {
+		memmap.Palette[i+memmap.PaletteOffset*palID] = data[i]
+	}
 	e.spritePalPtr++
-	e.spritePtr += int(tileSet.Count)
 
-	return nil
+	return palID
 }
 
-// loadBGTileSet loads a tileset into background VRAM, and it's palette into background palette memory
-// if there is not enough memory for either the palette or the graphics, an error is returned
-func (e *Engine) loadBGTileSet(tileSet *TileSet) error {
-	err := tileSet.Load(e.bgPalPtr, e.bgPtr)
-	if err != nil {
-		return err
+func (e *Engine) loadCB(data []memmap.VRAMValue) (int, int) {
+	tileOffset := e.bgPtr
+	for i := range data {
+		memmap.VRAM[i+tileOffset] = data[i]
 	}
 
-	e.bgPalPtr++
-	e.bgPtr += len(tileSet.Tiles)
-
-	return nil
+	e.bgPtr += len(data)
+	return 0, tileOffset / 16
 }
 
-// loadTileMap loads a tilemap into background VRAM. if there is not enought memory for either
-// the palette or the graphics, an error is returned
-func (e *Engine) loadTileMap(tileMap *TileMap) error {
-	if e.screenBlockPtr > 32 {
-		return fmt.Errorf("OOM: not enough screen blocks for a new map")
+func (e *Engine) loadSB(data []memmap.VRAMValue, offset, palID int) int {
+	screenID := e.screenBlockPtr
+	for i := range data {
+		memmap.VRAM[i+memmap.ScreenBlockOffset*screenID] = (data[i] + memmap.VRAMValue(offset)) | memmap.VRAMValue(palID)<<0x0C
 	}
 
-	tileMap.Load(e.screenBlockPtr)
-	switch tileMap.ScreenSize {
-	case display.BGSizeSmall:
-		e.screenBlockPtr += 1
-	case display.BGSizeWide:
-		e.screenBlockPtr += 2
-	case display.BGSizeTall:
-		e.screenBlockPtr += 2
-	case display.BGSizeLarge:
-		e.screenBlockPtr += 4
-	}
-
-	return nil
+	e.screenBlockPtr += len(data) / memmap.ScreenBlockOffset
+	return screenID
 }
 
 // addBG adds a new background to the list of active backgrounds
@@ -102,23 +94,21 @@ func (e *Engine) addBG(background *Background) error {
 		}
 	}
 
-	sbb := memmap.BGControll(background.tileMap.screenBaseBlock) << display.SBBShift
-	cbb := memmap.BGControll(background.tileSet.charBaseBlock) << display.CBBShift
-	controll := background.controll | sbb | cbb | background.tileMap.ScreenSize
+	controll := background.Controll()
 
 	switch use {
 	case 0:
 		memmap.SetReg(display.BG0Controll, controll)
-		memmap.SetReg(display.Controll, display.BG0)
+		memmap.SetReg(display.Controll, *display.Controll|display.BG0)
 	case 1:
 		memmap.SetReg(display.BG1Controll, controll)
-		memmap.SetReg(display.Controll, display.BG1)
+		memmap.SetReg(display.Controll, *display.Controll|display.BG1)
 	case 2:
 		memmap.SetReg(display.BG2Controll, controll)
-		memmap.SetReg(display.Controll, display.BG2)
+		memmap.SetReg(display.Controll, *display.Controll|display.BG2)
 	case 3:
 		memmap.SetReg(display.BG3Controll, controll)
-		memmap.SetReg(display.Controll, display.BG3)
+		memmap.SetReg(display.Controll, *display.Controll|display.BG3)
 	default:
 		return fmt.Errorf("OOM: no unused backgrounds available")
 	}
@@ -129,11 +119,11 @@ func (e *Engine) addBG(background *Background) error {
 }
 
 // NewBackground returns a new Background
-func (e *Engine) NewBackground(tileSet *TileSet, tilemap *TileMap, priority memmap.BGControll) *Background {
+func (e *Engine) NewBackground(tilemap *TileMap, priority memmap.BGControll) *Background {
 	return &Background{
-		engine:  e,
-		tileMap: tilemap,
-		tileSet: tileSet,
+		engine:   e,
+		tileMap:  tilemap,
+		controll: priority,
 	}
 }
 
@@ -151,8 +141,6 @@ type Background struct {
 
 	loaded bool
 
-	tileSet *TileSet
-
 	tileMap *TileMap
 
 	controll memmap.BGControll
@@ -163,20 +151,11 @@ type Background struct {
 // Load loads a backgrounds data into memory
 // if there is not enough free VRAM to accommodate this background an error will be returned
 func (b *Background) Load() error {
-	if !b.tileSet.loaded {
-		err := b.engine.loadBGTileSet(b.tileSet)
-		if err != nil {
-			return err
-		}
+	if b.loaded {
+		return nil
 	}
 
-	if !b.loaded {
-		err := b.engine.loadTileMap(b.tileMap)
-		if err != nil {
-			return err
-		}
-	}
-
+	b.tileMap.Load(b.engine)
 	b.loaded = true
 
 	return nil
@@ -203,6 +182,14 @@ func (b *Background) Add() error {
 // Remove removes the background for the list of active backgrounds.
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (b *Background) Remove() {}
+
+// Controll returns the correct value for the background controll registers for the given background
+func (b *Background) Controll() memmap.BGControll {
+	return b.controll |
+		memmap.BGControll(b.tileMap.screenBaseBlock)<<display.SBBShift |
+		memmap.BGControll(b.tileMap.TileSet.charBaseBlock)<<display.CBBShift |
+		b.tileMap.ScreenSize
+}
 
 // Sprite is a game engine sprite
 type Sprite struct {
@@ -234,7 +221,8 @@ func (s *Sprite) Load() error {
 		return nil
 	}
 
-	return s.engine.loadSpriteTileSet(s.tileSet)
+	// TODO: finish this
+	return errors.New("finish me")
 }
 
 // TileSet is a set of 8x8 tiles that can be loaded into VRAM for use by a background or sprite
@@ -252,32 +240,27 @@ type TileSet struct {
 	charBaseBlock int
 
 	// palette is the palette data for the tileset
-	Palette      *Palette
+	Palette      Palette
 	PaletteIndex int
 }
 
-func (ts *TileSet) Load(palBase, tileBase int) error {
-	// TODO: get rid of these magic numbers
-	if palBase > 32 {
-		return fmt.Errorf("OOM: invalid palette base %d", palBase)
+func (ts *TileSet) Load(e *Engine) error {
+	if ts.loaded {
+		return nil
 	}
 
-	// TODO: get rid of these magic numbers
-	if tileBase > 512*6 {
-		return fmt.Errorf("OOM: invalid tile base %d", tileBase)
-	}
+	// // TODO: get rid of these magic numbers
+	// if palBase > 32 {
+	// 	return fmt.Errorf("OOM: invalid palette base %d", palBase)
+	// }
 
-	ts.PaletteIndex = palBase
-	for i := range *ts.Palette {
-		memmap.Palette[i+memmap.PaletteOffset*palBase] = (*ts.Palette)[i]
-	}
+	// // TODO: get rid of these magic numbers
+	// if tileBase > 512*6 {
+	// 	return fmt.Errorf("OOM: invalid tile base %d", tileBase)
+	// }
+	ts.PaletteIndex = e.loadBGPal(ts.Palette)
 
-	ts.TileIndex = tileBase
-	for i := range ts.Tiles {
-		memmap.VRAM[i+tileBase] = ts.Tiles[i]
-	}
-
-	ts.charBaseBlock = tileBase / 512
+	ts.charBaseBlock, ts.TileIndex = e.loadCB(ts.Tiles)
 	ts.loaded = true
 
 	return nil
@@ -291,14 +274,18 @@ type TileMap struct {
 	screenBaseBlock int
 	ScreenSize      memmap.BGControll
 	Data            []memmap.VRAMValue
+	TileSet         *TileSet
 }
 
-func (t *TileMap) Load(screenBlock int) {
-	for i := range t.Data {
-		memmap.VRAM[i+memmap.ScreenBlockOffset*screenBlock] = t.Data[i]
+func (t *TileMap) Load(e *Engine) {
+	if t.loaded {
+		return
 	}
-	t.screenBaseBlock = screenBlock
 
+	// make sure the tile set is loaded into memory
+	t.TileSet.Load(e)
+
+	t.screenBaseBlock = e.loadSB(t.Data, t.TileSet.TileIndex, t.TileSet.PaletteIndex)
 	t.loaded = true
 }
 
