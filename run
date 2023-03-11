@@ -1,5 +1,5 @@
 #!/bin/bash
 set -euxo pipefail
 
-./build.sh
+./build
 mgba-qt -4 flappy_boot.gba

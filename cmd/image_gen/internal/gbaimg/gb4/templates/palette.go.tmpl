@@ -1,0 +1,10 @@
+package assets
+
+//go:embed {{.Name}}.pal4
+var {{ Private .Name}}Palette []byte
+
+// {{.Name}}Palette is a 16 color palette
+var {{.Name}}Palette Palette = unsafe.Slice(
+    (*memmap.PaletteValue)(unsafe.Pointer(&{{.Name}}Palette)),
+    16,
+}

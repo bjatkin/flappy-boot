@@ -15,7 +15,7 @@ import (
 // NewPal16 converts an image into a valid color.Palette.
 // it will also ensure the correct transparent option is at index 0 in the palette
 // if the resulting palette contains more than 16 colors and error will be returned
-func NewPal16(m image.Image, o *Options) (color.Palette, error) {
+func NewPal16(m image.Image, transparent *gbacol.RGB15) (color.Palette, error) {
 	pal := gbaimg.NewPal(m)
 	if len(pal) > 16 {
 		return nil, fmt.Errorf("palette is too large %d", len(pal))
@@ -26,8 +26,8 @@ func NewPal16(m image.Image, o *Options) (color.Palette, error) {
 	}
 
 	var tIndex int
-	if o != nil && o.Transparent != nil {
-		tIndex = pal.Index(o.Transparent)
+	if transparent != nil {
+		tIndex = pal.Index(transparent)
 	}
 
 	if tIndex != 0 {
@@ -42,6 +42,7 @@ func NewPal16(m image.Image, o *Options) (color.Palette, error) {
 // and Transparent which can be used to explicitly set the transparent color in the color palette
 type Options struct {
 	TileSize    *tile.Size
+	TileSet     []*tile.Meta
 	Transparent *gbacol.RGB15
 	IncludeMap  bool
 }
@@ -63,13 +64,17 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 		return fmt.Errorf("tile size must be 8x8 if a tile map is included")
 	}
 
-	pal, err := NewPal16(m, o)
+	pal, err := NewPal16(m, o.Transparent)
 	if err != nil {
 		return err
 	}
 
 	tiles := tile.NewMetaSlice(m, pal, size)
-	uniqueTiles := tile.Unique(tiles)
+	uniqueTiles := o.TileSet
+	if len(o.TileSet) == 0 {
+		// if there is no pre-set tileset then get all the unique tiles
+		uniqueTiles = tile.Unique(tiles)
+	}
 
 	raw = append(raw, generateHeader(size, dx, dy, len(uniqueTiles))...)
 	raw = append(raw, rawPalette(pal)...)

@@ -1,0 +1,43 @@
+package assets
+
+// TileMap is tilemap data for a background
+type TileMap struct {
+    // loaded is true if this tilemap has been loaded into VRAM
+    loaded bool
+
+    // screenBaseBlock is the screen base block where the tilemap is loaded
+    screenBaseBlock int
+    
+    // size is the size of the background
+    size memmap.BGControll
+
+    // tiles is the tile index data for the tile map
+    tiles []memmap.VRAMValue
+
+    // tileSet is the tile set pixel data for the tile map
+    tileSet *TileSet
+}
+
+// TileSet is tileset data for a background or sprite
+type TileSet struct {
+    // loaded is true if this tileset has been loaded into VRAM
+    loaded bool
+
+    // the number of 8x8 tiles in this tileset
+    count int
+
+    // pixels contains the pixel data for the tileset
+    pixels []memmap.VRAMValue
+
+    // charBaseBlock is the character base block where the tile set pixel data is loaded
+    charBaseBlock int
+
+    // tileIndex is the offset into the character base block where the tile set pixel data is loaded
+    tileIndex     int
+
+    // palette is the palette data for the tileset
+    palette Palette
+
+    // paletteIndex is the palette offset in palette memory
+    paletteIndex int
+}

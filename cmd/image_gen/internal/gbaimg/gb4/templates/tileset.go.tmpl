@@ -1,0 +1,18 @@
+package assets
+
+import (
+    _ "embed"
+}
+
+//go:embed {{.Name}}.ts4
+var {{ Private .Name}}Pixels []byte
+
+// {{.Name}}TileSet is a 4 bit per pixel tile set
+var {{.Name}}TileSet = &TileSet{
+    count: {{.TileCount}}
+    pixels: unsafe.Slice(
+        (*memmap.VRAMValue)(unsafe.Pointer(&{{.Name}}Pixels)),
+        {{.PixelCount}},
+    ),
+    palette: {{.PaletteName}},
+}

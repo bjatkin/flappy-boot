@@ -1,0 +1,12 @@
+TileSet:
+  - Name: player
+    File: player.png
+    Size: "16x16"
+  - Name: pillars
+    File: pillar_ts.png
+TileMaps:
+  - Name: pillars
+    File: pillar_bg.png
+    TileSet: pillars
+  - Name: sky
+    File: sky_bg.png

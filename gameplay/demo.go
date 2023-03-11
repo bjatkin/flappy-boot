@@ -100,7 +100,7 @@ func (d *Demo) Init() error {
 }
 
 func (d *Demo) Update(frame uint) (game.Node, error) {
-	if key.Pressed(key.A) {
+	if key.IsPressed(key.A) {
 		d.bootDy = jump
 	}
 

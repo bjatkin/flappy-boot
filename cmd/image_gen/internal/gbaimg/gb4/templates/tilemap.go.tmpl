@@ -1,0 +1,17 @@
+package assets
+
+import (
+	_ "embed"
+)
+
+//go:embed {{.Name}}.tm4
+var {{Private .Name}}Map []byte
+
+var {{.Name}}Map = &TileMap{
+	size:    {{.Size}}
+	tiles:   unsafe.Slice(
+		(*memmap.VRAMValue)(unsafe.Pointer(&{{Private .Name}}Map)),
+		{{.TileCount}},	
+	),
+	tileSet: {{.TileSetName}}
+}

@@ -70,33 +70,30 @@ func Combo(keys ...Key) Key {
 	return key
 }
 
-// IsDown returns true if the key is being held down
+// StillPressed returns true if the key is being held down
 // it will not return true if the key was first pressed durring this KeyPoll
-//
-// NOTE: having both IsDown as a function and Down as a key is kinda confusing
-// I should maybe use different terminology
-func IsDown(key Key) bool {
+func StillPressed(key Key) bool {
 	return (^previous & ^current & memmap.Input(key) == memmap.Input(key))
 }
 
 // IsUp returns true if the key is not being held down
 // it will not return true if the key was released durring this KeyPoll
-func IsUp(key Key) bool {
+func IsReleased(key Key) bool {
 	return (^previous & ^current & memmap.Input(key)) == 0
 }
 
-// Pressed returns true if the key was first pressed down durring this KeyPoll
-func Pressed(key Key) bool {
+// JustPressed returns true if the key was first pressed down durring this KeyPoll
+func JustPressed(key Key) bool {
 	return (previous & ^current & memmap.Input(key)) == memmap.Input(key)
 }
 
-// Released returns true if the key was released durring this KeyPoll
-func Released(key Key) bool {
+// JustReleased returns true if the key was released durring this KeyPoll
+func JustReleased(key Key) bool {
 	return (^previous & current & memmap.Input(key)) == memmap.Input(key)
 }
 
-// PressedDown returns true if the key was first press down durring this KeyPoll
+// StillPressed returns true if the key was first press down durring this KeyPoll
 // or if it is currently being held down
-func PressedDown(key Key) bool {
+func IsPressed(key Key) bool {
 	return (^current & memmap.Input(key)) == memmap.Input(key)
 }

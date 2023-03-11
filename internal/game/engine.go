@@ -76,12 +76,14 @@ func (e *Engine) Run(run Runable) error {
 
 			vSyncWait()
 
+			// copy active sprite data into OAM memory
 			var i int
-			for s, _ := range e.activeSprites {
+			for s := range e.activeSprites {
 				hw_sprite.OAM[i] = *s.attrs()
 				i++
 			}
 
+			// copy active background data into the background registers
 			for i := range e.activeBackgrounds {
 				if e.activeBackgrounds[i] == nil {
 					continue
@@ -92,16 +94,23 @@ func (e *Engine) Run(run Runable) error {
 				case 0:
 					memmap.SetReg(display.BG0Controll, controll)
 					memmap.SetReg(display.Controll, *display.Controll|display.BG0)
+					memmap.SetReg(display.BG0HOffset, e.activeBackgrounds[0].hScroll)
+					memmap.SetReg(display.BG0VOffset, e.activeBackgrounds[0].vScroll)
 				case 1:
 					memmap.SetReg(display.BG1Controll, controll)
 					memmap.SetReg(display.Controll, *display.Controll|display.BG1)
+					memmap.SetReg(display.BG1HOffset, e.activeBackgrounds[1].hScroll)
+					memmap.SetReg(display.BG1VOffset, e.activeBackgrounds[1].vScroll)
 				case 2:
 					memmap.SetReg(display.BG2Controll, controll)
 					memmap.SetReg(display.Controll, *display.Controll|display.BG2)
+					memmap.SetReg(display.BG2HOffset, e.activeBackgrounds[2].hScroll)
+					memmap.SetReg(display.BG2VOffset, e.activeBackgrounds[2].vScroll)
 				case 3:
 					memmap.SetReg(display.BG3Controll, controll)
 					memmap.SetReg(display.Controll, *display.Controll|display.BG3)
-				default:
+					memmap.SetReg(display.BG3HOffset, e.activeBackgrounds[3].hScroll)
+					memmap.SetReg(display.BG3VOffset, e.activeBackgrounds[3].vScroll)
 				}
 			}
 
@@ -160,6 +169,10 @@ func (e *Engine) loadSB(data []memmap.VRAMValue, offset, palID int) int {
 	return screenID
 }
 
+func (e *Engine) updateSB(screenBlock, offset int, tile memmap.VRAMValue) {
+	memmap.VRAM[offset+memmap.ScreenBlockOffset*screenBlock] = tile
+}
+
 func (e *Engine) loadSprite(data []memmap.VRAMValue) int {
 	tileOffset := e.spritePtr
 	for i := range data {
@@ -205,6 +218,7 @@ func (e *Engine) NewSprite(tileSet *TileSet) *Sprite {
 	}
 }
 
+// TODO move to it's own file
 // Background represents a normal background layer
 type Background struct {
 	// engine is a reference to the sprites parent engine
@@ -254,12 +268,30 @@ func (b *Background) Add() error {
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (b *Background) Remove() {}
 
+// TODO make this private
 // Controll returns the correct value for the background controll registers for the given background
 func (b *Background) Controll() memmap.BGControll {
 	return b.controll |
 		memmap.BGControll(b.tileMap.screenBaseBlock)<<display.SBBShift |
 		memmap.BGControll(b.tileMap.TileSet.charBaseBlock)<<display.CBBShift |
 		b.tileMap.ScreenSize
+}
+
+// TODO: introduce a v2 type?
+func (b *Background) Scroll(dx, dy int) {
+	b.hScroll += uint16(dx)
+	b.vScroll += uint16(dy)
+}
+
+func (b *Background) SetTile(x, y, tile int) {
+	b.tileMap.Data[y*64+x] = memmap.VRAMValue(tile)
+	if b.loaded {
+		// this should live inside the engine loader I think?
+		// or maybe background should have a .Tile() method that handsl most of this and then just hands stuff to the engine to load...
+		t := (memmap.VRAMValue(tile) + memmap.VRAMValue(b.tileMap.TileSet.TileIndex)) | memmap.VRAMValue(b.tileMap.TileSet.PaletteIndex)<<0x0C
+
+		b.engine.updateSB(b.tileMap.screenBaseBlock, y*32+x, t)
+	}
 }
 
 // Sprite is a game engine sprite

@@ -150,3 +150,27 @@ func ParseHexColor(s string) (gbacol.RGB15, error) {
 
 	return gbacol.NewRGB15(c), nil
 }
+
+// Config is a config file for the command
+type Config struct {
+	Palettes       []gb4.Palette
+	TileSets       []TileSet
+	TileMaps       []TileMap
+	SetTransparent string
+}
+
+// TileSet is a named tile set
+type TileSet struct {
+	Name    string
+	Palette string
+	File    string
+	Size    string
+}
+
+// TileMap is a named tile map
+type TileMap struct {
+	Name    string
+	File    string
+	TileSet string
+	Palette string
+}
