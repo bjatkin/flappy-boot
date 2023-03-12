@@ -2,16 +2,19 @@ package assets
 
 import (
 	_ "embed"
+	"unsafe"
+
+	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
-//go:embed {{.Name}}.tm4
-var {{Private .Name}}Map []byte
+//go:embed {{private .Name}}.tm4
+var {{private .Name}}Map []byte
 
-var {{.Name}}Map = &TileMap{
-	size:    {{.Size}}
+var {{public .Name}}Map = &TileMap{
+	size:    {{.Size}},
 	tiles:   unsafe.Slice(
-		(*memmap.VRAMValue)(unsafe.Pointer(&{{Private .Name}}Map)),
+		(*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}Map)),
 		{{.TileCount}},	
 	),
-	tileSet: {{.TileSetName}}
+	tileSet: {{.TileSetName}},
 }

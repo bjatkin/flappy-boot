@@ -26,6 +26,58 @@ var (
 )
 
 func main() {
+	err := gb4.GeneratePalette(gb4.Palette{
+		Name: "test",
+		File: "internal/assets/background.png",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	imgFile, err := os.Open("internal/assets/background.png")
+	if err != nil {
+		panic(err)
+	}
+
+	img, _, err := image.Decode(imgFile)
+	if err != nil {
+		panic(err)
+	}
+
+	pal, err := gb4.NewPal16(img, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	err = gb4.GenerateTileSet(gb4.TileSet{
+		Name:    "test",
+		File:    "internal/assets/background.png",
+		Size:    "8x8",
+		Palette: "test",
+	},
+		pal,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	err = gb4.GenerateTileMap(gb4.TileMap{
+		Name: "test",
+		File: "internal/assets/background.png",
+	}, gb4.TileSet{
+		Name:    "test",
+		File:    "internal/assets/background.png",
+		Size:    "8x8",
+		Palette: "test",
+	}, gb4.Palette{
+		Name: "test",
+		File: "internal/assets/background.png",
+	})
+	if err != nil {
+		panic(err)
+	}
+
+	return
 	// look for flags first
 	args, err := ExtractFlags(os.Args[1:])
 	if err != nil {
@@ -154,23 +206,7 @@ func ParseHexColor(s string) (gbacol.RGB15, error) {
 // Config is a config file for the command
 type Config struct {
 	Palettes       []gb4.Palette
-	TileSets       []TileSet
-	TileMaps       []TileMap
+	TileSets       []gb4.TileSet
+	TileMaps       []gb4.TileMap
 	SetTransparent string
-}
-
-// TileSet is a named tile set
-type TileSet struct {
-	Name    string
-	Palette string
-	File    string
-	Size    string
-}
-
-// TileMap is a named tile map
-type TileMap struct {
-	Name    string
-	File    string
-	TileSet string
-	Palette string
 }

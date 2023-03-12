@@ -1,10 +1,17 @@
 package assets
 
-//go:embed {{.Name}}.pal4
-var {{ Private .Name}}Palette []byte
+import (
+    _ "embed"
+	"unsafe"
 
-// {{.Name}}Palette is a 16 color palette
-var {{.Name}}Palette Palette = unsafe.Slice(
-    (*memmap.PaletteValue)(unsafe.Pointer(&{{.Name}}Palette)),
+	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+)
+
+//go:embed {{private .Name}}.pal4
+var {{private .Name}}Palette []byte
+
+// {{public .Name}}Palette is {{.Description}}
+var {{public .Name}}Palette Palette = unsafe.Slice(
+    (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}Palette)),
     16,
-}
+)

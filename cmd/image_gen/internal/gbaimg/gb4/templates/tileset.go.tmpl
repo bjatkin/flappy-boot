@@ -2,16 +2,19 @@ package assets
 
 import (
     _ "embed"
-}
+	"unsafe"
 
-//go:embed {{.Name}}.ts4
-var {{ Private .Name}}Pixels []byte
+	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+)
 
-// {{.Name}}TileSet is a 4 bit per pixel tile set
-var {{.Name}}TileSet = &TileSet{
-    count: {{.TileCount}}
+//go:embed {{private .Name}}.ts4
+var {{private .Name}}Pixels []byte
+
+// {{public .Name}}TileSet is {{.Description}}
+var {{public .Name}}TileSet = &TileSet{
+    count: {{.TileCount}},
     pixels: unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&{{.Name}}Pixels)),
+        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}Pixels)),
         {{.PixelCount}},
     ),
     palette: {{.PaletteName}},
