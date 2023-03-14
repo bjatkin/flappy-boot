@@ -14,18 +14,12 @@ import (
 	"text/template"
 	"unicode"
 
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/config"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
 )
 
 //go:embed templates
 var templates embed.FS
-
-// Palette is a named palette
-type Palette struct {
-	Name        string
-	File        string
-	Description string
-}
 
 type paletteData struct {
 	Name        string
@@ -102,14 +96,6 @@ func GeneratePalette(palette Palette) error {
 	return nil
 }
 
-// TileSet is a named tile set
-type TileSet struct {
-	Name    string
-	Palette string
-	File    string
-	Size    string
-}
-
 type tileSetData struct {
 	Name        string
 	Description string
@@ -118,7 +104,7 @@ type tileSetData struct {
 	PaletteName string
 }
 
-func GenerateTileSet(tileSet TileSet, palette color.Palette) error {
+func GenerateTileSet(tileSet config.TileSet, palette color.Palette) error {
 	imgFile, err := os.Open(tileSet.File)
 	if err != nil {
 		return fmt.Errorf("failed to read image file %s", err)
@@ -158,14 +144,6 @@ func GenerateTileSet(tileSet TileSet, palette color.Palette) error {
 	}
 
 	return nil
-}
-
-// TileMap is a named tile map
-type TileMap struct {
-	Name    string
-	File    string
-	TileSet string
-	Palette string
 }
 
 type tileMapData struct {
