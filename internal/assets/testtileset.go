@@ -17,5 +17,5 @@ var TestTileSet = &TileSet{
         (*memmap.VRAMValue)(unsafe.Pointer(&testPixels)),
         368,
     ),
-    palette: testPalette,
+    palette: TestPalette,
 }

@@ -40,6 +40,13 @@ type Engine struct {
 
 	// screenBlockPtr points to the next available screen block
 	screenBlockPtr int
+
+	// Allocators
+	bgPals   [8]bool
+	sprPals  [8]bool
+	bgTiles  Allocator
+	bgMaps   Allocator
+	sprTiles Allocator
 }
 
 // NewEngine creates a new instances of a game engine
@@ -126,6 +133,126 @@ func (e *Engine) Run(run Runable) error {
 			}
 		}
 	}
+}
+
+type PalAllocation struct {
+	Pal    memmap.VRAMValue
+	Memory []memmap.PaletteValue
+}
+
+func (e *Engine) AllocSprPal() (PalAllocation, error) {
+	for i := range e.sprPals {
+		if !e.sprPals[i] {
+			return PalAllocation{
+				Pal:    memmap.VRAMValue(i) << display.PaletteShift,
+				Memory: memmap.Palette[memmap.PaletteOffset*(i+16) : memmap.PaletteOffset*(i+17)],
+			}, nil
+		}
+	}
+	return PalAllocation{}, ErrOOM
+}
+
+func (e *Engine) FreeSprPal(alloc PalAllocation) {
+	e.sprPals[alloc.Pal>>display.PaletteShift] = false
+}
+
+func (e *Engine) AllocBGPal() (*PalAllocation, error) {
+	for i := range e.sprPals {
+		if !e.sprPals[i] {
+			return &PalAllocation{
+				Pal:    memmap.VRAMValue(i) << display.PaletteShift,
+				Memory: memmap.Palette[memmap.PaletteOffset*i : memmap.PaletteOffset*(i+1)],
+			}, nil
+		}
+	}
+	return nil, ErrOOM
+
+}
+
+func (e *Engine) FreeBGPall(alloc *PalAllocation) {
+	e.bgPals[alloc.Pal>>display.PaletteShift] = false
+}
+
+type TileAllocation struct {
+	Memory []memmap.VRAMValue
+	Index  memmap.VRAMValue
+}
+
+func (e *Engine) AllocBGTile(tiles int) (*TileAllocation, error) {
+	i, err := e.bgTiles.Alloc(tiles)
+	if err != nil {
+		return nil, err
+	}
+
+	start := i * 16
+	end := start + (tiles * 16)
+	return &TileAllocation{
+		Memory: memmap.VRAM[start:end],
+		Index:  memmap.VRAMValue(i),
+	}, nil
+}
+
+func (e *Engine) FreeBGTile(alloc *TileAllocation) {
+	e.bgTiles.Free(int(alloc.Index))
+}
+
+type MapAllocation struct {
+	Memory         []memmap.VRAMValue
+	CharacterBlock memmap.BGControll
+	ScreenBlock    memmap.BGControll
+}
+
+func (e *Engine) AllocBGMap(screens int) (*MapAllocation, error) {
+	i, err := e.bgMaps.Alloc(screens)
+	if err != nil {
+		return nil, err
+	}
+
+	characterBlock := memmap.BGControll(2) << display.CBBShift
+	if i > 8 {
+		characterBlock = 3 << display.CBBShift
+		i -= 8
+	}
+
+	start := (memmap.CharBlockOffset * 2)
+	end := start + (screens * memmap.ScreenBlockOffset)
+	return &MapAllocation{
+		Memory:         memmap.VRAM[start:end],
+		CharacterBlock: characterBlock,
+		ScreenBlock:    memmap.BGControll(i) << display.SBBShift,
+	}, nil
+}
+
+func (e *Engine) FreeBGMap(alloc *MapAllocation) {
+	i := alloc.ScreenBlock >> display.SBBShift
+	if alloc.CharacterBlock == 3<<display.CBBShift {
+		i += 8
+	}
+
+	e.bgMaps.Free(int(i))
+}
+
+type SprAllocation struct {
+	Memory []memmap.VRAMValue
+	Offset hw_sprite.Attr2
+}
+
+func (e *Engine) AllocSprs(sprites int) (SprAllocation, error) {
+	i, err := e.sprTiles.Alloc(sprites)
+	if err != nil {
+		return SprAllocation{}, ErrOOM
+	}
+
+	start := 4*memmap.CharBlockOffset + i*16
+	end := start + sprites*16
+	return SprAllocation{
+		Memory: memmap.VRAM[start:end],
+		Offset: hw_sprite.Attr2(i),
+	}, nil
+}
+
+func (e *Engine) FreeSprs(alloc SprAllocation) {
+	e.sprTiles.Free(int(alloc.Offset))
 }
 
 func (e *Engine) loadBGPal(data []memmap.PaletteValue) int {

@@ -11,7 +11,9 @@ import (
 var {{private .Name}}Palette []byte
 
 // {{public .Name}}Palette is {{.Description}}
-var {{public .Name}}Palette Palette = unsafe.Slice(
-    (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}Palette)),
-    16,
-)
+var {{public .Name}}Palette = CPalette{
+	colors: unsafe.Slice(
+		(*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}Palette)),
+		16,
+	),
+}

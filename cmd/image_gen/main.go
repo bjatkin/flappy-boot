@@ -77,6 +77,11 @@ func main() {
 		panic(err)
 	}
 
+	err = gb4.GenerateAssets()
+	if err != nil {
+		panic(err)
+	}
+
 	return
 	// look for flags first
 	args, err := ExtractFlags(os.Args[1:])

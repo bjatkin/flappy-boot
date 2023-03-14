@@ -17,5 +17,5 @@ var {{public .Name}}TileSet = &TileSet{
         (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}Pixels)),
         {{.PixelCount}},
     ),
-    palette: {{.PaletteName}},
+    palette: {{public .PaletteName}},
 }

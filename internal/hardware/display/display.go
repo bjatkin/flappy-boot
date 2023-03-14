@@ -370,3 +370,8 @@ const (
 	// CBBShift shifts a number into the correct bits to set the char base block
 	CBBShift memmap.BGControll = 0x0002
 )
+
+const (
+	// PaletteShift shifts a number into the correct bits to set the palette id for an SBB tile
+	PaletteShift memmap.VRAMValue = 0x000C
+)

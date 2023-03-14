@@ -170,13 +170,26 @@ type TileMap struct {
 
 type tileMapData struct {
 	Name        string
-	Size        string
+	Width       int
+	Height      int
 	TileCount   int
 	TileSetName string
 }
 
+func (t *tileMapData) BGSize(width, height int) string {
+	switch {
+	case width > 32 && height > 32:
+		return "display.BGSizeLarge"
+	case width > 32:
+		return "display.BGSizeWide"
+	case height > 32:
+		return "display.BGSizeTall"
+	default:
+		return "display.BGSizeSmall"
+	}
+}
+
 func GenerateTileMap(tileMap TileMap, tileSet TileSet, palette Palette) error {
-	fmt.Println("here 1")
 	// create the palette
 	imgFile, err := os.Open(palette.File)
 	if err != nil {
@@ -188,7 +201,6 @@ func GenerateTileMap(tileMap TileMap, tileSet TileSet, palette Palette) error {
 		return fmt.Errorf("failed to decode image file %s", err)
 	}
 
-	fmt.Println("here 2")
 	p, err := NewPal16(img, nil)
 	if err != nil {
 		return fmt.Errorf("failed to create new 16 color palette %s", err)
@@ -210,7 +222,6 @@ func GenerateTileMap(tileMap TileMap, tileSet TileSet, palette Palette) error {
 		return fmt.Errorf("failed to convert size %s", err)
 	}
 
-	fmt.Println("here 3")
 	tiles := tile.NewMetaSlice(imgTS, p, size)
 	uniqueTiles := tile.Unique(tiles)
 
@@ -227,12 +238,10 @@ func GenerateTileMap(tileMap TileMap, tileSet TileSet, palette Palette) error {
 
 	tiles = tile.NewMetaSlice(imgTM, p, size)
 	mapData := rawMapData(tiles, uniqueTiles, imgTM.Bounds().Dx(), imgTM.Bounds().Dy())
-	fmt.Println("here 4", filepath.Join("internal", "asset", tileMap.Name+".tm4"), len(mapData))
 	err = os.WriteFile(filepath.Join("internal", "assets", tileMap.Name+".tm4"), mapData, 0o0666)
 	if err != nil {
 		return fmt.Errorf("failed to create new map data %s", err)
 	}
-	fmt.Println("HERE 5, successfully wrote file")
 
 	f, err := os.Create(filepath.Join("internal", "assets", tileSet.Name+"tilemap.go"))
 	if err != nil {
@@ -241,12 +250,27 @@ func GenerateTileMap(tileMap TileMap, tileSet TileSet, palette Palette) error {
 
 	err = paletteTemplate.ExecuteTemplate(f, "tilemap.go.tmpl", &tileMapData{
 		Name:        tileMap.Name,
-		Size:        "stil to do",
+		Width:       imgTM.Bounds().Dx() / 8,
+		Height:      imgTM.Bounds().Dy() / 8,
 		TileCount:   len(tiles),
-		TileSetName: tileSet.Name,
+		TileSetName: tileSet.Name + "TileSet",
 	})
 	if err != nil {
 		return fmt.Errorf("failed to execulte palette template %s", err)
+	}
+
+	return nil
+}
+
+func GenerateAssets() error {
+	f, err := os.Create(filepath.Join("internal", "assets", "assets.go"))
+	if err != nil {
+		return fmt.Errorf("failed to craete assets file")
+	}
+
+	err = paletteTemplate.ExecuteTemplate(f, "assets.go.tmpl", struct{}{})
+	if err != nil {
+		return fmt.Errorf("failed to create asset file")
 	}
 
 	return nil

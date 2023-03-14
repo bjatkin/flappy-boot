@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"unsafe"
 
+	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -11,10 +12,10 @@ import (
 var {{private .Name}}Map []byte
 
 var {{public .Name}}Map = &TileMap{
-	size:    {{.Size}},
+	size:    {{.BGSize .Width .Height}},
 	tiles:   unsafe.Slice(
 		(*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}Map)),
 		{{.TileCount}},	
 	),
-	tileSet: {{.TileSetName}},
+	tileSet: {{public .TileSetName}},
 }
