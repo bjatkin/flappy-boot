@@ -1,0 +1,43 @@
+// This is generated code. DO NOT EDIT
+
+package assets
+
+import (
+    _ "embed"
+    "unsafe"
+
+    "github.com/bjatkin/flappy_boot/internal/hardware/display"
+    "github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+)
+
+//go:embed {{private .Name}}.tm4
+var {{private .Name}}TileMap []byte
+
+var {{public .Name}}TileMap = &TileMap{
+   size:    {{.BGSize .Width .Height}},
+    tiles:   unsafe.Slice(
+        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap)),
+        {{.TileCount}},	
+    ),
+{{- if eq .TileSet.Shared 1}}
+    tileSet: &TileSet{
+        count: {{.TileSet.TileCount}},
+        pixels: unsafe.Slice(
+            (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap[{{.Bytes}}])),
+            {{.TileSet.Length}},
+        ),
+{{- if eq .TileSet.Palette.Shared 1}}
+        palette: CPalette{
+            colors: unsafe.Slice(
+                (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}TileMap[{{add .Bytes .TileSet.Bytes}}])),
+                16,
+            ),
+        },
+{{- else}}
+    palette: {{public .TileSet.Palette.Name}}Palette,
+{{- end}}
+    },
+{{- else}}
+	tileSet: {{public .TileSet.Name}}TileSet,
+{{- end}}
+}
