@@ -1,3 +1,5 @@
+// This is generated code. DO NOT EDIT
+
 package assets
 
 import (

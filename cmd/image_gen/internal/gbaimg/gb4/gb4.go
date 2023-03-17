@@ -77,11 +77,11 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	}
 
 	raw = append(raw, generateHeader(size, dx, dy, len(uniqueTiles))...)
-	raw = append(raw, rawPalette(pal)...)
-	raw = append(raw, rawTiles(uniqueTiles)...)
+	raw = append(raw, RawPalette(pal)...)
+	raw = append(raw, RawTiles(uniqueTiles)...)
 
 	if includeMap {
-		raw = append(raw, rawMapData(tiles, uniqueTiles, dx, dy)...)
+		raw = append(raw, RawMapData(tiles, uniqueTiles, dx, dy)...)
 	}
 
 	_, err = w.Write(raw)
@@ -104,8 +104,8 @@ func generateHeader(size tile.Size, dx, dy, tileCount int) []byte {
 	return header
 }
 
-// rawPalette converts a color.Palette into a byte slices for a .gb4 image
-func rawPalette(pal color.Palette) []byte {
+// RawPalette converts a color.Palette into a byte slices for a .gb4 image
+func RawPalette(pal color.Palette) []byte {
 	var raw []byte
 	for _, p := range pal {
 		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
@@ -115,7 +115,7 @@ func rawPalette(pal color.Palette) []byte {
 }
 
 // rawTiles converts a slice of tile.Meta tiles to a raw byte slice for a .gb4 image
-func rawTiles(tiles []*tile.Meta) []byte {
+func RawTiles(tiles []*tile.Meta) []byte {
 	var raw []byte
 	for _, tile := range tiles {
 		raw = append(raw, tile.Bytes()...)
@@ -123,9 +123,9 @@ func rawTiles(tiles []*tile.Meta) []byte {
 	return raw
 }
 
-// rawMapData converts map data for a .gb4 image into a raw byte slice.
+// RawMapData converts map data for a .gb4 image into a raw byte slice.
 // tiles are mapped using 32x32 tile screen base blocks.
-func rawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte {
+func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte {
 	// pitch is the number of tiles per horizontal row
 	pitch := paddedPitch(dx)
 	tileDy := dy / 8

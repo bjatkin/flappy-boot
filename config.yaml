@@ -1,0 +1,14 @@
+OutDir: internal/assets/test
+TileSets:
+  - Name: player
+    File: assets/player.png
+    Size: "16x16"
+  - Name: pillars
+    Size: "8x8"
+    File: assets/pillar_ts.png
+TileMaps:
+  - Name: pillars
+    File: assets/pillar_tm.png
+    TileSet: pillars
+  - Name: sky
+    File: assets/sky_tm.png
