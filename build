@@ -1,2 +1,8 @@
 #!/bin/bash
+set -euxo pipefail
+
+# run go test to make sure all new code passes
+go test ./...
+
+# build the .gba file
 tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s .
