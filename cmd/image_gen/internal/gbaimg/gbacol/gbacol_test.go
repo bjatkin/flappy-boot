@@ -77,7 +77,7 @@ func TestRGB15_RGBA(t *testing.T) {
 		},
 		{
 			"gray",
-			NewRGB15(color.RGBA64{R: 0x4210, G: 0x4210, B: 0x39CE, A: 0x0000}),
+			NewRGB15(color.RGBA64{R: 0x4211, G: 0x4211, B: 0x39CF, A: 0x0000}),
 			0x4210,
 			0x4210,
 			0x39CE,

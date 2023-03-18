@@ -2,6 +2,7 @@ package tile
 
 import (
 	"crypto/md5"
+	"fmt"
 	"image"
 	"image/color"
 	"reflect"
@@ -21,6 +22,17 @@ var (
 )
 
 func newImage(width, height int, pixels []color.Color) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, pixels[y*width+x])
+		}
+	}
+
+	return img
+}
+
+func newImage16(width, height int, pixels []color.Color) image.Image {
 	img := gbaimg.NewRGB16(image.Rect(0, 0, width, height))
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
@@ -32,7 +44,7 @@ func newImage(width, height int, pixels []color.Color) image.Image {
 }
 
 func TestNewMeta(t *testing.T) {
-	img8x8 := newImage(8, 8, []color.Color{
+	img8x8 := newImage16(8, 8, []color.Color{
 		red, white, red, white, red, white, red, white,
 		white, red, white, red, white, red, white, red,
 		red, white, red, white, red, white, red, white,
@@ -43,7 +55,7 @@ func TestNewMeta(t *testing.T) {
 		white, red, white, red, white, red, white, red,
 	})
 
-	img16x16 := newImage(16, 16, []color.Color{
+	img16x16 := newImage16(16, 16, []color.Color{
 		red, white, red, white, red, white, red, white, white, blue, white, blue, white, blue, white, blue,
 		white, red, white, red, white, red, white, red, blue, white, blue, white, blue, white, blue, white,
 		red, white, red, white, red, white, red, white, white, blue, white, blue, white, blue, white, blue,
@@ -166,7 +178,7 @@ func TestNewMeta(t *testing.T) {
 func TestUnique(t *testing.T) {
 	pal := color.Palette{red, green, blue, white, black}
 
-	imgA := newImage(16, 16, []color.Color{
+	imgA := newImage16(16, 16, []color.Color{
 		red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white,
 		green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red,
 		blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green,
@@ -185,7 +197,7 @@ func TestUnique(t *testing.T) {
 		white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue,
 	})
 
-	imgB := newImage(16, 16, []color.Color{
+	imgB := newImage16(16, 16, []color.Color{
 		red, white, black, white, black, white, black, white, black, white, black, white, black, white, black, white,
 		white, black, white, black, white, black, white, black, white, black, white, black, white, black, white, black,
 		black, white, black, white, black, white, black, white, black, white, black, white, black, white, black, white,
@@ -227,8 +239,8 @@ func TestUnique(t *testing.T) {
 				},
 			},
 			[]*Meta{
-				NewMeta(imgA, pal, S8x8),
 				NewMeta(imgB, pal, S8x8),
+				NewMeta(imgA, pal, S8x8),
 			},
 		},
 	}
@@ -243,7 +255,7 @@ func TestUnique(t *testing.T) {
 }
 
 func TestMeta_Hash(t *testing.T) {
-	img := newImage(8, 8, []color.Color{
+	img := newImage16(8, 8, []color.Color{
 		white, blue, white, blue, red, green, red, green,
 		blue, white, blue, white, green, red, green, red,
 		white, blue, white, blue, red, green, red, green,
@@ -313,7 +325,7 @@ func TestMeta_Hash(t *testing.T) {
 }
 
 func TestMeta_Bytes(t *testing.T) {
-	img := newImage(8, 8, []color.Color{
+	img := newImage16(8, 8, []color.Color{
 		white, blue, white, blue, red, green, red, green,
 		blue, white, blue, white, green, red, green, red,
 		white, blue, white, blue, red, green, red, green,
@@ -346,14 +358,14 @@ func TestMeta_Bytes(t *testing.T) {
 				Tiles: []image.Image{img},
 			},
 			[]byte{
-				0x32, 0x32, 0x01, 0x01,
 				0x23, 0x23, 0x10, 0x10,
 				0x32, 0x32, 0x01, 0x01,
 				0x23, 0x23, 0x10, 0x10,
-				0x34, 0x34, 0x32, 0x32,
+				0x32, 0x32, 0x01, 0x01,
 				0x43, 0x43, 0x23, 0x23,
 				0x34, 0x34, 0x32, 0x32,
 				0x43, 0x43, 0x23, 0x23,
+				0x34, 0x34, 0x32, 0x32,
 			},
 		},
 	}
@@ -366,8 +378,48 @@ func TestMeta_Bytes(t *testing.T) {
 				Tiles: tt.fields.Tiles,
 			}
 			if got := m.Bytes(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Meta.Bytes() = \n%v, want \n%v", got, tt.want)
+				t.Errorf("Meta.Bytes() diff \n%s", hexDiff(got, tt.want))
 			}
 		})
 	}
+}
+
+func hexDiff(a, b []byte) string {
+	max := len(a)
+	if len(b) > max {
+		max = len(b)
+	}
+
+	var aStr, bStr, diffStr []string
+	for i := 0; i < max; i++ {
+		var aCheck, bCheck *byte
+		if len(a) > i {
+			aStr = append(aStr, fmt.Sprintf("0x%02X", a[i]))
+			aCheck = &a[i]
+		}
+		if len(b) > i {
+			bStr = append(bStr, fmt.Sprintf("0x%02X", b[i]))
+			bCheck = &b[i]
+		}
+
+		var diff string
+		switch {
+		case aCheck == nil && bCheck != nil:
+			diff = "[!!] "
+		case aCheck != nil && bCheck == nil:
+			diff = "[!!] "
+		case *aCheck != *bCheck:
+			diff = "[!!] "
+		default:
+			diff = "-----"
+		}
+
+		diffStr = append(diffStr, diff)
+	}
+
+	return fmt.Sprintf("%s\n%s\n%s",
+		"  "+strings.Join(diffStr, " ")+"  ",
+		"[ "+strings.Join(aStr, ", ")+" ]",
+		"[ "+strings.Join(bStr, ", ")+" ]",
+	)
 }
