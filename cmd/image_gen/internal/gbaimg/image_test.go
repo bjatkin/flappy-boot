@@ -16,7 +16,6 @@ var (
 	green = color.RGBA{0x00, 0xFF, 0x00, 0xFF}
 	blue  = color.RGBA{0x00, 0x00, 0xFF, 0xff}
 
-	white16 = gbacol.NewRGB15(white)
 	black16 = gbacol.NewRGB15(black)
 	red16   = gbacol.NewRGB15(red)
 	green16 = gbacol.NewRGB15(green)
@@ -24,6 +23,17 @@ var (
 )
 
 func newImage(width, height int, pixels []color.Color) image.Image {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			img.Set(x, y, pixels[y*width+x])
+		}
+	}
+
+	return img
+}
+
+func newImage16(width, height int, pixels []color.Color) image.Image {
 	img := NewRGB16(image.Rect(0, 0, width, height))
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
@@ -168,7 +178,7 @@ func TestCopy(t *testing.T) {
 				dest: newImage(2, 2, []color.Color{
 					black, black,
 					black, black,
-				}).(*RGB16),
+				}).(*image.RGBA),
 			},
 			newImage(2, 2, []color.Color{
 				red, green,
@@ -214,7 +224,7 @@ func TestNewPal(t *testing.T) {
 		{
 			"16 color palette",
 			args{
-				m: newImage(4, 4, []color.Color{
+				m: newImage16(4, 4, []color.Color{
 					gbacol.RGB15(0xFF),
 					gbacol.RGB15(0x70),
 					gbacol.RGB15(0xE0),
@@ -256,7 +266,7 @@ func TestNewPal(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			if got := NewPal(tt.args.m); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("NewPal() = %v, want %v", got, tt.want)
+				t.Errorf("NewPal() = \n%v, want \n%v", got, tt.want)
 			}
 		})
 	}

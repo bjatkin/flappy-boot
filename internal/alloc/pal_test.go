@@ -11,7 +11,7 @@ func TestPal_Alloc(t *testing.T) {
 	var memBlock []memmap.PaletteValue
 	// fill memBlock with data so deep equal can
 	// check if slice sections are in fact equal
-	for i := 0; i < 8*8; i++ {
+	for i := 0; i < 16*16; i++ {
 		memBlock = append(memBlock, memmap.PaletteValue(i))
 	}
 
@@ -28,7 +28,7 @@ func TestPal_Alloc(t *testing.T) {
 				memory: memBlock,
 			},
 			&PMem{
-				Memory: memBlock[16:24],
+				Memory: memBlock[32:48],
 				Offset: 2,
 			},
 			false,
