@@ -14,7 +14,7 @@ import (
 var {{private .Name}}TileMap []byte
 
 var {{public .Name}}TileMap = &TileMap{
-   size:    {{.BGSize .Width .Height}},
+    Size:    {{.BGSize .Width .Height}},
     tiles:   unsafe.Slice(
         (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap)),
         {{.TileCount}},	
@@ -27,7 +27,7 @@ var {{public .Name}}TileMap = &TileMap{
             {{.TileSet.Length}},
         ),
 {{- if eq .TileSet.Palette.Shared 1}}
-        palette: CPalette{
+        palette: &Palette{
             colors: unsafe.Slice(
                 (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}TileMap[{{add .Bytes .TileSet.Bytes}}])),
                 16,

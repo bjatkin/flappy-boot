@@ -2,8 +2,8 @@ package generate
 
 import (
 	"embed"
-	"html/template"
 	"strings"
+	"text/template"
 	"unicode"
 )
 

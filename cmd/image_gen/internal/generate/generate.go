@@ -10,25 +10,27 @@ import (
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/config"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gb4"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
 )
 
 // File is an interface that can be used to create both raw data files and coresponding go files
 type File interface {
-	Raw() []byte
+	Raw() ([]byte, error)
 	Go() ([]byte, error)
 }
 
 // PaletteData holds metadata for a specific palette
 type PaletteData struct {
-	Palette     color.Palette
-	Name        string
-	Description string
-	Shared      int
+	Palette        color.Palette
+	Name           string
+	Description    string
+	Shared         int
+	SetTransparent *gbacol.RGB15
 }
 
 // NewPaletteData creates new palette data from a palette config
-func NewPaletteData(palette config.Palette) (*PaletteData, error) {
+func NewPaletteData(palette config.Palette, setTransparent *gbacol.RGB15) (*PaletteData, error) {
 	imgFile, err := os.Open(palette.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read image file %w", err)
@@ -45,15 +47,20 @@ func NewPaletteData(palette config.Palette) (*PaletteData, error) {
 	}
 
 	return &PaletteData{
-		Palette:     pal,
-		Name:        palette.Name,
-		Description: palette.Description,
+		Palette:        pal,
+		Name:           palette.Name,
+		Description:    palette.Description,
+		SetTransparent: setTransparent,
 	}, nil
 }
 
 // Raw returns the raw palette data as a byte slice
-func (t *PaletteData) Raw() []byte {
-	return gb4.RawPalette(t.Palette)
+func (t *PaletteData) Raw() ([]byte, error) {
+	if t.SetTransparent != nil {
+		return gb4.RawPalette(append(color.Palette{*t.SetTransparent}, t.Palette[1:]...)), nil
+	}
+
+	return gb4.RawPalette(t.Palette), nil
 }
 
 // Go returns a go file that contains the specified palette
@@ -80,7 +87,7 @@ type TileSetData struct {
 }
 
 // NewTileSetData creates TileSetData from tileSet configuration and a map of PaletteData
-func NewTileSetData(tileSet config.TileSet, palettes map[string]*PaletteData) (*TileSetData, error) {
+func NewTileSetData(tileSet config.TileSet, setTransparent *gbacol.RGB15, palettes map[string]*PaletteData) (*TileSetData, error) {
 	imgFile, err := os.Open(tileSet.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read image file %w", err)
@@ -100,7 +107,7 @@ func NewTileSetData(tileSet config.TileSet, palettes map[string]*PaletteData) (*
 	if tileSet.Palette == "" {
 		pal, err = NewPaletteData(config.Palette{
 			File: tileSet.File,
-		})
+		}, setTransparent)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create valid palette from image %s | %w", tileSet.File, err)
 		}
@@ -129,14 +136,19 @@ func NewTileSetData(tileSet config.TileSet, palettes map[string]*PaletteData) (*
 
 // Raw returns the raw tile set data. If the tile set is the only user of its palette the
 // palette data will be appended to the end of the tile set data as well
-func (t *TileSetData) Raw() []byte {
+func (t *TileSetData) Raw() ([]byte, error) {
 	raw := gb4.RawTiles(t.Tiles)
 
 	if t.Palette.Shared == 1 {
-		raw = append(raw, t.Palette.Raw()...)
+		pal, err := t.Palette.Raw()
+		if err != nil {
+			return nil, err
+		}
+
+		raw = append(raw, pal...)
 	}
 
-	return raw
+	return raw, nil
 }
 
 // Go returns a go file that contains the tile set. If the tile set is the only user of its
@@ -165,11 +177,11 @@ type TileMapData struct {
 // BGSize returns the correct display.BGSize constant that corresponds to the given width and height
 func (t *TileMapData) BGSize(width, height int) string {
 	switch {
-	case width > 32 && height > 32:
+	case width > 32*8 && height > 32*8:
 		return "display.BGSizeLarge"
-	case width > 32:
+	case width > 32*8:
 		return "display.BGSizeWide"
-	case height > 32:
+	case height > 32*8:
 		return "display.BGSizeTall"
 	default:
 		return "display.BGSizeSmall"
@@ -177,7 +189,7 @@ func (t *TileMapData) BGSize(width, height int) string {
 }
 
 // NewTileMapData creates a new TileMapData from a tileMap configuration and a tileSet and palette map
-func NewTileMapData(tileMap config.TileMap, tileSets map[string]*TileSetData, palettes map[string]*PaletteData) (*TileMapData, error) {
+func NewTileMapData(tileMap config.TileMap, setTransparent *gbacol.RGB15, tileSets map[string]*TileSetData, palettes map[string]*PaletteData) (*TileMapData, error) {
 	imgFile, err := os.Open(tileMap.File)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read image file %s | %w", tileMap.File, err)
@@ -190,12 +202,14 @@ func NewTileMapData(tileMap config.TileMap, tileSets map[string]*TileSetData, pa
 
 	var tileSet *TileSetData
 	switch {
+
+	// TODO: this section of code doesn't actually support using a custom palette yet. I should add that in
 	case tileMap.TileSet == "" && tileMap.Palette == "":
 		tileSet, err = NewTileSetData(config.TileSet{
 			Name: tileMap.Name,
 			File: tileMap.File,
 			Size: "8x8",
-		}, palettes)
+		}, setTransparent, palettes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tile set %w", err)
 		}
@@ -205,7 +219,7 @@ func NewTileMapData(tileMap config.TileMap, tileSets map[string]*TileSetData, pa
 			File:    tileMap.File,
 			Palette: tileMap.Palette,
 			Size:    "8x8",
-		}, palettes)
+		}, setTransparent, palettes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tile set %w", err)
 		}
@@ -237,14 +251,21 @@ func NewTileMapData(tileMap config.TileMap, tileSets map[string]*TileSetData, pa
 
 // Raw returns the raw tile map data. If the tile map is the only user of it's tile set
 // the tile set will be appended to the end of the data
-func (t *TileMapData) Raw() []byte {
-	raw := gb4.RawMapData(t.Tiles, t.TileSet.Tiles, t.Width, t.Height)
-
-	if t.TileSet.Shared == 1 {
-		raw = append(raw, t.TileSet.Raw()...)
+func (t *TileMapData) Raw() ([]byte, error) {
+	raw, err := gb4.RawMapData(t.Tiles, t.TileSet.Tiles, t.Width, t.Height)
+	if err != nil {
+		return nil, err
 	}
 
-	return raw
+	if t.TileSet.Shared == 1 {
+		ts, err := t.TileSet.Raw()
+		if err != nil {
+			return nil, err
+		}
+		raw = append(raw, ts...)
+	}
+
+	return raw, nil
 }
 
 // Go returns a go file that contains the the tile map. If the tile map is the only user of it's
