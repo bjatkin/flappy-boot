@@ -223,7 +223,6 @@ func Unique(tiles []*Meta) []*Meta {
 	for _, tile := range tiles {
 		unique[tile.Hash()] = tile
 	}
-
 	uniqueTiles := maps.Values(unique)
 
 	sum := func(data [16]byte) int {

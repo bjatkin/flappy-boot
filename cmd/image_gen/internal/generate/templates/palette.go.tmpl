@@ -13,7 +13,7 @@ import (
 var {{private .Name}}Palette []byte
 
 // {{public .Name}}Palette is {{.Description}}
-var {{public .Name}}Palette = CPalette{
+var {{public .Name}}Palette = &Palette{
 	colors: unsafe.Slice(
 		(*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}Palette)),
 		16,

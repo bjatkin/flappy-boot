@@ -9,34 +9,49 @@ import (
 	"path/filepath"
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/config"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/exit"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/generate"
 )
 
 func main() {
+	// add this first so any other defers are run before we exit
+	defer exit.Final()
+
 	// look for an input yaml file
 	if len(os.Args) != 2 {
-		fmt.Println("invalie usage, missing config file", os.Args)
+		exit.Error(exit.InvalidArguments, fmt.Errorf("invalid usage, missing config file: %v", os.Args))
 		return
 	}
 
 	file := os.Args[1]
 	cfg, err := config.NewConfigFromFile(file)
 	if err != nil {
-		fmt.Printf("failed to read in config %s\n", err)
+		exit.Error(exit.InvalidConfig, fmt.Errorf("failed to read in config %w", err))
 		return
 	}
 
 	err = cfg.Validate()
 	if err != nil {
-		fmt.Printf("failed to validate config %s\n", err)
+		exit.Error(exit.InvalidConfig, fmt.Errorf("failed to validate config %w", err))
 		return
+	}
+
+	var setTransparent *gbacol.RGB15
+	if cfg.SetTransparent != "" {
+		tmp, err := config.ParseHexColor(cfg.SetTransparent)
+		if err != nil {
+			exit.Error(exit.InvalidConfig, fmt.Errorf("%s is not a valid hex color %w", cfg.SetTransparent, err))
+			return
+		}
+		setTransparent = &tmp
 	}
 
 	palettes := make(map[string]*generate.PaletteData)
 	for _, pal := range cfg.Palettes {
-		palData, err := generate.NewPaletteData(pal)
+		palData, err := generate.NewPaletteData(pal, setTransparent)
 		if err != nil {
-			fmt.Printf("falied to generate new pallet %s | %s\n", pal.Name, err)
+			exit.Error(exit.InvalidPalette, fmt.Errorf("falied to generate new pallet %s | %w", pal.Name, err))
 			return
 		}
 		palettes[pal.Name] = palData
@@ -44,9 +59,9 @@ func main() {
 
 	tileSets := make(map[string]*generate.TileSetData)
 	for _, tileSet := range cfg.TileSets {
-		tileSetData, err := generate.NewTileSetData(tileSet, palettes)
+		tileSetData, err := generate.NewTileSetData(tileSet, setTransparent, palettes)
 		if err != nil {
-			fmt.Printf("failed to generate new tile set %s | %s\n", tileSet.Name, err)
+			exit.Error(exit.InvalidTileSet, fmt.Errorf("failed to generate new tile set %s | %w", tileSet.Name, err))
 			return
 		}
 		tileSets[tileSet.Name] = tileSetData
@@ -54,9 +69,9 @@ func main() {
 
 	tileMaps := make(map[string]*generate.TileMapData)
 	for _, tileMap := range cfg.TileMaps {
-		tileMapData, err := generate.NewTileMapData(tileMap, tileSets, palettes)
+		tileMapData, err := generate.NewTileMapData(tileMap, setTransparent, tileSets, palettes)
 		if err != nil {
-			fmt.Printf("failed to generate tile map %s | %s\n", tileMap.Name, err)
+			exit.Error(exit.InvalidTileMap, fmt.Errorf("failed to generate tile map %s | %w", tileMap.Name, err))
 			return
 		}
 		tileMaps[tileMap.Name] = tileMapData
@@ -64,7 +79,7 @@ func main() {
 
 	err = generate.WriteAssetFile(cfg.OutDir)
 	if err != nil {
-		fmt.Printf("failed to write base asset.go file %s\n", err)
+		exit.Error(exit.FileWriteFailed, fmt.Errorf("failed to write base asset.go file %w", err))
 		return
 	}
 
@@ -75,7 +90,7 @@ func main() {
 		// this is a shared palette
 		err := writeFiles(pal, cfg.OutDir, pal.Name+".pal4", pal.Name+"Palette.go")
 		if err != nil {
-			fmt.Println(err)
+			exit.Error(exit.InvalidPalette, err)
 			return
 		}
 	}
@@ -88,7 +103,7 @@ func main() {
 		// this is a shared tile set
 		err := writeFiles(tileSet, cfg.OutDir, tileSet.Name+".ts4", tileSet.Name+"TileSet.go")
 		if err != nil {
-			fmt.Println(err)
+			exit.Error(exit.InvalidTileSet, err)
 			return
 		}
 	}
@@ -96,7 +111,7 @@ func main() {
 	for _, tileMap := range tileMaps {
 		err := writeFiles(tileMap, cfg.OutDir, tileMap.Name+".tm4", tileMap.Name+"TileMap.go")
 		if err != nil {
-			fmt.Println(err)
+			exit.Error(exit.InvalidTileMap, err)
 			return
 		}
 	}
@@ -104,7 +119,12 @@ func main() {
 
 func writeFiles(f generate.File, dir, rawName, goName string) error {
 	rawFile := filepath.Join(dir, rawName)
-	err := os.WriteFile(rawFile, f.Raw(), 0o0666)
+	rawBytes, err := f.Raw()
+	if err != nil {
+		return err
+	}
+
+	err = os.WriteFile(rawFile, rawBytes, 0o0666)
 	if err != nil {
 		return fmt.Errorf("failed to save file %s | %w", rawFile, err)
 	}

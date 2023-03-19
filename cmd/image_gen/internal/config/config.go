@@ -91,16 +91,29 @@ func (c *Config) Validate() error {
 	}
 
 	for _, tileMap := range c.TileMaps {
-		if tileMap.TileSet == "" {
+		if tileMap.TileSet == "" && tileMap.Palette == "" {
 			continue
 		}
 
-		tileSet, ok := tileSets[tileMap.TileSet]
-		if !ok {
-			return fmt.Errorf("tile set %s does not exists", tileMap.TileSet)
+		if tileMap.TileSet != "" && tileMap.Palette != "" {
+			return fmt.Errorf("tile set %s and palette %s can not both be set", tileMap.TileSet, tileMap.Palette)
 		}
-		if tileSet.Size != "8x8" {
-			return fmt.Errorf("tile sets used by tile maps must be 8x8 but it's actually %s", tileSet.Size)
+
+		if tileMap.TileSet != "" {
+			tileSet, ok := tileSets[tileMap.TileSet]
+			if !ok {
+				return fmt.Errorf("tile set %s does not exists", tileMap.TileSet)
+			}
+			if tileSet.Size != "8x8" {
+				return fmt.Errorf("tile sets used by tile maps must be 8x8 but it's actually %s", tileSet.Size)
+			}
+		}
+
+		if tileMap.Palette != "" {
+			_, ok := palettes[tileMap.Palette]
+			if !ok {
+				return fmt.Errorf("palette %s does not exist", tileMap.Palette)
+			}
 		}
 	}
 

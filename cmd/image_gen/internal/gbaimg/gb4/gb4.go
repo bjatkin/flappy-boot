@@ -1,6 +1,7 @@
 package gb4
 
 import (
+	"errors"
 	"fmt"
 	"image"
 	"image/color"
@@ -81,7 +82,12 @@ func Encode(w io.Writer, m image.Image, o *Options) error {
 	raw = append(raw, RawTiles(uniqueTiles)...)
 
 	if includeMap {
-		raw = append(raw, RawMapData(tiles, uniqueTiles, dx, dy)...)
+		mapData, err := RawMapData(tiles, uniqueTiles, dx, dy)
+		if err != nil {
+			return err
+		}
+
+		raw = append(raw, mapData...)
 	}
 
 	_, err = w.Write(raw)
@@ -125,7 +131,7 @@ func RawTiles(tiles []*tile.Meta) []byte {
 
 // RawMapData converts map data for a .gb4 image into a raw byte slice.
 // tiles are mapped using 32x32 tile screen base blocks.
-func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte {
+func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byte, error) {
 	// pitch is the number of tiles per horizontal row
 	pitch := paddedPitch(dx)
 	tileDy := dy / 8
@@ -168,10 +174,14 @@ func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) []byte
 				raw[index+1] = tBytes[1]
 				break
 			}
+
+			if ii == len(uniqueTiles)-1 {
+				return nil, errors.New("tile not found in tile set")
+			}
 		}
 	}
 
-	return raw
+	return raw, nil
 }
 
 // paddedPitch returns the pitch of the image in tiles.
