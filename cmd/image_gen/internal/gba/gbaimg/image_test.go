@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
 )
 
 var (
@@ -24,17 +24,6 @@ var (
 
 func newImage(width, height int, pixels []color.Color) image.Image {
 	img := image.NewRGBA(image.Rect(0, 0, width, height))
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			img.Set(x, y, pixels[y*width+x])
-		}
-	}
-
-	return img
-}
-
-func newImage16(width, height int, pixels []color.Color) image.Image {
-	img := NewRGB16(image.Rect(0, 0, width, height))
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			img.Set(x, y, pixels[y*width+x])
@@ -224,42 +213,40 @@ func TestNewPal(t *testing.T) {
 		{
 			"16 color palette",
 			args{
-				m: newImage16(4, 4, []color.Color{
-					gbacol.RGB15(0xFF),
-					gbacol.RGB15(0x70),
-					gbacol.RGB15(0xE0),
-					gbacol.RGB15(0x00),
-					gbacol.RGB15(0x60),
-					gbacol.RGB15(0x20),
-					gbacol.RGB15(0x30),
-					gbacol.RGB15(0x10),
-					gbacol.RGB15(0x40),
-					gbacol.RGB15(0x90),
-					gbacol.RGB15(0xA0),
-					gbacol.RGB15(0xB0),
-					gbacol.RGB15(0xF0),
-					gbacol.RGB15(0xC0),
-					gbacol.RGB15(0xD0),
-					gbacol.RGB15(0x50),
+				m: newImage(4, 4, []color.Color{
+					color.RGBA{0xFF, 0xFF, 0xFF, 0xFF},
+					color.RGBA{0xFF, 0x00, 0x00, 0xFF},
+					color.RGBA{0x00, 0xFF, 0x00, 0xFF},
+					color.RGBA{0x00, 0x77, 0x77, 0xFF},
+					color.RGBA{0x00, 0x00, 0x00, 0xFF},
+					color.RGBA{0x00, 0x00, 0xFF, 0xFF},
+					color.RGBA{0xFF, 0xFF, 0x00, 0xFF},
+					color.RGBA{0x00, 0xFF, 0xFF, 0xFF},
+					color.RGBA{0x77, 0x77, 0x77, 0xFF},
+					color.RGBA{0x77, 0x00, 0x00, 0xFF},
+					color.RGBA{0x00, 0x00, 0x77, 0xFF},
+					color.RGBA{0x00, 0x00, 0xFF, 0xFF},
+					color.RGBA{0x00, 0x00, 0x77, 0xFF},
+					color.RGBA{0x77, 0x77, 0x00, 0xFF},
+					color.RGBA{0xFF, 0x77, 0xFF, 0xFF},
+					color.RGBA{0x00, 0x77, 0x00, 0xFF},
 				}),
 			},
 			color.Palette{
-				gbacol.RGB15(0xFF),
-				gbacol.RGB15(0x00),
-				gbacol.RGB15(0x10),
-				gbacol.RGB15(0x20),
-				gbacol.RGB15(0x30),
-				gbacol.RGB15(0x40),
-				gbacol.RGB15(0x50),
-				gbacol.RGB15(0x60),
-				gbacol.RGB15(0x70),
-				gbacol.RGB15(0x90),
-				gbacol.RGB15(0xA0),
-				gbacol.RGB15(0xB0),
-				gbacol.RGB15(0xC0),
-				gbacol.RGB15(0xD0),
-				gbacol.RGB15(0xE0),
-				gbacol.RGB15(0xF0),
+				gbacol.RGB15(0x7FFF),
+				gbacol.RGB15(0x0000),
+				gbacol.RGB15(0x000E),
+				gbacol.RGB15(0x001F),
+				gbacol.RGB15(0x01C0),
+				gbacol.RGB15(0x01CE),
+				gbacol.RGB15(0x03E0),
+				gbacol.RGB15(0x03FF),
+				gbacol.RGB15(0x3800),
+				gbacol.RGB15(0x39C0),
+				gbacol.RGB15(0x39CE),
+				gbacol.RGB15(0x7C00),
+				gbacol.RGB15(0x7DDF),
+				gbacol.RGB15(0x7FE0),
 			},
 		},
 	}

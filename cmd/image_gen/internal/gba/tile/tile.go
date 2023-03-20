@@ -8,8 +8,8 @@ import (
 	"sort"
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/byteconv"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbaimg"
 	"golang.org/x/exp/maps"
 )
 

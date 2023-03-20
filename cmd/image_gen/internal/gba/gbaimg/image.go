@@ -4,7 +4,7 @@ import (
 	"image"
 	"image/color"
 
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )

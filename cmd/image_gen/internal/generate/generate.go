@@ -9,9 +9,9 @@ import (
 	"path/filepath"
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/config"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gb4"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/raw"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/tile"
 )
 
 // File is an interface that can be used to create both raw data files and coresponding go files
@@ -41,7 +41,7 @@ func NewPaletteData(palette config.Palette, setTransparent *gbacol.RGB15) (*Pale
 		return nil, fmt.Errorf("failed to decode image file %s | %w", palette.File, err)
 	}
 
-	pal, err := gb4.NewPal16(img, nil)
+	pal, err := raw.NewPal16(img, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new 16 color palette %w", err)
 	}
@@ -57,10 +57,10 @@ func NewPaletteData(palette config.Palette, setTransparent *gbacol.RGB15) (*Pale
 // Raw returns the raw palette data as a byte slice
 func (t *PaletteData) Raw() ([]byte, error) {
 	if t.SetTransparent != nil {
-		return gb4.RawPalette(append(color.Palette{*t.SetTransparent}, t.Palette[1:]...)), nil
+		return raw.Palette(append(color.Palette{*t.SetTransparent}, t.Palette[1:]...)), nil
 	}
 
-	return gb4.RawPalette(t.Palette), nil
+	return raw.Palette(t.Palette), nil
 }
 
 // Go returns a go file that contains the specified palette
@@ -137,7 +137,7 @@ func NewTileSetData(tileSet config.TileSet, setTransparent *gbacol.RGB15, palett
 // Raw returns the raw tile set data. If the tile set is the only user of its palette the
 // palette data will be appended to the end of the tile set data as well
 func (t *TileSetData) Raw() ([]byte, error) {
-	raw := gb4.RawTiles(t.Tiles)
+	raw := raw.Tiles(t.Tiles)
 
 	if t.Palette.Shared == 1 {
 		pal, err := t.Palette.Raw()
@@ -252,7 +252,7 @@ func NewTileMapData(tileMap config.TileMap, setTransparent *gbacol.RGB15, tileSe
 // Raw returns the raw tile map data. If the tile map is the only user of it's tile set
 // the tile set will be appended to the end of the data
 func (t *TileMapData) Raw() ([]byte, error) {
-	raw, err := gb4.RawMapData(t.Tiles, t.TileSet.Tiles, t.Width, t.Height)
+	raw, err := raw.MapData(t.Tiles, t.TileSet.Tiles, t.Width, t.Height)
 	if err != nil {
 		return nil, err
 	}
