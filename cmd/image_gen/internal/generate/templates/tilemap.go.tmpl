@@ -16,7 +16,7 @@ var {{private .Name}}TileMap []byte
 var {{public .Name}}TileMap = &TileMap{
     Size:    {{.BGSize .Width .Height}},
     tiles:   unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap)),
+        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap[0])),
         {{.TileCount}},	
     ),
 {{- if eq .TileSet.Shared 1}}

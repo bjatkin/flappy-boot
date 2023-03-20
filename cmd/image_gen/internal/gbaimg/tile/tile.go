@@ -198,6 +198,24 @@ func (m *Meta) Bytes() []byte {
 	return data
 }
 
+// IsTransparent returns true if the tile is 8x8 and completely transparent.
+// This is usefule for building layerd backgrounds where many tiles can be fully transparent
+func (m *Meta) IsTransparent() bool {
+	if m.Size != S8x8 {
+		return false
+	}
+
+	var hasColor bool
+	transparent := gbacol.NewRGB15(m.Pal[0])
+	gbaimg.Walk(m.Img, func(x, y int) {
+		if gbacol.NewRGB15(m.Img.At(x, y)) != transparent {
+			hasColor = true
+		}
+	})
+
+	return !hasColor
+}
+
 // NewMetaSlice creates a new slice of meta tiles from an underlying image
 // Each Meta tile will have the specified size and share the provided palette
 // if the image size is not evenly divisible by the provided size the image will be padded to include all the image data
