@@ -1,6 +1,9 @@
 #!/bin/bash
 set -euxo pipefail
 
+# re-generate all asset files
+go run ./cmd/image_gen config.yaml
+
 # run go test to make sure all new code passes
 go test ./...
 
