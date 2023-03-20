@@ -14,20 +14,20 @@ import (
 var pillarsTileMap []byte
 
 var PillarsTileMap = &TileMap{
-   size:    display.BGSizeLarge,
+    Size:    display.BGSizeWide,
     tiles:   unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&pillarsTileMap)),
+        (*memmap.VRAMValue)(unsafe.Pointer(&pillarsTileMap[0])),
         2048,	
     ),
     tileSet: &TileSet{
-        count: 29,
+        count: 30,
         pixels: unsafe.Slice(
             (*memmap.VRAMValue)(unsafe.Pointer(&pillarsTileMap[4096])),
-            464,
+            480,
         ),
-        palette: CPalette{
+        palette: &Palette{
             colors: unsafe.Slice(
-                (*memmap.PaletteValue)(unsafe.Pointer(&pillarsTileMap[5024])),
+                (*memmap.PaletteValue)(unsafe.Pointer(&pillarsTileMap[5056])),
                 16,
             ),
         },

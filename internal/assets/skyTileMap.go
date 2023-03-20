@@ -14,9 +14,9 @@ import (
 var skyTileMap []byte
 
 var SkyTileMap = &TileMap{
-   size:    display.BGSizeLarge,
+    Size:    display.BGSizeWide,
     tiles:   unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&skyTileMap)),
+        (*memmap.VRAMValue)(unsafe.Pointer(&skyTileMap[0])),
         2048,	
     ),
     tileSet: &TileSet{
@@ -25,7 +25,7 @@ var SkyTileMap = &TileMap{
             (*memmap.VRAMValue)(unsafe.Pointer(&skyTileMap[4096])),
             160,
         ),
-        palette: CPalette{
+        palette: &Palette{
             colors: unsafe.Slice(
                 (*memmap.PaletteValue)(unsafe.Pointer(&skyTileMap[4416])),
                 16,
