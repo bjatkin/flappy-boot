@@ -1,4 +1,5 @@
-OutDir: internal/assets/test
+OutDir: internal/assets
+SetTransparent: "#000816"
 TileSets:
   - Name: player
     File: assets/player.png
