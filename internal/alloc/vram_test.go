@@ -20,11 +20,11 @@ func TestVRAM_Alloc(t *testing.T) {
 	}
 	tests := []struct {
 		name     string
-		m        VRAM
+		m        *VRAM
 		args     args
 		want     []*VMem
 		wantErr  []bool
-		wantMeta VRAM
+		wantMeta *VRAM
 	}{
 		{
 			"single allocation",
@@ -37,7 +37,7 @@ func TestVRAM_Alloc(t *testing.T) {
 				Offset: 0,
 			}},
 			[]bool{false, false, false},
-			VRAM{
+			&VRAM{
 				meta:     []int{used | 3, 0, 0, 2, 0},
 				memory:   memBlock[:20],
 				cellSize: 4,
@@ -68,7 +68,7 @@ func TestVRAM_Alloc(t *testing.T) {
 				},
 			},
 			[]bool{false, false, false, false},
-			VRAM{
+			&VRAM{
 				meta:     []int{used | 3, 0, 0, used | 2, 0, used | 3, 0, 0, used | 1, 1},
 				memory:   memBlock,
 				cellSize: 10,
@@ -92,7 +92,7 @@ func TestVRAM_Alloc(t *testing.T) {
 				nil,
 			},
 			[]bool{false, false, true},
-			VRAM{
+			&VRAM{
 				meta:     []int{used | 5, 0, 0, 0, 0, used | 4, 0, 0, 0, 1},
 				memory:   memBlock[:20],
 				cellSize: 2,

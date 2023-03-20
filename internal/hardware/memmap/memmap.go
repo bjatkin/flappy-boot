@@ -22,6 +22,9 @@ const (
 
 	// PaletteOffset is the size of a 16 color palette in 16 bit chunks
 	PaletteOffset = 16
+
+	// TileOffset4 is the size of a 4 bit per pixel tile in uint16's
+	TileOffset4 = 16
 )
 
 const (

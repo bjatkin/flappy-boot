@@ -28,7 +28,7 @@ func (p *Pal) Alloc() (*PMem, error) {
 		if !p.meta[i] {
 			p.meta[i] = true
 			return &PMem{
-				Memory: p.memory[i*8 : (i+1)*8],
+				Memory: p.memory[i*memmap.PaletteOffset : (i+1)*memmap.PaletteOffset],
 				Offset: i,
 			}, nil
 		}
