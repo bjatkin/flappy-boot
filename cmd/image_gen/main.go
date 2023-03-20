@@ -10,7 +10,7 @@ import (
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/config"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/exit"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/generate"
 )
 

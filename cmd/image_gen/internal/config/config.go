@@ -6,9 +6,10 @@ import (
 	"image/color"
 	"os"
 
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
 	"gopkg.in/yaml.v2"
+
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/tile"
 )
 
 // Config is a config file for the command

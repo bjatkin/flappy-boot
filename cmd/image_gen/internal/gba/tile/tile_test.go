@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbaimg"
 	"github.com/go-test/deep"
 )
 
@@ -32,19 +32,8 @@ func newImage(width, height int, pixels []color.Color) image.Image {
 	return img
 }
 
-func newImage16(width, height int, pixels []color.Color) image.Image {
-	img := gbaimg.NewRGB16(image.Rect(0, 0, width, height))
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			img.Set(x, y, pixels[y*width+x])
-		}
-	}
-
-	return img
-}
-
 func TestNewMeta(t *testing.T) {
-	img8x8 := newImage16(8, 8, []color.Color{
+	img8x8 := newImage(8, 8, []color.Color{
 		red, white, red, white, red, white, red, white,
 		white, red, white, red, white, red, white, red,
 		red, white, red, white, red, white, red, white,
@@ -55,7 +44,7 @@ func TestNewMeta(t *testing.T) {
 		white, red, white, red, white, red, white, red,
 	})
 
-	img16x16 := newImage16(16, 16, []color.Color{
+	img16x16 := newImage(16, 16, []color.Color{
 		red, white, red, white, red, white, red, white, white, blue, white, blue, white, blue, white, blue,
 		white, red, white, red, white, red, white, red, blue, white, blue, white, blue, white, blue, white,
 		red, white, red, white, red, white, red, white, white, blue, white, blue, white, blue, white, blue,
@@ -178,7 +167,7 @@ func TestNewMeta(t *testing.T) {
 func TestUnique(t *testing.T) {
 	pal := color.Palette{red, green, blue, white, black}
 
-	imgA := newImage16(16, 16, []color.Color{
+	imgA := newImage(16, 16, []color.Color{
 		red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white,
 		green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red,
 		blue, white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green,
@@ -197,7 +186,7 @@ func TestUnique(t *testing.T) {
 		white, red, green, blue, white, red, green, blue, white, red, green, blue, white, red, green, blue,
 	})
 
-	imgB := newImage16(16, 16, []color.Color{
+	imgB := newImage(16, 16, []color.Color{
 		red, white, black, white, black, white, black, white, black, white, black, white, black, white, black, white,
 		white, black, white, black, white, black, white, black, white, black, white, black, white, black, white, black,
 		black, white, black, white, black, white, black, white, black, white, black, white, black, white, black, white,
@@ -255,7 +244,7 @@ func TestUnique(t *testing.T) {
 }
 
 func TestMeta_Hash(t *testing.T) {
-	img := newImage16(8, 8, []color.Color{
+	img := newImage(8, 8, []color.Color{
 		white, blue, white, blue, red, green, red, green,
 		blue, white, blue, white, green, red, green, red,
 		white, blue, white, blue, red, green, red, green,
@@ -325,7 +314,7 @@ func TestMeta_Hash(t *testing.T) {
 }
 
 func TestMeta_Bytes(t *testing.T) {
-	img := newImage16(8, 8, []color.Color{
+	img := newImage(8, 8, []color.Color{
 		white, blue, white, blue, red, green, red, green,
 		blue, white, blue, white, green, red, green, red,
 		white, blue, white, blue, red, green, red, green,
@@ -440,7 +429,7 @@ func TestMeta_IsTransparent(t *testing.T) {
 			"transparent tile",
 			fields{
 				Size: S8x8,
-				Img: newImage16(8, 8, []color.Color{
+				Img: newImage(8, 8, []color.Color{
 					white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white,
@@ -458,7 +447,7 @@ func TestMeta_IsTransparent(t *testing.T) {
 			"sprite tile",
 			fields{
 				Size: S16x8,
-				Img: newImage16(16, 8, []color.Color{
+				Img: newImage(16, 8, []color.Color{
 					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
@@ -477,7 +466,7 @@ func TestMeta_IsTransparent(t *testing.T) {
 			"colored tile",
 			fields{
 				Size: S8x8,
-				Img: newImage16(8, 8, []color.Color{
+				Img: newImage(8, 8, []color.Color{
 					white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white,
 					white, white, white, white, white, white, white, white,

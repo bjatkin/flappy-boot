@@ -1,16 +1,15 @@
-package gb4
+package raw
 
 import (
 	"errors"
 	"fmt"
 	"image"
 	"image/color"
-	"io"
 
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/byteconv"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/gbacol"
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gbaimg/tile"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbaimg"
+	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/tile"
 )
 
 // NewPal16 converts an image into a valid color.Palette.
@@ -38,80 +37,8 @@ func NewPal16(m image.Image, transparent *gbacol.RGB15) (color.Palette, error) {
 	return pal, nil
 }
 
-// Options allows the behavior of the Encode function to be adjusted
-// the two options are TileSize, which can be used to adjust the size of tiles in the image
-// and Transparent which can be used to explicitly set the transparent color in the color palette
-type Options struct {
-	TileSize    *tile.Size
-	TileSet     []*tile.Meta
-	Transparent *gbacol.RGB15
-	IncludeMap  bool
-}
-
-// Encode writes the image as a valid 4 bit rgb image (.gb4) to the provided writer
-// the provided image has a maximum width and height of 256*TileSize pixels
-// Any larger and the function will return an error
-func Encode(w io.Writer, m image.Image, o *Options) error {
-	dx, dy := m.Bounds().Dx(), m.Bounds().Dy()
-	var raw []byte
-
-	size := tile.S8x8
-	if o != nil {
-		size = *o.TileSize
-	}
-
-	includeMap := o.IncludeMap
-	if includeMap && size != tile.S8x8 {
-		return fmt.Errorf("tile size must be 8x8 if a tile map is included")
-	}
-
-	pal, err := NewPal16(m, o.Transparent)
-	if err != nil {
-		return err
-	}
-
-	tiles := tile.NewMetaSlice(m, pal, size)
-	uniqueTiles := o.TileSet
-	if len(o.TileSet) == 0 {
-		// if there is no pre-set tileset then get all the unique tiles
-		uniqueTiles = tile.Unique(tiles)
-	}
-
-	raw = append(raw, generateHeader(size, dx, dy, len(uniqueTiles))...)
-	raw = append(raw, RawPalette(pal)...)
-	raw = append(raw, RawTiles(uniqueTiles)...)
-
-	if includeMap {
-		mapData, err := RawMapData(tiles, uniqueTiles, dx, dy)
-		if err != nil {
-			return err
-		}
-
-		raw = append(raw, mapData...)
-	}
-
-	_, err = w.Write(raw)
-	return err
-}
-
-// generateHeader generates raw header data for a .gb4 image
-func generateHeader(size tile.Size, dx, dy, tileCount int) []byte {
-	var header []byte
-	header = append(header, size.Bytes()...)
-
-	// preserve alignment since a tile size is only 2 bytes in length
-	header = append(header, 0, 0)
-
-	// dx must be padded to take into account the full width of a screen block
-	header = append(header, byteconv.Itoa(uint32(paddedPitch(dx)*8))...)
-	header = append(header, byteconv.Itoa(uint32(dy))...)
-	header = append(header, byteconv.Itoa(uint32(tileCount))...)
-
-	return header
-}
-
-// RawPalette converts a color.Palette into a byte slices for a .gb4 image
-func RawPalette(pal color.Palette) []byte {
+// Palette converts a color.Palette into a byte slices for a .gb4 image
+func Palette(pal color.Palette) []byte {
 	var raw []byte
 	for _, p := range pal {
 		p16 := gbaimg.RGB15Model.Convert(p).(gbacol.RGB15)
@@ -120,8 +47,8 @@ func RawPalette(pal color.Palette) []byte {
 	return raw
 }
 
-// rawTiles converts a slice of tile.Meta tiles to a raw byte slice for a .gb4 image
-func RawTiles(tiles []*tile.Meta) []byte {
+// Tiles converts a slice of tile.Meta tiles to a raw byte slice for a .gb4 image
+func Tiles(tiles []*tile.Meta) []byte {
 	var raw []byte
 	for _, tile := range tiles {
 		raw = append(raw, tile.Bytes()...)
@@ -129,9 +56,9 @@ func RawTiles(tiles []*tile.Meta) []byte {
 	return raw
 }
 
-// RawMapData converts map data for a .gb4 image into a raw byte slice.
+// MapData converts map data for a .gb4 image into a raw byte slice.
 // tiles are mapped using 32x32 tile screen base blocks.
-func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byte, error) {
+func MapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byte, error) {
 	// pitch is the number of tiles per horizontal row
 	pitch := paddedPitch(dx)
 	tileDy := dy / 8
