@@ -29,7 +29,8 @@ type TileMap struct {
 
 // ScreenBaseBlock returns the screen base block for the tile map
 func (t *TileMap) ScreenBaseBlock() memmap.BGControll {
-	return memmap.BGControll(t.alloc.Offset)
+	// the 16 offset here is because the bottom half of background VRAM is reserved for tile maps
+	return memmap.BGControll(t.alloc.Offset+16)<<display.SBBShift
 }
 
 // SetTile updates the tile map with the new tile at the coordinates x,y
@@ -80,12 +81,18 @@ func (t *TileMap) Load(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) err
 		}
 
 		for i := range t.tiles {
+			if t.tiles[0] == 0 {
+				t.alloc.Memory[i] = 0
+			}
 			t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 		}
 		t.dirtyTiles = []int{}
 	}
 
 	for _, i := range t.dirtyTiles {
+		if t.tiles[0] == 0 {
+			t.alloc.Memory[i] = 0
+		}
 		t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 	}
 	t.dirtyTiles = []int{}

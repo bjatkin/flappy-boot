@@ -143,6 +143,13 @@ func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byt
 	hFlip := uint16(0x0400)
 
 	for i, tile := range tiles {
+		if tile.IsTransparent() {
+			index := getIndex(i, dx, dy, pitch)
+			raw[index] = 0
+			raw[index+1] = 0
+			continue
+		}
+
 		for ii, match := range uniqueTiles {
 			var found bool
 			var add uint16
@@ -165,10 +172,9 @@ func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byt
 			}
 
 			if found {
-				tileX, tileY := i%(dx/8), i/(dx/8)
-				screenBaseBlock := (tileY/32)*(pitch/32) + (tileX / 32)
-				index := (screenBaseBlock*1024 + (tileY%32)*32 + tileX%32) * 2
-				tBytes := byteconv.Itoa(add)
+				index := getIndex(i, dx, dy, pitch)
+				// +1 here because the 0th tile is reserved as a transparency tile
+				tBytes := byteconv.Itoa(add + 1)
 
 				raw[index] = tBytes[0]
 				raw[index+1] = tBytes[1]
@@ -182,6 +188,13 @@ func RawMapData(tiles []*tile.Meta, uniqueTiles []*tile.Meta, dx, dy int) ([]byt
 	}
 
 	return raw, nil
+}
+
+// getIndex calculates the index in the buffer where the tile should be set
+func getIndex(i, dx, dy, pitch int) int {
+	tileX, tileY := i%(dx/8), i/(dx/8)
+	screenBaseBlock := (tileY/32)*(pitch/32) + (tileX / 32)
+	return (screenBaseBlock*1024 + (tileY%32)*32 + tileX%32) * 2
 }
 
 // paddedPitch returns the pitch of the image in tiles.

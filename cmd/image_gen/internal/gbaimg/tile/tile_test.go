@@ -423,3 +423,86 @@ func hexDiff(a, b []byte) string {
 		"[ "+strings.Join(bStr, ", ")+" ]",
 	)
 }
+
+func TestMeta_IsTransparent(t *testing.T) {
+	type fields struct {
+		Size  Size
+		Img   image.Image
+		Pal   color.Palette
+		Tiles []image.Image
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		want   bool
+	}{
+		{
+			"transparent tile",
+			fields{
+				Size: S8x8,
+				Img: newImage16(8, 8, []color.Color{
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+				}),
+				Pal: color.Palette{white},
+			},
+			true,
+		},
+		{
+			"sprite tile",
+			fields{
+				Size: S16x8,
+				Img: newImage16(16, 8, []color.Color{
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white, white, white, white, white, white, white, white, white,
+				}),
+				Pal: color.Palette{white},
+			},
+			false,
+		},
+		{
+			"colored tile",
+			fields{
+				Size: S8x8,
+				Img: newImage16(8, 8, []color.Color{
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, black, black, white, white, white,
+					white, white, white, black, black, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+					white, white, white, white, white, white, white, white,
+				}),
+				Pal: color.Palette{white, black},
+			},
+			false,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Meta{
+				Size:  tt.fields.Size,
+				Img:   tt.fields.Img,
+				Pal:   tt.fields.Pal,
+				Tiles: tt.fields.Tiles,
+			}
+			if got := m.IsTransparent(); got != tt.want {
+				t.Errorf("Meta.Transparent() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
