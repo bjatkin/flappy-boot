@@ -1,8 +1,11 @@
+// This is generated code. DO NOT EDIT
+
 package assets
 
 import (
-	"github.com/bjatkin/flappy_boot/internal/game"
+	"github.com/bjatkin/flappy_boot/internal/alloc"
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
+	"github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -11,8 +14,8 @@ type TileMap struct {
 	// dirtyTiles are the tiles that have changed since the tilemap was loaded into memory
 	dirtyTiles []int
 
-	// size is the size of the background
-	size memmap.BGControll
+	// Size is the size of the background
+	Size memmap.BGControll
 
 	// tiles is the tile index data for the tile map
 	tiles []memmap.VRAMValue
@@ -20,14 +23,20 @@ type TileMap struct {
 	// tileSet is the tile set pixel data for the tile map
 	tileSet *TileSet
 
-	// alloc is the allocated memory for the tile map in vram
-	alloc *game.MapAllocation
+	// alloc is the allocated memory for the tile map in VRAM
+	alloc *alloc.VMem
+}
+
+// ScreenBaseBlock returns the screen base block for the tile map
+func (t *TileMap) ScreenBaseBlock() memmap.BGControll {
+	// the 16 offset here is because the bottom half of background VRAM is reserved for tile maps
+	return memmap.BGControll(t.alloc.Offset+16)<<display.SBBShift
 }
 
 // SetTile updates the tile map with the new tile at the coordinates x,y
 func (t *TileMap) SetTile(x, y, tile int) {
 	var width int
-	switch t.size {
+	switch t.Size {
 	case display.BGSizeSmall:
 		width = 32
 	case display.BGSizeWide:
@@ -46,16 +55,16 @@ func (t *TileMap) SetTile(x, y, tile int) {
 // Load loads the tile map data into vram memory, if the tile map has already been loaded into memory
 // load will only load those tiles which have changed since the last tile load was called. Therefor it is
 // safe to call load repeatedly
-func (t *TileMap) Load(e *game.Engine) error {
+func (t *TileMap) Load(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) error {
 	// make sure the associated tile set is loaded
-	err := t.tileSet.Load(e)
+	err := t.tileSet.Load(tileAlloc, palAlloc)
 	if err != nil {
 		return err
 	}
 
 	if t.alloc == nil {
 		var screens int
-		switch t.size {
+		switch t.Size {
 		case display.BGSizeLarge:
 			screens = 4
 		case display.BGSizeTall:
@@ -66,19 +75,25 @@ func (t *TileMap) Load(e *game.Engine) error {
 			screens = 1
 		}
 
-		t.alloc, err = e.AllocBGMap(screens)
+		t.alloc, err = mapAlloc.Alloc(screens)
 		if err != nil {
 			return err
 		}
 
-		for i := range t.alloc.Memory {
-			t.alloc.Memory[i] = (t.tiles[i] + t.tileSet.alloc.Index) | t.tileSet.paletteIndex
+		for i := range t.tiles {
+			if t.tiles[0] == 0 {
+				t.alloc.Memory[i] = 0
+			}
+			t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 		}
 		t.dirtyTiles = []int{}
 	}
 
 	for _, i := range t.dirtyTiles {
-		t.alloc.Memory[i] = (t.tiles[i] + t.tileSet.alloc.Index) | t.tileSet.paletteIndex
+		if t.tiles[0] == 0 {
+			t.alloc.Memory[i] = 0
+		}
+		t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 	}
 	t.dirtyTiles = []int{}
 
@@ -86,11 +101,12 @@ func (t *TileMap) Load(e *game.Engine) error {
 }
 
 // Free frees the space that was allocated for this tile map in vram
-func (t *TileMap) Free(e *game.Engine) {
-	e.FreeBGMap(t.alloc)
-	// TODO: use reference counting so tilesets can be shared
-	t.tileSet.Free(e)
+func (t *TileMap) Free(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) {
+	mapAlloc.Free(t.alloc)
 	t.alloc = nil
+
+	// TODO: use reference counting so tilesets can be shared
+	t.tileSet.Free(tileAlloc, palAlloc)
 }
 
 // TileSet is tileset data for a background or sprite
@@ -102,27 +118,41 @@ type TileSet struct {
 	pixels []memmap.VRAMValue
 
 	// palette is the palette data for the tileset
-	palette CPalette
+	palette *Palette
 
-	// paletteIndex is the palette palette index of the tilesets in use palette
-	paletteIndex memmap.VRAMValue
+	// alloc is the allocated memory in VRAM for the tile set
+	alloc *alloc.VMem
+}
 
-	// alloc is the allocated memory in vram for the tile set
-	alloc *game.TileAllocation
+// Offset is the offset in tiles into tile memory where this tile set was loaded
+func (t *TileSet) Offset() sprite.Attr2 {
+	return sprite.Attr2(t.alloc.Offset)
+}
+
+// SprPalette is the palette number that this tileset uses
+func (t *TileSet) SprPalette() sprite.Attr2 {
+	return sprite.Attr2(t.palette.alloc.Offset)<<sprite.PalShift
+}
+
+// TilePalette is the palette number that this tileset uses
+func (t *TileSet) TilePalette() memmap.VRAMValue{
+	return memmap.VRAMValue(t.palette.alloc.Offset) << display.PaletteShift
 }
 
 // Load the tileset into vram
-func (t *TileSet) Load(e *game.Engine) error {
-	t.palette.Load(e)
+func (t *TileSet) Load(tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) error {
+	t.palette.Load(palAlloc)
 
 	if t.alloc == nil {
 		var err error
-		t.alloc, err = e.AllocBGTile(t.count)
+		t.alloc, err = tileAlloc.Alloc(t.count)
 		if err != nil {
 			return err
 		}
 
-		for i := range t.alloc.Memory {
+		// don't use copy as it may copy data one byte at a time.
+		// pixel data must be coppied 16-bits at a time or the pixels will be corrupted
+		for i := range t.pixels {
 			t.alloc.Memory[i] = t.pixels[i]
 		}
 	}
@@ -131,29 +161,32 @@ func (t *TileSet) Load(e *game.Engine) error {
 }
 
 // Free frees the space that was allocated for this tileset in vram
-func (t *TileSet) Free(e *game.Engine) {
-	e.FreeBGTile(t.alloc)
-	// TODO: use reference counting so that palettes can be shared
-	t.palette.Free(e)
+func (t *TileSet) Free(tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) {
+	tileAlloc.Free(t.alloc)
 	t.alloc = nil
+
+	// TODO: use reference counting so that palettes can be shared
+	t.palette.Free(palAlloc)
 }
 
-// CPalette is a 16 color palette
-type CPalette struct {
+// Palette is a 16 color palette
+type Palette struct {
 	colors []memmap.PaletteValue
-	alloc  *game.PalAllocation
+	alloc  *alloc.PMem
 }
 
 // Load loads the palette into the gba's palette memory
-func (p *CPalette) Load(e *game.Engine) error {
-	if p.alloc != nil {
+func (p *Palette) Load(alloc *alloc.Pal) error {
+	if p.alloc == nil {
 		var err error
-		p.alloc, err = e.AllocBGPal()
+		p.alloc, err = alloc.Alloc()
 		if err != nil {
 			return err
 		}
 
-		for i := range p.alloc.Memory {
+		// don't use copy as it may copy data one byte at a time.
+		// color data must be coppied 16-bits at a time or the value will be corrupted
+		for i := range p.colors {
 			p.alloc.Memory[i] = p.colors[i]
 		}
 	}
@@ -162,7 +195,7 @@ func (p *CPalette) Load(e *game.Engine) error {
 }
 
 // Free frees the space that was allocated for this palette in palette memory
-func (p *CPalette) Free(e *game.Engine) {
-	e.FreeBGPall(p.alloc)
+func (p *Palette) Free(palAlloc *alloc.Pal) {
+	palAlloc.Free(p.alloc)
 	p.alloc = nil
 }
