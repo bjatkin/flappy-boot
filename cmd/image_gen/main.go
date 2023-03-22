@@ -96,8 +96,7 @@ func main() {
 	}
 
 	for _, tileSet := range tileSets {
-		// TODO: how should I handle tile sets used for sprites?
-		if tileSet.Shared <= 1 {
+		if tileSet.Shared == 1 {
 			continue
 		}
 		// this is a shared tile set

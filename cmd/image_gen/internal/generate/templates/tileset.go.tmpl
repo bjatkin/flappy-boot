@@ -16,13 +16,13 @@ var {{private .Name}}TileSet []byte
 var {{public .Name}}TileSet = &TileSet{
     count: {{.TileCount}},
     pixels: unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap)),
+        (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileSet[0])),
         {{.Length}},
     ),
 {{if eq .Palette.Shared 1}}
-    palette: CPalette{
+    palette: &Palette{
         colors: unsafe.Slice(
-            (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}TileMap[{{.Bytes}}])),
+            (*memmap.PaletteValue)(unsafe.Pointer(&{{private .Name}}TileSet[{{.Bytes}}])),
             16,
         ),
     },

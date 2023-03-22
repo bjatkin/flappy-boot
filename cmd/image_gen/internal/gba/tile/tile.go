@@ -13,6 +13,8 @@ import (
 	"golang.org/x/exp/maps"
 )
 
+// TODO: it would be nice to be able to auto-generate a lot of this code
+
 // TileSize represents a valid GBA tile size
 type Size uint16
 
@@ -95,6 +97,38 @@ func (s Size) Point() image.Point {
 		return image.Point{X: 32, Y: 64}
 	default:
 		return image.Point{X: 8, Y: 8}
+	}
+}
+
+// Tiles returns the number of 8x8 tiles the make up a tile of this size
+func (s Size) Tiles() int {
+	switch s {
+	case S8x8:
+		return 1
+	case S8x16:
+		return 2
+	case S16x8:
+		return 2
+	case S16x16:
+		return 4
+	case S32x8:
+		return 4
+	case S8x32:
+		return 4
+	case S32x32:
+		return 16
+	case S32x16:
+		return 8
+	case S16x32:
+		return 8
+	case S64x64:
+		return 64
+	case S64x32:
+		return 32
+	case S32x64:
+		return 32
+	default:
+		return 1
 	}
 }
 
