@@ -13,6 +13,7 @@ import (
 //go:embed sky.tm4
 var skyTileMap []byte
 
+// SkyTileMap is the furthest background tile map, it contains only the sky
 var SkyTileMap = &TileMap{
     Size:    display.BGSizeWide,
     tiles:   unsafe.Slice(

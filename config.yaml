@@ -4,13 +4,19 @@ TileSets:
   - Name: player
     File: assets/player.png
     Size: "16x16"
+    Description: the sprite sheet for the player character
   - Name: pillars
     Size: "8x8"
     File: assets/pillar_ts.png
+    Description: |
+      the tile set for the pillars background, it contains tiles that are not in the default tile map
+      which is why it is defined seperately here
 TileMaps:
   - Name: pillars
     File: assets/pillar_tm.png
     TileSet: pillars
+    Description: the tile map for the pillars background. It includes both the pillars and grass tiles
   - Name: sky
     File: assets/sky_tm.png
     Transparent: "#FF00FF"
+    Description: the furthest background tile map, it contains only the sky

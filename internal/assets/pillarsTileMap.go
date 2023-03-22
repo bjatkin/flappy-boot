@@ -13,6 +13,7 @@ import (
 //go:embed pillars.tm4
 var pillarsTileMap []byte
 
+// PillarsTileMap is the tile map for the pillars background. It includes both the pillars and grass tiles
 var PillarsTileMap = &TileMap{
     Size:    display.BGSizeWide,
     tiles:   unsafe.Slice(
