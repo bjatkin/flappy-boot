@@ -26,22 +26,25 @@ type Palette struct {
 	Name        string `yaml:"Name"`
 	File        string `yaml:"File"`
 	Description string `yaml:"Description"`
+	Transparent string `yaml:"Transparent"`
 }
 
 // TileSet is a named tile set
 type TileSet struct {
-	Name    string `yaml:"Name"`
-	File    string `yaml:"File"`
-	Palette string `yaml:"Palette"`
-	Size    string `yaml:"Size"`
+	Name        string `yaml:"Name"`
+	File        string `yaml:"File"`
+	Palette     string `yaml:"Palette"`
+	Size        string `yaml:"Size"`
+	Transparent string `yaml:"Transparent"`
 }
 
 // TileMap is a named tile map
 type TileMap struct {
-	Name    string `yaml:"Name"`
-	File    string `yaml:"File"`
-	TileSet string `yaml:"TileSet"`
-	Palette string `yaml:"Palette"`
+	Name        string `yaml:"Name"`
+	File        string `yaml:"File"`
+	TileSet     string `yaml:"TileSet"`
+	Palette     string `yaml:"Palette"`
+	Transparent string `yaml:"Transparent"`
 }
 
 // NewConfigFromFile reads in the yaml file at the provided file location and then marshalls it into a new config struct
@@ -73,6 +76,11 @@ func (c *Config) Validate() error {
 	palettes := make(map[string]Palette)
 	for _, pal := range c.Palettes {
 		palettes[pal.Name] = pal
+
+		err := validateColor(pal.Transparent)
+		if err != nil {
+			return fmt.Errorf("invalid palette color %s | %w", pal.Transparent, err)
+		}
 	}
 
 	tileSets := make(map[string]TileSet)
@@ -82,6 +90,16 @@ func (c *Config) Validate() error {
 		if err != nil {
 			return err
 		}
+
+		if tileSet.Palette != "" && tileSet.Transparent != "" {
+			return fmt.Errorf("can not set transparent color when palette %s is set", tileSet.Palette)
+		}
+
+		err = validateColor(tileSet.Transparent)
+		if err != nil {
+			return err
+		}
+
 		if tileSet.Palette == "" {
 			continue
 		}
@@ -98,6 +116,15 @@ func (c *Config) Validate() error {
 
 		if tileMap.TileSet != "" && tileMap.Palette != "" {
 			return fmt.Errorf("tile set %s and palette %s can not both be set", tileMap.TileSet, tileMap.Palette)
+		}
+
+		if tileMap.TileSet != "" && tileMap.Transparent != "" {
+			return fmt.Errorf("can not set transparent color when tile set %s is set", tileMap.TileSet)
+		}
+
+		err := validateColor(tileMap.Transparent)
+		if err != nil {
+			return fmt.Errorf("could not validate transparent color %s | %w", tileMap.Transparent, err)
 		}
 
 		if tileMap.TileSet != "" {
@@ -118,11 +145,20 @@ func (c *Config) Validate() error {
 		}
 	}
 
-	if c.SetTransparent == "" {
+	err := validateColor(c.SetTransparent)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateColor(hex string) error {
+	if hex == "" {
 		return nil
 	}
 
-	_, err := ParseHexColor(c.SetTransparent)
+	_, err := ParseHexColor(hex)
 	if err != nil {
 		return err
 	}
@@ -131,27 +167,28 @@ func (c *Config) Validate() error {
 }
 
 // ParseHexColor parses a hex color into a valid gbacol.RGB15 color
-func ParseHexColor(s string) (gbacol.RGB15, error) {
+func ParseHexColor(hex string) (*gbacol.RGB15, error) {
 	c := color.RGBA{A: 0xFF}
-	switch len(s) {
+	switch len(hex) {
 	case 7:
-		_, err := fmt.Sscanf(s, "#%02x%02x%02x", &c.R, &c.G, &c.B)
+		_, err := fmt.Sscanf(hex, "#%02x%02x%02x", &c.R, &c.G, &c.B)
 		if err != nil {
-			return 0, fmt.Errorf("invaid color %s", err)
+			return nil, fmt.Errorf("invaid color %s", err)
 		}
 
 	case 4:
-		_, err := fmt.Sscanf(s, "#%1x%1x%1x", &c.R, &c.G, &c.B)
+		_, err := fmt.Sscanf(hex, "#%1x%1x%1x", &c.R, &c.G, &c.B)
 		if err != nil {
-			return 0, fmt.Errorf("invalid color %s", err)
+			return nil, fmt.Errorf("invalid color %s", err)
 		}
 		// Double the hex digits:
-		c.R *= 17
-		c.G *= 17
-		c.B *= 17
+		c.R *= 0x11
+		c.G *= 0x11
+		c.B *= 0x11
 	default:
-		return 0, fmt.Errorf("invalid color len %d", len(s))
+		return nil, fmt.Errorf("invalid color len %d", len(hex))
 	}
 
-	return gbacol.NewRGB15(c), nil
+	ret := gbacol.NewRGB15(c)
+	return &ret, nil
 }

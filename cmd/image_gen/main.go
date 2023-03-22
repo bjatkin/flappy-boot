@@ -44,7 +44,7 @@ func main() {
 			exit.Error(exit.InvalidConfig, fmt.Errorf("%s is not a valid hex color %w", cfg.SetTransparent, err))
 			return
 		}
-		setTransparent = &tmp
+		setTransparent = tmp
 	}
 
 	palettes := make(map[string]*generate.PaletteData)
