@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
+	"github.com/bjatkin/flappy_boot/internal/fix"
 	"github.com/bjatkin/flappy_boot/internal/game"
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 )
@@ -13,6 +14,7 @@ func main() {
 
 type Test struct {
 	sky, pillars *game.Background
+	player       *game.Sprite
 }
 
 func (t *Test) Init(e *game.Engine) error {
@@ -24,6 +26,14 @@ func (t *Test) Init(e *game.Engine) error {
 
 	t.sky = e.NewBackground(assets.SkyTileMap, hw_display.Priority3)
 	err = t.sky.Add()
+	if err != nil {
+		return err
+	}
+
+	t.player = e.NewSprite(assets.PlayerTileSet)
+	t.player.X = fix.New(20, 0)
+	t.player.Y = fix.New(40, 0)
+	err = t.player.Add()
 	if err != nil {
 		return err
 	}
