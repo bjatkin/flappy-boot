@@ -35,6 +35,7 @@ type TileSet struct {
 	File        string `yaml:"File"`
 	Palette     string `yaml:"Palette"`
 	Size        string `yaml:"Size"`
+	Description string `yaml:"Description"`
 	Transparent string `yaml:"Transparent"`
 }
 
@@ -44,6 +45,7 @@ type TileMap struct {
 	File        string `yaml:"File"`
 	TileSet     string `yaml:"TileSet"`
 	Palette     string `yaml:"Palette"`
+	Description string `yaml:"Description"`
 	Transparent string `yaml:"Transparent"`
 }
 

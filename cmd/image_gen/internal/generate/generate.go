@@ -84,14 +84,15 @@ func (t *PaletteData) Go() ([]byte, error) {
 
 // TileSetData contains metadata for a specific tile set
 type TileSetData struct {
-	Name      string
-	Tiles     []*tile.Meta
-	TileCount int
-	Length    int
-	Bytes     int
-	Palette   *PaletteData
-	Size      tile.Size
-	Shared    int
+	Name        string
+	Tiles       []*tile.Meta
+	TileCount   int
+	Length      int
+	Bytes       int
+	Palette     *PaletteData
+	Size        tile.Size
+	Description string
+	Shared      int
 }
 
 // NewTileSetData creates TileSetData from tileSet configuration and a map of PaletteData
@@ -134,13 +135,14 @@ func NewTileSetData(tileSet config.TileSet, setTransparent *gbacol.RGB15, palett
 	uniqueTiles := tile.Unique(tiles)
 
 	return &TileSetData{
-		Name:      tileSet.Name,
-		Tiles:     uniqueTiles,
-		TileCount: len(uniqueTiles),
-		Length:    len(uniqueTiles) * 16,
-		Bytes:     len(uniqueTiles) * 32,
-		Palette:   pal,
-		Size:      size,
+		Name:        tileSet.Name,
+		Tiles:       uniqueTiles,
+		TileCount:   len(uniqueTiles) * size.Tiles(),
+		Length:      len(uniqueTiles) * 16 * size.Tiles(),
+		Bytes:       len(uniqueTiles) * 32 * size.Tiles(),
+		Palette:     pal,
+		Description: tileSet.Description,
+		Size:        size,
 	}, nil
 }
 
@@ -175,13 +177,14 @@ func (t *TileSetData) Go() ([]byte, error) {
 
 // TileMapData contains metadata for a specific tile map
 type TileMapData struct {
-	Name      string
-	Width     int
-	Height    int
-	Tiles     []*tile.Meta
-	TileCount int
-	TileSet   *TileSetData
-	Bytes     int
+	Name        string
+	Width       int
+	Height      int
+	Tiles       []*tile.Meta
+	TileCount   int
+	TileSet     *TileSetData
+	Bytes       int
+	Description string
 }
 
 // BGSize returns the correct display.BGSize constant that corresponds to the given width and height
@@ -251,13 +254,14 @@ func NewTileMapData(tileMap config.TileMap, setTransparent *gbacol.RGB15, tileSe
 	tiles := tile.NewMetaSlice(img, tileSet.Palette.Palette, tile.S8x8)
 
 	return &TileMapData{
-		Name:      tileMap.Name,
-		Width:     img.Bounds().Dx(),
-		Height:    img.Bounds().Dy(),
-		Tiles:     tiles,
-		TileCount: len(tiles),
-		TileSet:   tileSet,
-		Bytes:     len(tiles) * 2,
+		Name:        tileMap.Name,
+		Width:       img.Bounds().Dx(),
+		Height:      img.Bounds().Dy(),
+		Tiles:       tiles,
+		TileCount:   len(tiles),
+		TileSet:     tileSet,
+		Bytes:       len(tiles) * 2,
+		Description: tileMap.Description,
 	}, nil
 }
 

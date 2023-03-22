@@ -13,6 +13,7 @@ import (
 //go:embed {{private .Name}}.tm4
 var {{private .Name}}TileMap []byte
 
+// {{public .Name}}TileMap is {{.Description}}
 var {{public .Name}}TileMap = &TileMap{
     Size:    {{.BGSize .Width .Height}},
     tiles:   unsafe.Slice(
