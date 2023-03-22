@@ -206,9 +206,9 @@ func (m *Meta) IsTransparent() bool {
 	}
 
 	var hasColor bool
-	transparent := gbacol.NewRGB15(m.Pal[0])
+	transparent := gbaimg.RGB15Model.Convert(m.Pal[0])
 	gbaimg.Walk(m.Img, func(x, y int) {
-		if gbacol.NewRGB15(m.Img.At(x, y)) != transparent {
+		if gbaimg.RGB15Model.Convert(m.Img.At(x, y)) != transparent {
 			hasColor = true
 		}
 	})

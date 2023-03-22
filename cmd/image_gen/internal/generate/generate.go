@@ -41,7 +41,15 @@ func NewPaletteData(palette config.Palette, setTransparent *gbacol.RGB15) (*Pale
 		return nil, fmt.Errorf("failed to decode image file %s | %w", palette.File, err)
 	}
 
-	pal, err := raw.NewPal16(img, nil)
+	var transparent *gbacol.RGB15
+	if palette.Transparent != "" {
+		transparent, err = config.ParseHexColor(palette.Transparent)
+		if err != nil {
+			return nil, fmt.Errorf("invalid transparent hex color %w", err)
+		}
+	}
+
+	pal, err := raw.NewPal16(img, transparent)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create a new 16 color palette %w", err)
 	}
@@ -106,7 +114,9 @@ func NewTileSetData(tileSet config.TileSet, setTransparent *gbacol.RGB15, palett
 	var pal *PaletteData
 	if tileSet.Palette == "" {
 		pal, err = NewPaletteData(config.Palette{
-			File: tileSet.File,
+			Name:        tileSet.Name,
+			File:        tileSet.File,
+			Transparent: tileSet.Transparent,
 		}, setTransparent)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create valid palette from image %s | %w", tileSet.File, err)
@@ -206,19 +216,21 @@ func NewTileMapData(tileMap config.TileMap, setTransparent *gbacol.RGB15, tileSe
 	// TODO: this section of code doesn't actually support using a custom palette yet. I should add that in
 	case tileMap.TileSet == "" && tileMap.Palette == "":
 		tileSet, err = NewTileSetData(config.TileSet{
-			Name: tileMap.Name,
-			File: tileMap.File,
-			Size: "8x8",
+			Name:        tileMap.Name,
+			File:        tileMap.File,
+			Size:        "8x8",
+			Transparent: tileMap.Transparent,
 		}, setTransparent, palettes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tile set %w", err)
 		}
 	case tileMap.TileSet == "":
 		tileSet, err = NewTileSetData(config.TileSet{
-			Name:    tileMap.Name,
-			File:    tileMap.File,
-			Palette: tileMap.Palette,
-			Size:    "8x8",
+			Name:        tileMap.Name,
+			File:        tileMap.File,
+			Palette:     tileMap.Palette,
+			Size:        "8x8",
+			Transparent: tileMap.Transparent,
 		}, setTransparent, palettes)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create tile set %w", err)

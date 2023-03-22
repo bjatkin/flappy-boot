@@ -13,3 +13,4 @@ TileMaps:
     TileSet: pillars
   - Name: sky
     File: assets/sky_tm.png
+    Transparent: "#FF00FF"
