@@ -87,6 +87,11 @@ func (b *Background) Scroll(dx, dy int) {
 	b.vScroll += uint16(dy)
 }
 
+func (b *Background) SetScroll(x, y int) {
+	b.hScroll = uint16(x)
+	b.vScroll = uint16(y)
+}
+
 func (b *Background) SetTile(x, y, tile int) {
 	b.tileMap.SetTile(x, y, tile)
 }

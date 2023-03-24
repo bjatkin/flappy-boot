@@ -35,18 +35,21 @@ func (t *TileMap) ScreenBaseBlock() memmap.BGControll {
 
 // SetTile updates the tile map with the new tile at the coordinates x,y
 func (t *TileMap) SetTile(x, y, tile int) {
-	var width int
+	var screen int
 	switch t.Size {
 	case display.BGSizeSmall:
-		width = 32
+		screen = 0
 	case display.BGSizeWide:
-		width = 64
+		screen = (x/32)*1024
 	case display.BGSizeTall:
-		width = 32
+		screen = (y/32)*1024
 	case display.BGSizeLarge:
-		width = 32
+		screen = ((x/32)+(y/16))*1024
 	}
-	i := y*width + x
+
+	x%=32
+	y%=32
+	i := screen+y*32+x
 	t.tiles[i] = memmap.VRAMValue(tile)
 
 	t.dirtyTiles = append(t.dirtyTiles, i)
