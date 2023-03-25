@@ -9,8 +9,7 @@ import (
 type Background struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
-
-	loaded bool
+	added  bool
 
 	tileMap *assets.TileMap
 
@@ -31,16 +30,10 @@ func (e *Engine) NewBackground(tilemap *assets.TileMap, priority memmap.BGContro
 // Load loads a backgrounds data into memory
 // if there is not enough free VRAM to accommodate this background an error will be returned
 func (b *Background) Load() error {
-	if b.loaded {
-		return nil
-	}
-
 	err := b.tileMap.Load(b.engine.mapAlloc, b.engine.bgTileAlloc, b.engine.bgPalAlloc)
 	if err != nil {
 		return err
 	}
-
-	b.loaded = true
 
 	return nil
 }
@@ -55,10 +48,16 @@ func (b *Background) Add() error {
 		return err
 	}
 
+	if b.added {
+		return nil
+	}
+
 	err = b.engine.addBackground(b)
 	if err != nil {
 		return err
 	}
+
+	b.added = true
 
 	return nil
 }
@@ -67,11 +66,11 @@ func (b *Background) Add() error {
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (b *Background) Remove() {
 	b.engine.removeBackground(b)
+	b.added = false
 }
 
 func (b *Background) Unload() {
 	b.tileMap.Free(b.engine.mapAlloc, b.engine.bgTileAlloc, b.engine.sprPalAlloc)
-	b.loaded = false
 }
 
 // controll returns the correct value for the background controll registers for the given background
