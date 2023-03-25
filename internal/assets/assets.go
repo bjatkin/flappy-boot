@@ -84,8 +84,9 @@ func (t *TileMap) Load(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) err
 		}
 
 		for i := range t.tiles {
-			if t.tiles[0] == 0 {
+			if t.tiles[i] == 0 {
 				t.alloc.Memory[i] = 0
+				continue
 			}
 			t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 		}
@@ -93,8 +94,9 @@ func (t *TileMap) Load(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) err
 	}
 
 	for _, i := range t.dirtyTiles {
-		if t.tiles[0] == 0 {
+		if t.tiles[i] == 0 {
 			t.alloc.Memory[i] = 0
+			continue
 		}
 		t.alloc.Memory[i] = (t.tiles[i] + memmap.VRAMValue(t.tileSet.alloc.Offset)) | t.tileSet.TilePalette()
 	}

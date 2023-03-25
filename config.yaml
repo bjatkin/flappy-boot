@@ -20,3 +20,6 @@ TileMaps:
     File: assets/sky_tm.png
     Transparent: "#FF00FF"
     Description: the furthest background tile map, it contains only the sky
+  - Name: clouds
+    File: assets/clouds_tm.png
+    Description: the background clouds
