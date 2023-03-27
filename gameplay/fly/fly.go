@@ -13,12 +13,17 @@ import (
 
 type Stage struct {
 	sky         *game.Background
+	clouds      *game.Background
 	pillarBG    *pillarBG
 	player      *player
+	counter     *counter
 	gravity     fix.P8
 	ground      fix.P8
 	scrollSpeed fix.P8
-	skyScroll   fix.P8
+
+	// TODO: move these into a background type?
+	skyScroll    fix.P8
+	cloudsScroll fix.P8
 }
 
 func NewStage() *Stage {
@@ -30,7 +35,7 @@ func NewStage() *Stage {
 }
 
 func (s *Stage) Init(e *game.Engine) error {
-	s.pillarBG = newPillarBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority2))
+	s.pillarBG = newPillarBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority1))
 	err := s.pillarBG.Show()
 	if err != nil {
 		return err
@@ -42,11 +47,19 @@ func (s *Stage) Init(e *game.Engine) error {
 		return err
 	}
 
+	s.clouds = e.NewBackground(assets.CloudsTileMap, display.Priority2)
+	err = s.clouds.Add()
+	if err != nil {
+		return err
+	}
+
 	s.player = newPlayer(fix.One*40, fix.One*62, e.NewSprite(assets.PlayerTileSet))
 	err = s.player.Show()
 	if err != nil {
 		return err
 	}
+
+	s.counter = newCounter(97, 24, e)
 
 	return nil
 }
@@ -54,16 +67,23 @@ func (s *Stage) Init(e *game.Engine) error {
 func (s *Stage) Update(e *game.Engine, frame int) error {
 	var jump fix.P8
 	if key.JustPressed(key.A) {
-		s.player.started = true
-		s.pillarBG.started = true
+		s.pillarBG.start()
+		s.player.start()
 		jump = -fix.One * 3
 	}
 
 	s.player.Update(s.gravity, jump, s.ground)
 
-	s.skyScroll += s.scrollSpeed / 2
+	s.skyScroll += s.scrollSpeed / 3
 	s.sky.SetScroll(s.skyScroll.Int(), 0)
 	err := s.sky.Add()
+	if err != nil {
+		return err
+	}
+
+	s.cloudsScroll += s.scrollSpeed / 2
+	s.clouds.SetScroll(s.cloudsScroll.Int(), 20)
+	err = s.clouds.Add()
 	if err != nil {
 		return err
 	}
@@ -73,6 +93,12 @@ func (s *Stage) Update(e *game.Engine, frame int) error {
 	if err != nil {
 		return err
 	}
+
+	if s.pillarBG.checkPoint(s.player.Rect()) {
+		s.counter.Add()
+	}
+
+	s.counter.Draw()
 
 	if s.pillarBG.collisionCheck(s.player.Rect()) {
 		return errors.New("game over")
@@ -102,6 +128,10 @@ func newPlayer(x, y fix.P8, sprite *game.Sprite) *player {
 	p.sprite.X = x
 	p.sprite.Y = y
 	return p
+}
+
+func (p *player) start() {
+	p.started = true
 }
 
 func (p *player) Rect() rect {
@@ -166,6 +196,7 @@ type pillarBG struct {
 	pillarEvery int
 	pillars     []rect
 	gapSize     int
+	lastPoint   int
 
 	started bool
 }
@@ -173,11 +204,35 @@ type pillarBG struct {
 func newPillarBG(pillarEvery int, bg *game.Background) *pillarBG {
 	pillars := &pillarBG{
 		bg:          bg,
-		gapSize:     6,
+		gapSize:     7,
 		pillarEvery: pillarEvery,
 	}
 
 	return pillars
+}
+
+func (p *pillarBG) checkPoint(check rect) bool {
+	buffer := 4
+	for i := range p.pillars {
+		if p.pillars[i].x2 == p.lastPoint {
+			continue
+		}
+		right := p.pillars[i].x2 - p.scrollX.Int()
+		if right < check.x1+buffer {
+			p.lastPoint = p.pillars[i].x2
+			return true
+		}
+	}
+	return false
+}
+
+func (p *pillarBG) start() {
+	if p.started {
+		return
+	}
+
+	p.started = true
+	p.lastPoint = p.scrollX.Int() + p.pillarEvery
 }
 
 func (p *pillarBG) collisionCheck(check rect) bool {
@@ -201,19 +256,19 @@ func (p *pillarBG) collisionCheck(check rect) bool {
 	return false
 }
 
-func (p *pillarBG) addPillar(x, gapSize int) rect {
+func (p *pillarBG) addPillar(x int) rect {
 	start := (x % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
 
-	gap := p.rand.Intn(15 - gapSize)
+	gap := p.rand.Intn(15 - p.gapSize)
 	for i := 0; i < 18; i++ {
 		tiles := [4]int{}
 		switch {
 		case i == gap:
 			tiles = [4]int{13, 22, 11, 10}
-		case i == gap+gapSize:
+		case i == gap+p.gapSize:
 			tiles = [4]int{24, 29, 20, 21}
-		case i > gap && i < gap+gapSize:
+		case i > gap && i < gap+p.gapSize:
 			continue
 		case i == 16:
 			tiles = [4]int{2, 4, 8, 1}
@@ -228,7 +283,7 @@ func (p *pillarBG) addPillar(x, gapSize int) rect {
 		}
 	}
 
-	return rect{x1: x, y1: gap*8 + 4, x2: x + 32, y2: (gap+gapSize)*8 + 4}
+	return rect{x1: x, y1: gap*8 + 4, x2: x + 32, y2: (gap+p.gapSize)*8 + 4}
 }
 
 func (p *pillarBG) removePillar(r rect) {
@@ -259,7 +314,7 @@ func (p *pillarBG) Update(scrollSpeed fix.P8) {
 	var keep []rect
 	if p.nextPillar <= 0 {
 		x := p.scrollX.Int() + 256
-		r := p.addPillar(x, 5)
+		r := p.addPillar(x)
 		p.nextPillar = p.pillarEvery
 		keep = []rect{r}
 	}
