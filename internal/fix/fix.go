@@ -13,6 +13,11 @@ func (p P8) Int() int {
 	return int(p >> 8)
 }
 
+// Int16 converts the P8 into an int16
+func (p P8) Uint16() uint16 {
+	return uint16(p >> 8)
+}
+
 const (
 	// One is the value 1 in P8 format
 	One P8 = 0x0100

@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
+	"github.com/bjatkin/flappy_boot/internal/fix"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
@@ -14,8 +15,8 @@ type Background struct {
 	tileMap *assets.TileMap
 
 	controllReg memmap.BGControll
-	hScroll     uint16
-	vScroll     uint16
+	HScroll     fix.P8
+	VScroll     fix.P8
 }
 
 // NewBackground returns a new Background
@@ -78,17 +79,6 @@ func (b *Background) controll() memmap.BGControll {
 	return b.controllReg |
 		b.tileMap.ScreenBaseBlock() |
 		b.tileMap.Size
-}
-
-// TODO: introduce a v2 type?
-func (b *Background) Scroll(dx, dy int) {
-	b.hScroll += uint16(dx)
-	b.vScroll += uint16(dy)
-}
-
-func (b *Background) SetScroll(x, y int) {
-	b.hScroll = uint16(x)
-	b.vScroll = uint16(y)
 }
 
 func (b *Background) SetTile(x, y, tile int) {
