@@ -11,6 +11,10 @@ TileSets:
     Description: |
       the tile set for the pillars background, it contains tiles that are not in the default tile map
       which is why it is defined seperately here
+  - Name: numbers
+    Size: "16x16"
+    File: assets/numbers_large_ts.png
+    Description: a 16x16 set of digits (0-9)
 TileMaps:
   - Name: pillars
     File: assets/pillar_tm.png
