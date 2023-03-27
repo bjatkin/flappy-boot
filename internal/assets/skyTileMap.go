@@ -21,14 +21,14 @@ var SkyTileMap = &TileMap{
         2048,	
     ),
     tileSet: &TileSet{
-        count: 10,
+        count: 20,
         pixels: unsafe.Slice(
             (*memmap.VRAMValue)(unsafe.Pointer(&skyTileMap[4096])),
-            160,
+            320,
         ),
         palette: &Palette{
             colors: unsafe.Slice(
-                (*memmap.PaletteValue)(unsafe.Pointer(&skyTileMap[4416])),
+                (*memmap.PaletteValue)(unsafe.Pointer(&skyTileMap[4736])),
                 16,
             ),
         },
