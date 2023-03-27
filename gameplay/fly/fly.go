@@ -20,10 +20,6 @@ type Stage struct {
 	gravity     fix.P8
 	ground      fix.P8
 	scrollSpeed fix.P8
-
-	// TODO: move these into a background type?
-	skyScroll    fix.P8
-	cloudsScroll fix.P8
 }
 
 func NewStage() *Stage {
@@ -52,6 +48,7 @@ func (s *Stage) Init(e *game.Engine) error {
 	if err != nil {
 		return err
 	}
+	s.clouds.VScroll = 20
 
 	s.player = newPlayer(fix.One*40, fix.One*62, e.NewSprite(assets.PlayerTileSet))
 	err = s.player.Show()
@@ -74,15 +71,13 @@ func (s *Stage) Update(e *game.Engine, frame int) error {
 
 	s.player.Update(s.gravity, jump, s.ground)
 
-	s.skyScroll += s.scrollSpeed / 3
-	s.sky.SetScroll(s.skyScroll.Int(), 0)
+	s.sky.HScroll += s.scrollSpeed / 3
 	err := s.sky.Add()
 	if err != nil {
 		return err
 	}
 
-	s.cloudsScroll += s.scrollSpeed / 2
-	s.clouds.SetScroll(s.cloudsScroll.Int(), 20)
+	s.clouds.HScroll += s.scrollSpeed / 2
 	err = s.clouds.Add()
 	if err != nil {
 		return err
@@ -188,9 +183,7 @@ type rect struct {
 }
 
 type pillarBG struct {
-	bg      *game.Background
-	scrollX fix.P8
-
+	bg          *game.Background
 	rand        *rand.Rand
 	nextPillar  int
 	pillarEvery int
@@ -217,7 +210,7 @@ func (p *pillarBG) checkPoint(check rect) bool {
 		if p.pillars[i].x2 == p.lastPoint {
 			continue
 		}
-		right := p.pillars[i].x2 - p.scrollX.Int()
+		right := p.pillars[i].x2 - p.bg.HScroll.Int()
 		if right < check.x1+buffer {
 			p.lastPoint = p.pillars[i].x2
 			return true
@@ -232,12 +225,12 @@ func (p *pillarBG) start() {
 	}
 
 	p.started = true
-	p.lastPoint = p.scrollX.Int() + p.pillarEvery
+	p.lastPoint = p.bg.HScroll.Int() + p.pillarEvery
 }
 
 func (p *pillarBG) collisionCheck(check rect) bool {
 	for i := range p.pillars {
-		left := p.pillars[i].x1 - p.scrollX.Int()
+		left := p.pillars[i].x1 - p.bg.HScroll.Int()
 		if left <= 0 {
 			continue
 		}
@@ -298,14 +291,13 @@ func (p *pillarBG) removePillar(r rect) {
 }
 
 func (p *pillarBG) Update(scrollSpeed fix.P8) {
-	p.scrollX += scrollSpeed
-	p.bg.SetScroll(p.scrollX.Int(), 0)
+	p.bg.HScroll += scrollSpeed
 
 	if !p.started {
 		return
 	}
 	if p.rand == nil {
-		p.rand = rand.New(rand.NewSource(int64(p.scrollX)))
+		p.rand = rand.New(rand.NewSource(int64(p.bg.HScroll)))
 
 	}
 
@@ -313,14 +305,14 @@ func (p *pillarBG) Update(scrollSpeed fix.P8) {
 	p.nextPillar--
 	var keep []rect
 	if p.nextPillar <= 0 {
-		x := p.scrollX.Int() + 256
+		x := p.bg.HScroll.Int() + 256
 		r := p.addPillar(x)
 		p.nextPillar = p.pillarEvery
 		keep = []rect{r}
 	}
 
 	// remove current pillars to the left of the screen
-	border := p.scrollX.Int() - 32
+	border := p.bg.HScroll.Int() - 32
 	for i := range p.pillars {
 		if p.pillars[i].x1 < border {
 			p.removePillar(p.pillars[i])

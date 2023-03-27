@@ -106,23 +106,23 @@ func (e *Engine) drawBackgrounds() {
 		case 0:
 			memmap.SetReg(hw_display.BG0Controll, controll)
 			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG0)
-			memmap.SetReg(hw_display.BG0HOffset, e.activeBackgrounds[0].hScroll)
-			memmap.SetReg(hw_display.BG0VOffset, e.activeBackgrounds[0].vScroll)
+			memmap.SetReg(hw_display.BG0HOffset, e.activeBackgrounds[0].HScroll.Uint16())
+			memmap.SetReg(hw_display.BG0VOffset, e.activeBackgrounds[0].VScroll.Uint16())
 		case 1:
 			memmap.SetReg(hw_display.BG1Controll, controll)
 			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG1)
-			memmap.SetReg(hw_display.BG1HOffset, e.activeBackgrounds[1].hScroll)
-			memmap.SetReg(hw_display.BG1VOffset, e.activeBackgrounds[1].vScroll)
+			memmap.SetReg(hw_display.BG1HOffset, e.activeBackgrounds[1].HScroll.Uint16())
+			memmap.SetReg(hw_display.BG1VOffset, e.activeBackgrounds[1].VScroll.Uint16())
 		case 2:
 			memmap.SetReg(hw_display.BG2Controll, controll)
 			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG2)
-			memmap.SetReg(hw_display.BG2HOffset, e.activeBackgrounds[2].hScroll)
-			memmap.SetReg(hw_display.BG2VOffset, e.activeBackgrounds[2].vScroll)
+			memmap.SetReg(hw_display.BG2HOffset, e.activeBackgrounds[2].HScroll.Uint16())
+			memmap.SetReg(hw_display.BG2VOffset, e.activeBackgrounds[2].VScroll.Uint16())
 		case 3:
 			memmap.SetReg(hw_display.BG3Controll, controll)
 			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG3)
-			memmap.SetReg(hw_display.BG3HOffset, e.activeBackgrounds[3].hScroll)
-			memmap.SetReg(hw_display.BG3VOffset, e.activeBackgrounds[3].vScroll)
+			memmap.SetReg(hw_display.BG3HOffset, e.activeBackgrounds[3].HScroll.Uint16())
+			memmap.SetReg(hw_display.BG3VOffset, e.activeBackgrounds[3].VScroll.Uint16())
 		}
 	}
 }
