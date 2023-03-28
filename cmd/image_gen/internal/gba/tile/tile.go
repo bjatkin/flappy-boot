@@ -7,134 +7,159 @@ import (
 	"image/color"
 	"sort"
 
-	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/byteconv"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbacol"
 	"github.com/bjatkin/flappy_boot/cmd/image_gen/internal/gba/gbaimg"
 	"golang.org/x/exp/maps"
 )
 
-// TODO: it would be nice to be able to auto-generate a lot of this code
+// Size represents a valid GBA tile size
+type Size struct {
+	str    string
+	width  int
+	height int
+	size   string
+	shape  string
+}
 
-// TileSize represents a valid GBA tile size
-type Size uint16
-
-// valid tile sizes
-const (
-	// TODO make these bitfields that match the ones in the sprite attrs
-	S8x8   Size = 0x08_08
-	S16x8  Size = 0x10_08
-	S8x16  Size = 0x08_10
-	S16x16 Size = 0x10_10
-	S32x8  Size = 0x20_08
-	S8x32  Size = 0x08_20
-	S32x32 Size = 0x20_20
-	S32x16 Size = 0x20_10
-	S16x32 Size = 0x10_20
-	S64x64 Size = 0x40_40
-	S64x32 Size = 0x40_20
-	S32x64 Size = 0x20_40
+var (
+	S8x8 = Size{
+		str:    "8x8",
+		width:  8,
+		height: 8,
+		size:   "sprite.Small",
+		shape:  "sprite.Square",
+	}
+	S8x16 = Size{
+		str:    "16x16",
+		width:  8,
+		height: 16,
+		size:   "sprite.Small",
+		shape:  "sprite.Tall",
+	}
+	S16x8 = Size{
+		str:    "16x8",
+		width:  16,
+		height: 8,
+		size:   "sprite.Small",
+		shape:  "sprite.Wide",
+	}
+	S16x16 = Size{
+		str:    "16x16",
+		width:  16,
+		height: 16,
+		size:   "sprite.Medium",
+		shape:  "sprite.Square",
+	}
+	S32x8 = Size{
+		str:    "32x8",
+		width:  32,
+		height: 8,
+		size:   "sprite.Medium",
+		shape:  "sprite.Wide",
+	}
+	S8x32 = Size{
+		str:    "8x32",
+		width:  8,
+		height: 32,
+		size:   "sprite.Medium",
+		shape:  "sprite.Tall",
+	}
+	S32x32 = Size{
+		str:    "32x32",
+		width:  32,
+		height: 32,
+		size:   "sprite.Large",
+		shape:  "sprite.Square",
+	}
+	S32x16 = Size{
+		str:    "32x16",
+		width:  32,
+		height: 16,
+		size:   "sprite.Large",
+		shape:  "sprite.Wide",
+	}
+	S16x32 = Size{
+		str:    "16x32",
+		width:  16,
+		height: 32,
+		size:   "sprite.Large",
+		shape:  "sprite.Tall",
+	}
+	S64x64 = Size{
+		str:    "64x64",
+		width:  64,
+		height: 64,
+		size:   "sprite.XL",
+		shape:  "sprite.Square",
+	}
+	S64x32 = Size{
+		str:    "64x32",
+		width:  64,
+		height: 32,
+		size:   "sprite.XL",
+		shape:  "sprite.Wide",
+	}
+	S32x64 = Size{
+		str:    "32x64",
+		width:  32,
+		height: 64,
+		size:   "sprite.XL",
+		shape:  "sprite.Tall",
+	}
 )
+
+var allSizes = map[string]Size{
+	S8x8.str:   S8x8,
+	S8x16.str:  S8x16,
+	S16x8.str:  S16x8,
+	S16x16.str: S16x16,
+	S32x8.str:  S32x8,
+	S8x32.str:  S8x32,
+	S32x32.str: S32x32,
+	S32x16.str: S32x16,
+	S16x32.str: S16x32,
+	S64x64.str: S64x64,
+	S64x32.str: S64x32,
+	S32x64.str: S32x64,
+}
 
 // NewSize creates a new Size from a string
 // strings should contain size width and height seperated by an x (e.g. 8x8, 16x32)
 func NewSize(size string) (Size, error) {
-	switch size {
-	case "8x8":
-		return S8x8, nil
-	case "8x16":
-		return S8x16, nil
-	case "16x8":
-		return S16x8, nil
-	case "16x16":
-		return S16x16, nil
-	case "32x8":
-		return S32x8, nil
-	case "8x32":
-		return S8x32, nil
-	case "32x32":
-		return S32x32, nil
-	case "32x16":
-		return S32x16, nil
-	case "16x32":
-		return S16x32, nil
-	case "64x64":
-		return S64x64, nil
-	case "64x32":
-		return S64x32, nil
-	case "32x64":
-		return S32x64, nil
-	default:
-		return 0, fmt.Errorf("%s is not a valid tile size", size)
+	if s, ok := allSizes[size]; ok {
+		return s, nil
 	}
+	return Size{}, fmt.Errorf("%s is not a valid tile size", size)
 }
 
-// Point returns the Size as an image.Point
+// Point returns the dimentions of the tile size as an image.Point
 func (s Size) Point() image.Point {
-	switch s {
-	case S8x8:
-		return image.Point{X: 8, Y: 8}
-	case S8x16:
-		return image.Point{X: 8, Y: 16}
-	case S16x8:
-		return image.Point{X: 16, Y: 8}
-	case S16x16:
-		return image.Point{X: 16, Y: 16}
-	case S32x8:
-		return image.Point{X: 32, Y: 8}
-	case S8x32:
-		return image.Point{X: 8, Y: 32}
-	case S32x32:
-		return image.Point{X: 32, Y: 32}
-	case S32x16:
-		return image.Point{X: 32, Y: 16}
-	case S16x32:
-		return image.Point{X: 16, Y: 32}
-	case S64x64:
-		return image.Point{X: 64, Y: 64}
-	case S64x32:
-		return image.Point{X: 64, Y: 32}
-	case S32x64:
-		return image.Point{X: 32, Y: 64}
-	default:
-		return image.Point{X: 8, Y: 8}
-	}
+	return image.Point{X: s.width, Y: s.height}
 }
 
-// Tiles returns the number of 8x8 tiles the make up a tile of this size
+// Tiles returns the number of 8x8 tiles that make up a tile of this size
 func (s Size) Tiles() int {
-	switch s {
-	case S8x8:
-		return 1
-	case S8x16:
-		return 2
-	case S16x8:
-		return 2
-	case S16x16:
-		return 4
-	case S32x8:
-		return 4
-	case S8x32:
-		return 4
-	case S32x32:
-		return 16
-	case S32x16:
-		return 8
-	case S16x32:
-		return 8
-	case S64x64:
-		return 64
-	case S64x32:
-		return 32
-	case S32x64:
-		return 32
-	default:
-		return 1
-	}
+	return s.width * s.height / 64
 }
 
-// Bytes returns the Size as a byte slice
-func (s Size) Bytes() []byte {
-	return byteconv.Itoa(uint16(s))
+// Size returns the sprite size
+func (s Size) Size() string {
+	return s.size
+}
+
+// Shape returns the sprite shape
+func (s Size) Shape() string {
+	return s.shape
+}
+
+// Is returns true if the to tile sizes have equal width and height
+func (s Size) Is(comp Size) bool {
+	return s.width == comp.width && s.height == comp.height
+}
+
+// String is the string representation of the tile size
+func (s Size) String() string {
+	return s.str
 }
 
 // Meta is a meta tile. It consists of smaller 8x8 tiles and must use either a 16 color or 256 color palette
@@ -235,7 +260,7 @@ func (m *Meta) Bytes() []byte {
 // IsTransparent returns true if the tile is 8x8 and completely transparent.
 // This is usefule for building layerd backgrounds where many tiles can be fully transparent
 func (m *Meta) IsTransparent() bool {
-	if m.Size != S8x8 {
+	if !m.Size.Is(S8x8) {
 		return false
 	}
 

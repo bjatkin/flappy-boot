@@ -116,7 +116,13 @@ func (t *TileMap) Free(mapAlloc, tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) {
 
 // TileSet is tileset data for a background or sprite
 type TileSet struct {
-	// the number of 8x8 tiles in this tileset
+	// shape is the sprite shape, the value is compatable with sprite.Attr0
+	shape sprite.Attr0
+
+	// size is the sprite size, the value is compatable with sprite.Attr1
+	size sprite.Attr1
+
+	// count is the number of tiles in this tileset
 	count int
 
 	// pixels contains the pixel data for the tileset
@@ -172,6 +178,16 @@ func (t *TileSet) Free(tileAlloc *alloc.VRAM, palAlloc *alloc.Pal) {
 
 	// TODO: use reference counting so that palettes can be shared
 	t.palette.Free(palAlloc)
+}
+
+// Size is the size of the tiles in the tile set
+func (t *TileSet) Size() sprite.Attr1 {
+	return t.size
+}
+
+// Shape is the shape of the tiles in the tile set
+func (t *TileSet) Shape() sprite.Attr0 {
+	return t.shape
 }
 
 // Palette is a 16 color palette
