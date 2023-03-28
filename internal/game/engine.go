@@ -166,8 +166,8 @@ func (e *Engine) NewSprite(tileSet *assets.TileSet) *Sprite {
 	return &Sprite{
 		engine:  e,
 		tileSet: tileSet,
-		size:    hw_sprite.Medium,
-		shape:   hw_sprite.Square,
+		size:    tileSet.Size(),
+		shape:   tileSet.Shape(),
 	}
 }
 
