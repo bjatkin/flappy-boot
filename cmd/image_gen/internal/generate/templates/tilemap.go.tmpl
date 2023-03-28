@@ -8,6 +8,7 @@ import (
 
     "github.com/bjatkin/flappy_boot/internal/hardware/display"
     "github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+    "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
 //go:embed {{private .Name}}.tm4
@@ -22,6 +23,8 @@ var {{public .Name}}TileMap = &TileMap{
     ),
 {{- if eq .TileSet.Shared 1}}
     tileSet: &TileSet{
+        shape: {{.TileSet.Size.Shape}},
+        size:  {{.TileSet.Size.Size}},
         count: {{.TileSet.TileCount}},
         pixels: unsafe.Slice(
             (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileMap[{{.Bytes}}])),

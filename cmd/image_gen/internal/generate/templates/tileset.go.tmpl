@@ -7,6 +7,7 @@ import (
     "unsafe"
 
     "github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+    "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
 //go:embed {{private .Name}}.ts4
@@ -14,6 +15,8 @@ var {{private .Name}}TileSet []byte
 
 // {{public .Name}}TileSet is {{.Description}}
 var {{public .Name}}TileSet = &TileSet{
+    shape: {{.Size.Shape}},
+    size:  {{.Size.Size}},
     count: {{.TileCount}},
     pixels: unsafe.Slice(
         (*memmap.VRAMValue)(unsafe.Pointer(&{{private .Name}}TileSet[0])),
