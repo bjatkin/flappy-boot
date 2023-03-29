@@ -10,22 +10,22 @@ import (
     "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
-//go:embed player.ts4
-var playerTileSet []byte
+//go:embed resart.ts4
+var resartTileSet []byte
 
-// PlayerTileSet is the sprite sheet for the player character
-var PlayerTileSet = &TileSet{
-    shape: sprite.Square,
+// ResartTileSet is restart and quit options for the game over screen
+var ResartTileSet = &TileSet{
+    shape: sprite.Wide,
     size:  sprite.Medium,
-    count: 4,
+    count: 12,
     pixels: unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&playerTileSet[0])),
-        64,
+        (*memmap.VRAMValue)(unsafe.Pointer(&resartTileSet[0])),
+        192,
     ),
 
     palette: &Palette{
         colors: unsafe.Slice(
-            (*memmap.PaletteValue)(unsafe.Pointer(&playerTileSet[128])),
+            (*memmap.PaletteValue)(unsafe.Pointer(&resartTileSet[384])),
             16,
         ),
     },

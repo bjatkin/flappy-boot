@@ -8,6 +8,7 @@ import (
 
     "github.com/bjatkin/flappy_boot/internal/hardware/display"
     "github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+    "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
 //go:embed pillars.tm4
@@ -21,6 +22,8 @@ var PillarsTileMap = &TileMap{
         2048,	
     ),
     tileSet: &TileSet{
+        shape: sprite.Square,
+        size:  sprite.Small,
         count: 30,
         pixels: unsafe.Slice(
             (*memmap.VRAMValue)(unsafe.Pointer(&pillarsTileMap[4096])),
