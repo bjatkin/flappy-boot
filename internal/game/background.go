@@ -2,8 +2,8 @@ package game
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
-	"github.com/bjatkin/flappy_boot/internal/fix"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
 // Background represents a normal background layer
@@ -15,8 +15,8 @@ type Background struct {
 	tileMap *assets.TileMap
 
 	controllReg memmap.BGControll
-	HScroll     fix.P8
-	VScroll     fix.P8
+	HScroll     math.Fix8
+	VScroll     math.Fix8
 }
 
 // NewBackground returns a new Background

@@ -2,8 +2,8 @@ package game
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
-	"github.com/bjatkin/flappy_boot/internal/fix"
 	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
+	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
 // Sprite is a game engine sprite
@@ -11,8 +11,8 @@ type Sprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
-	Y         fix.P8
-	X         fix.P8
+	Y         math.Fix8
+	X         math.Fix8
 	TileIndex int
 	Hide      bool
 	HFlip     bool
@@ -51,9 +51,17 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 		priorityAttr = hw_sprite.Priority3
 	}
 
+	x := s.X.Int()
+	if x < 0 {
+		x += 512
+	}
+	y := s.Y.Int()
+	if y < 0 {
+		y += 256
+	}
 	return &hw_sprite.Attrs{
-		Attr0: hw_sprite.Attr0(s.Y.Int()) | s.shape | hideAttr,
-		Attr1: hw_sprite.Attr1(s.X.Int()) | vFlipAttr | hFlipAttr | s.size,
+		Attr0: hw_sprite.Attr0(y%256) | s.shape | hideAttr,
+		Attr1: hw_sprite.Attr1(x%512) | vFlipAttr | hFlipAttr | s.size,
 		Attr2: (hw_sprite.Attr2(s.TileIndex) + s.tileSet.Offset()) |
 			priorityAttr |
 			s.tileSet.SprPalette(),
