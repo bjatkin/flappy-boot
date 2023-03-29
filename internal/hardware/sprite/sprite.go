@@ -296,72 +296,6 @@ const (
 	PriorityMask Attr2 = 0x0C00
 )
 
-// TODO: move these out of the hardware package
-
-// X is the x position of the sprite on the screen, valid values go from 0 - 511
-// func (a *Attrs) X() uint {
-// 	return uint(a.Attr1 & XMask)
-// }
-
-// SetX sets the x position of the sprite on screen, valid values go from 0 - 511
-// this function does not bounds check the provided x so be sure to check the x value
-// if invalid values are possible
-//
-// TODO: there should be a setXY(x, y) for setting position more quickly
-// func (a *Attrs) SetX(x uint) {
-// 	a.Attr1 = (a.Attr1 & ^XMask) | memmap.OAMValue(x)
-// }
-
-// DX adds delta to the sprites x attribute, valid values go from 0 - 511
-// this function caps the result of x + delta in the valid range
-// func (a *Attrs) DX(delta int) {
-// 	newX := int(a.X()) + delta
-// 	if newX < 0 {
-// 		newX = 0
-// 	}
-// 	if newX > 511 {
-// 		newX = 511
-// 	}
-// 	a.SetX(uint(newX))
-// }
-
-// Y is the y position of the sprite on the screen, valid values go from 0 - 255
-// func (a *Attrs) Y() uint {
-// 	return uint(a.Attr0 & YMask)
-// }
-
-// SetY sets the y position of the sprite on screen, valid values go from 0 - 255
-// this function does not bounds check the final value of y so be sure to check the y value
-// if invalid values are possible
-// func (a *Attrs) SetY(y uint) {
-// 	a.Attr0 = (a.Attr0 & ^YMask) | (memmap.OAMValue(y) & YMask)
-// }
-
-// DY adds delta to the sprites y attribute, valid values go from 0 - 255
-// this function caps the result of y + delta in the valid range
-// func (a *Attrs) DY(delta int) {
-// 	newY := int(a.Y()) + delta
-// 	if newY < 0 {
-// 		newY = 0
-// 	}
-// 	if newY > 255 {
-// 		newY = 255
-// 	}
-// 	a.SetY(uint(newY))
-// }
-
-// Index is the current base sprite tile index, valid values are 0 - 1023 in tiles modes (0, 1, 2)
-// and 512 - 1023 in bitmap modes (3, 4, 5)
-// func (a *Attrs) Index() uint {
-// 	return uint(a.Attr2 & IndexMask)
-// }
-
-// SetIndex sets the curren base sprite tile index, valid values are 0 - 1024 in tile modes (0, 1, 2)
-// and 512 - 1023 in bitmap modes (3, 4, 5)
-// func (a *Attrs) SetIndex(index uint) {
-// 	a.Attr2 = (a.Attr2 & ^IndexMask) | (memmap.OAMValue(index) & IndexMask)
-// }
-
 // AffineAttrs is the structure sprite OAM affine attributes, it maps the sprites pixels from screen space to the sprites pixel space
 //
 // [ Pa, Pb ] = [ Sx*cos(alpha),  Sy*sin(alpha) ]
@@ -391,9 +325,3 @@ type AffineAttrs struct {
 	// Pd is the 1,1 value of the matrix
 	Pd memmap.OAMValue
 }
-
-// Scale sets the x and y scale for the affine matrix
-// func (a *AffineAttrs) Scale(x, y float32) {
-// 	a.Pa = memmap.OAMValue(fix.ToF16(x))
-// 	a.Pd = memmap.OAMValue(fix.ToF16(y))
-// }
