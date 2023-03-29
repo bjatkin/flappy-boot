@@ -7,5 +7,5 @@ import (
 
 func main() {
 	engine := game.NewEngine()
-	engine.Run(fly.NewStage())
+	engine.Run(fly.NewScene())
 }
