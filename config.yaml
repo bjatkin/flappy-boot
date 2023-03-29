@@ -15,6 +15,18 @@ TileSets:
     Size: "16x16"
     File: assets/numbers_large_ts.png
     Description: a 16x16 set of digits (0-9)
+  - Name: select
+    Size: "8x8"
+    File: assets/select_ts.png
+    Description: a simple spinning select arrow
+  - Name: banners
+    Size: "32x16"
+    File: assets/score_best_ts.png
+    Description: score banners for the game over screen
+  - Name: resart
+    Size: "32x8"
+    File: assets/restart_quit_ts.png
+    Description: restart and quit options for the game over screen
 TileMaps:
   - Name: pillars
     File: assets/pillar_tm.png

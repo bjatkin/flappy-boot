@@ -7,6 +7,7 @@ import (
     "unsafe"
 
     "github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+    "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
 //go:embed numbers.ts4
@@ -14,6 +15,8 @@ var numbersTileSet []byte
 
 // NumbersTileSet is a 16x16 set of digits (0-9)
 var NumbersTileSet = &TileSet{
+    shape: sprite.Square,
+    size:  sprite.Medium,
     count: 40,
     pixels: unsafe.Slice(
         (*memmap.VRAMValue)(unsafe.Pointer(&numbersTileSet[0])),

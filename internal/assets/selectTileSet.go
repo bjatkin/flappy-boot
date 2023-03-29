@@ -10,22 +10,22 @@ import (
     "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 )
 
-//go:embed player.ts4
-var playerTileSet []byte
+//go:embed select.ts4
+var selectTileSet []byte
 
-// PlayerTileSet is the sprite sheet for the player character
-var PlayerTileSet = &TileSet{
+// SelectTileSet is a simple spinning select arrow
+var SelectTileSet = &TileSet{
     shape: sprite.Square,
-    size:  sprite.Medium,
-    count: 4,
+    size:  sprite.Small,
+    count: 3,
     pixels: unsafe.Slice(
-        (*memmap.VRAMValue)(unsafe.Pointer(&playerTileSet[0])),
-        64,
+        (*memmap.VRAMValue)(unsafe.Pointer(&selectTileSet[0])),
+        48,
     ),
 
     palette: &Palette{
         colors: unsafe.Slice(
-            (*memmap.PaletteValue)(unsafe.Pointer(&playerTileSet[128])),
+            (*memmap.PaletteValue)(unsafe.Pointer(&selectTileSet[96])),
             16,
         ),
     },
