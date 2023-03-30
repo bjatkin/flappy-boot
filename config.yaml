@@ -23,11 +23,10 @@ TileSets:
     Size: "32x16"
     File: assets/score_best_ts.png
     Description: score banners for the game over screen
-  - Name: resart
-    Size: "32x8"
-    File: assets/restart_quit_ts.png
-    Description: restart and quit options for the game over screen
 TileMaps:
+  - Name: bluebg
+    File: assets/blue_bg_ts.png
+    Description: a small selection block for when you game over
   - Name: pillars
     File: assets/pillar_tm.png
     TileSet: pillars

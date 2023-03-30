@@ -7,7 +7,7 @@ import (
 
 // Player is a struct representing a player
 type Player struct {
-	sprite *game.Sprite
+	Sprite *game.Sprite
 	dy     math.Fix8
 	maxDy  math.Fix8
 
@@ -17,12 +17,12 @@ type Player struct {
 // NewPlayer creates a new player struct
 func NewPlayer(x, y math.Fix8, sprite *game.Sprite) *Player {
 	p := &Player{
-		sprite: sprite,
-		maxDy:  math.FixOne * 5,
+		Sprite: sprite,
+		maxDy:  math.FixOne * 8,
 	}
 
-	p.sprite.X = x
-	p.sprite.Y = y
+	p.Sprite.X = x
+	p.Sprite.Y = y
 	return p
 }
 
@@ -32,15 +32,15 @@ func (p *Player) Start() {
 
 func (p *Player) Rect() math.Rect {
 	return math.Rect{
-		X1: p.sprite.X.Int() + 2,
-		Y1: p.sprite.Y.Int() + 2,
-		X2: p.sprite.X.Int() + 12,
-		Y2: p.sprite.Y.Int() + 12,
+		X1: p.Sprite.X.Int() + 2,
+		Y1: p.Sprite.Y.Int() + 2,
+		X2: p.Sprite.X.Int() + 12,
+		Y2: p.Sprite.Y.Int() + 12,
 	}
 }
 
 func (p *Player) Show() error {
-	err := p.sprite.Add()
+	err := p.Sprite.Add()
 	if err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func (p *Player) Show() error {
 }
 
 func (p *Player) Hide() {
-	p.sprite.Remove()
+	p.Sprite.Remove()
 }
 
 func (p *Player) Update(gravity, jump math.Fix8) {
@@ -67,12 +67,12 @@ func (p *Player) Update(gravity, jump math.Fix8) {
 		p.dy = jump
 	}
 
-	p.sprite.Y += p.dy
-	if p.sprite.Y > math.FixOne*200 {
-		p.sprite.Y = math.FixOne * 200
+	p.Sprite.Y += p.dy
+	if p.Sprite.Y > math.FixOne*200 {
+		p.Sprite.Y = math.FixOne * 200
 	}
 
-	if p.sprite.Y < -math.FixOne*16 {
-		p.sprite.Y = -math.FixOne * 16
+	if p.Sprite.Y < -math.FixOne*16 {
+		p.Sprite.Y = -math.FixOne * 16
 	}
 }
