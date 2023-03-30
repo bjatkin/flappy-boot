@@ -2,7 +2,6 @@ package game
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/alloc"
-	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/display"
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
@@ -159,16 +158,6 @@ func (e *Engine) addSprite(sprite *Sprite) {
 // from memory so you must do that yourself if the sprite is no longer needed
 func (e *Engine) removeSprite(sprite *Sprite) {
 	delete(e.activeSprites, sprite)
-}
-
-// NewSprite returns a new Sprite
-func (e *Engine) NewSprite(tileSet *assets.TileSet) *Sprite {
-	return &Sprite{
-		engine:  e,
-		tileSet: tileSet,
-		size:    tileSet.Size(),
-		shape:   tileSet.Shape(),
-	}
 }
 
 // exit exits the game loop and draws error infromation to the screen
