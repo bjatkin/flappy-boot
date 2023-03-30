@@ -24,6 +24,16 @@ type Sprite struct {
 	tileSet *assets.TileSet
 }
 
+// NewSprite returns a new Sprite
+func (e *Engine) NewSprite(tileSet *assets.TileSet) *Sprite {
+	return &Sprite{
+		engine:  e,
+		tileSet: tileSet,
+		size:    tileSet.Size(),
+		shape:   tileSet.Shape(),
+	}
+}
+
 func (s *Sprite) attrs() *hw_sprite.Attrs {
 	var hideAttr hw_sprite.Attr0
 	if s.Hide {
