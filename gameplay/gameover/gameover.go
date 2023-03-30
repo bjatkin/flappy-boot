@@ -123,6 +123,18 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	arrow.X = x
 	arrow.Y = y
 	arrow.TileIndex = 2
+	arrow.SetAnimation(
+		game.Frame{Index: 2, Len: 30},
+		game.Frame{Index: 1, Len: 10},
+		game.Frame{Index: 0, Len: 10},
+		game.Frame{Index: 0, HFlip: true, Len: 10},
+		game.Frame{Index: 1, HFlip: true, Len: 10},
+		game.Frame{Index: 2, Len: 10},
+		game.Frame{Index: 1, Len: 10},
+		game.Frame{Index: 0, Len: 10},
+		game.Frame{Index: 0, HFlip: true, Len: 10},
+		game.Frame{Index: 1, HFlip: true, Len: 10},
+	)
 
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
@@ -142,6 +154,8 @@ func (m *menu) Update() {
 	if key.JustPressed(key.Up) {
 		m.arrow.Y = m.y
 	}
+
+	m.arrow.Update()
 }
 
 // Add adds menu sprites and backgrounds into active engine memory

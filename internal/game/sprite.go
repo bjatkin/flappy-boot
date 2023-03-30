@@ -6,6 +6,14 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
+// Frame is a single frame of sprite animation data
+type Frame struct {
+	Index int
+	HFlip bool
+	VFlip bool
+	Len   int
+}
+
 // Sprite is a game engine sprite
 type Sprite struct {
 	// engine is a reference to the sprites parent engine
@@ -20,6 +28,10 @@ type Sprite struct {
 	Priority  int
 	size      hw_sprite.Attr1
 	shape     hw_sprite.Attr0
+
+	animation  []Frame
+	aniFrame   int
+	aniCounter int
 
 	tileSet *assets.TileSet
 }
@@ -78,6 +90,11 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 	}
 }
 
+// SetAnimation sets the animation data for the sprite
+func (s *Sprite) SetAnimation(frames ...Frame) {
+	s.animation = frames
+}
+
 // Add adds the sprite to the list of active sprites.
 // if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
 // all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
@@ -107,4 +124,19 @@ func (s *Sprite) Load() error {
 // Unload removes a sprites graphics data from memory
 func (s *Sprite) UnLoad() {
 	s.tileSet.Free(s.engine.sprTileAlloc, s.engine.sprPalAlloc)
+}
+
+// Update updates the sprites graphics
+func (s *Sprite) Update() {
+	s.aniCounter++
+	if s.aniCounter < s.animation[s.aniFrame].Len {
+		return
+	}
+	s.aniCounter = 0
+	s.aniFrame++
+	s.aniFrame %= len(s.animation)
+
+	s.TileIndex = s.animation[s.aniFrame].Index
+	s.HFlip = s.animation[s.aniFrame].HFlip
+	s.VFlip = s.animation[s.aniFrame].VFlip
 }
