@@ -1,117 +1,13 @@
-package fly
+package pillar
 
 import (
 	"math/rand"
 
-	"github.com/bjatkin/flappy_boot/gameplay/actor"
-	"github.com/bjatkin/flappy_boot/gameplay/score"
-	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
-	"github.com/bjatkin/flappy_boot/internal/hardware/display"
-	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
-type Scene struct {
-	GameOver bool
-
-	sky         *game.Background
-	clouds      *game.Background
-	pillars     *pillarBG
-	player      *actor.Player
-	score       *score.Counter
-	scrollSpeed math.Fix8
-
-	gravity    math.Fix8
-	ground     math.Fix8
-	jumpHeight math.Fix8
-}
-
-func NewScene(sky, clouds *game.Background, player *actor.Player, score *score.Counter) *Scene {
-	return &Scene{
-		scrollSpeed: math.FixOne + math.FixEighth,
-		gravity:     math.FixQuarter,
-		ground:      math.FixOne * 147,
-		jumpHeight:  -math.FixOne * 3,
-
-		sky:    sky,
-		clouds: clouds,
-		player: player,
-		score:  score,
-	}
-}
-
-func (s *Scene) Init(e *game.Engine) error {
-	s.pillars = newPillarBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority1))
-	err := s.pillars.Show()
-	if err != nil {
-		return err
-	}
-
-	err = s.sky.Add()
-	if err != nil {
-		return err
-	}
-
-	err = s.clouds.Add()
-	if err != nil {
-		return err
-	}
-	s.clouds.VScroll = 20
-
-	err = s.player.Show()
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (s *Scene) Update(e *game.Engine, frame int) error {
-	var jump math.Fix8
-	if key.JustPressed(key.A) {
-		s.pillars.start()
-		s.player.Start()
-		jump = -math.FixOne * 3
-	}
-
-	s.player.Update(s.gravity, jump)
-	if s.player.Rect().Y2 >= s.ground.Int() {
-		s.GameOver = true
-	}
-
-	s.sky.HScroll += s.scrollSpeed / 3
-	err := s.sky.Add()
-	if err != nil {
-		return err
-	}
-
-	s.clouds.HScroll += s.scrollSpeed / 2
-	err = s.clouds.Add()
-	if err != nil {
-		return err
-	}
-
-	s.pillars.Update(s.scrollSpeed)
-	err = s.pillars.Show()
-	if err != nil {
-		return err
-	}
-
-	if s.pillars.checkPoint(s.player.Rect()) {
-		s.score.Add()
-	}
-
-	s.score.Draw()
-
-	if s.pillars.collisionCheck(s.player.Rect()) {
-		s.GameOver = true
-	}
-
-	return nil
-}
-
-type pillarBG struct {
+type BG struct {
 	bg          *game.Background
 	rand        *rand.Rand
 	nextPillar  int
@@ -123,8 +19,8 @@ type pillarBG struct {
 	started bool
 }
 
-func newPillarBG(pillarEvery int, bg *game.Background) *pillarBG {
-	pillars := &pillarBG{
+func NewBG(pillarEvery int, bg *game.Background) *BG {
+	pillars := &BG{
 		bg:          bg,
 		gapSize:     7,
 		pillarEvery: pillarEvery,
@@ -133,7 +29,7 @@ func newPillarBG(pillarEvery int, bg *game.Background) *pillarBG {
 	return pillars
 }
 
-func (p *pillarBG) checkPoint(check math.Rect) bool {
+func (p *BG) CheckPoint(check math.Rect) bool {
 	buffer := 4
 	for i := range p.pillars {
 		if p.pillars[i].X2 == p.lastPoint {
@@ -148,7 +44,7 @@ func (p *pillarBG) checkPoint(check math.Rect) bool {
 	return false
 }
 
-func (p *pillarBG) start() {
+func (p *BG) Start() {
 	if p.started {
 		return
 	}
@@ -157,7 +53,7 @@ func (p *pillarBG) start() {
 	p.lastPoint = p.bg.HScroll.Int() + p.pillarEvery
 }
 
-func (p *pillarBG) collisionCheck(check math.Rect) bool {
+func (p *BG) CollisionCheck(check math.Rect) bool {
 	for i := range p.pillars {
 		left := p.pillars[i].X1 - p.bg.HScroll.Int()
 		if left <= 0 {
@@ -178,7 +74,7 @@ func (p *pillarBG) collisionCheck(check math.Rect) bool {
 	return false
 }
 
-func (p *pillarBG) addPillar(x int) math.Rect {
+func (p *BG) addPillar(x int) math.Rect {
 	start := (x % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
 
@@ -208,7 +104,7 @@ func (p *pillarBG) addPillar(x int) math.Rect {
 	return math.Rect{X1: x, Y1: gap*8 + 4, X2: x + 32, Y2: (gap+p.gapSize)*8 + 4}
 }
 
-func (p *pillarBG) removePillar(r math.Rect) {
+func (p *BG) removePillar(r math.Rect) {
 	start := (r.X1 % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
 
@@ -219,7 +115,7 @@ func (p *pillarBG) removePillar(r math.Rect) {
 	}
 }
 
-func (p *pillarBG) Update(scrollSpeed math.Fix8) {
+func (p *BG) Update(scrollSpeed math.Fix8) {
 	p.bg.HScroll += scrollSpeed
 
 	if !p.started {
@@ -253,7 +149,7 @@ func (p *pillarBG) Update(scrollSpeed math.Fix8) {
 	p.pillars = keep
 }
 
-func (p *pillarBG) Show() error {
+func (p *BG) Show() error {
 	err := p.bg.Add()
 	if err != nil {
 		return err
@@ -261,6 +157,6 @@ func (p *pillarBG) Show() error {
 	return nil
 }
 
-func (p *pillarBG) Hide() {
+func (p *BG) Hide() {
 	p.bg.Remove()
 }

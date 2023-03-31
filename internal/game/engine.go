@@ -13,7 +13,6 @@ import (
 type Runable interface {
 	Init(*Engine) error
 	Update(*Engine, int) error
-	Next() (Runable, bool)
 }
 
 // Engine is the core game engine
@@ -75,12 +74,6 @@ func (e *Engine) Run(run Runable) error {
 
 			// copy active background data into the background registers
 			e.drawBackgrounds()
-
-			if next, ok := run.Next(); ok {
-				sprite.Reset()
-				run = next
-				break
-			}
 		}
 	}
 }

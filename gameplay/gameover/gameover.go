@@ -13,7 +13,6 @@ import (
 type Scene struct {
 	sky       *game.Background
 	clouds    *game.Background
-	pillars   *game.Background
 	player    *actor.Player
 	score     *score.Counter
 	highScore *score.Counter
@@ -24,19 +23,20 @@ type Scene struct {
 
 	gravity   math.Fix8
 	deathJump math.Fix8
+
+	Restart, Quit bool
 }
 
-func NewScene(sky, clouds, pillars *game.Background, player *actor.Player, roundScore *score.Counter) *Scene {
+func NewScene(sky, clouds *game.Background, player *actor.Player, roundScore *score.Counter) *Scene {
 	if roundScore.Score() > score.Best {
 		score.Best = roundScore.Score()
 	}
 
 	return &Scene{
-		sky:     sky,
-		clouds:  clouds,
-		pillars: pillars,
-		player:  player,
-		score:   roundScore,
+		sky:    sky,
+		clouds: clouds,
+		player: player,
+		score:  roundScore,
 
 		gravity:   math.FixQuarter,
 		deathJump: -math.FixOne * 6,
@@ -103,18 +103,17 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 	s.score.Draw()
 	s.highScore.Draw()
 	s.menu.Update()
+	s.Restart = s.menu.restart
+	s.Quit = s.menu.quit
 	return nil
-}
-
-func (s *Scene) Next() (game.Runable, bool) {
-	return nil, false
 }
 
 // menu is a simple game over menu
 type menu struct {
-	x, y  math.Fix8
-	arrow *game.Sprite
-	bg    *game.Background
+	x, y          math.Fix8
+	arrow         *game.Sprite
+	bg            *game.Background
+	restart, quit bool
 }
 
 // newMenu creates a new game over menu
@@ -148,11 +147,29 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 
 // Update updates the menu state each frame
 func (m *menu) Update() {
+	if m.restart || m.quit {
+		m.arrow.Update()
+		return
+	}
+
 	if key.JustPressed(key.Down) {
 		m.arrow.Y = m.y + math.FixOne*12
 	}
 	if key.JustPressed(key.Up) {
 		m.arrow.Y = m.y
+	}
+	if key.JustPressed(key.A) && m.arrow.Y == m.y {
+		m.restart = true
+	}
+	if key.JustPressed(key.A) && m.arrow.Y > m.y {
+		m.quit = true
+	}
+
+	if m.restart || m.quit {
+		m.arrow.SetAnimation(
+			game.Frame{Index: 2, Len: 7},
+			game.Frame{Index: 3, Len: 7},
+		)
 	}
 
 	m.arrow.Update()
