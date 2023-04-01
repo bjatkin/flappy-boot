@@ -32,7 +32,7 @@ type Engine struct {
 	mapAlloc     *alloc.VRAM
 
 	// Debug sprites
-	debug [10]*Sprite
+	Debug [10]*Sprite
 }
 
 // NewEngine creates a new instances of a game engine
@@ -55,7 +55,7 @@ func NewEngine() *Engine {
 		debugSprites[i] = e.NewSprite(assets.DebugTileSet)
 	}
 
-	e.debug = debugSprites
+	e.Debug = debugSprites
 
 	return e
 }
