@@ -27,51 +27,53 @@ type Scene struct {
 	Restart, Quit bool
 }
 
-func NewScene(sky, clouds *game.Background, player *actor.Player, roundScore *score.Counter) *Scene {
-	if roundScore.Score() > score.Best {
-		score.Best = roundScore.Score()
-	}
-
-	return &Scene{
-		sky:    sky,
-		clouds: clouds,
-		player: player,
-		score:  roundScore,
-
-		gravity:   math.FixQuarter,
-		deathJump: -math.FixOne * 6,
-	}
-}
-
-func (s *Scene) Init(e *game.Engine) error {
-	s.player.Sprite.HFlip = true
-	s.player.Update(s.gravity, s.deathJump)
-
-	// TODO: should this lerp in?
-	// shift the score down so it can sit uner the score banner
-	s.score.Y = 28
-
-	var err error
-	s.scoreBanner, err = e.NewMetaSprite(
+func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player, roundScore, highScore *score.Counter) (*Scene, error) {
+	scoreBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
 		[]int{0, 16},
 		assets.BannersTileSet,
 	)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
-	s.scoreBanner.Set(math.FixOne*87, math.FixOne*8)
-	err = s.scoreBanner.Add()
-	if err != nil {
-		return err
-	}
-
-	s.bestBanner, err = e.NewMetaSprite(
+	bestBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
 		[]int{8, 24},
 		assets.BannersTileSet,
 	)
+	if err != nil {
+		return nil, err
+	}
+
+	menu, err := newMenu(math.FixOne*87, math.FixOne*102, e)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Scene{
+		sky:       sky,
+		clouds:    clouds,
+		player:    player,
+		score:     roundScore,
+		highScore: highScore,
+
+		scoreBanner: scoreBanner,
+		bestBanner:  bestBanner,
+		menu:        menu,
+
+		gravity:   math.FixQuarter,
+		deathJump: -math.FixOne * 6,
+	}, nil
+}
+
+func (s *Scene) Init(e *game.Engine) error {
+	s.player.Sprite.HFlip = true
+	s.player.Update(s.gravity, s.deathJump)
+	s.menu.Reset(math.FixOne*87, math.FixOne*102)
+
+	s.scoreBanner.Set(math.FixOne*87, math.FixOne*8)
+	err := s.scoreBanner.Add()
 	if err != nil {
 		return err
 	}
@@ -82,13 +84,8 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
-	s.highScore = score.NewCounter(97, 70, e)
-	s.highScore.Set(score.Best)
-
-	s.menu, err = newMenu(math.FixOne*87, math.FixOne*102, e)
-	if err != nil {
-		return err
-	}
+	s.highScore.X = 97
+	s.highScore.Y = 70
 
 	err = s.menu.Add()
 	if err != nil {
@@ -103,17 +100,29 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 	s.score.Draw()
 	s.highScore.Draw()
 	s.menu.Update()
-	s.Restart = s.menu.restart
-	s.Quit = s.menu.quit
+	if s.menu.selectCountDown <= 0 {
+		s.Restart = s.menu.restart
+		s.Quit = s.menu.quit
+	}
 	return nil
+}
+
+func (s *Scene) Hide() {
+	s.menu.Hide()
+	s.bestBanner.Set(math.FixOne*240, 0)
+	s.scoreBanner.Set(math.FixOne*240, 0)
+	s.highScore.X = 240
+	s.highScore.Draw()
 }
 
 // menu is a simple game over menu
 type menu struct {
-	x, y          math.Fix8
-	arrow         *game.Sprite
-	bg            *game.Background
-	restart, quit bool
+	x, y            math.Fix8
+	arrow           *game.Sprite
+	bg              *game.Background
+	restart, quit   bool
+	selectCountDown int
+	selectStart     int
 }
 
 // newMenu creates a new game over menu
@@ -138,16 +147,24 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
 	return &menu{
-		x:     x,
-		y:     y,
-		arrow: arrow,
-		bg:    bg,
+		x:           x,
+		y:           y,
+		arrow:       arrow,
+		bg:          bg,
+		selectStart: 30,
 	}, nil
 }
 
 // Update updates the menu state each frame
 func (m *menu) Update() {
+	if m.selectStart > 0 {
+		m.selectStart--
+		m.arrow.Update()
+		return
+	}
+
 	if m.restart || m.quit {
+		m.selectCountDown--
 		m.arrow.Update()
 		return
 	}
@@ -170,6 +187,7 @@ func (m *menu) Update() {
 			game.Frame{Index: 2, Len: 7},
 			game.Frame{Index: 3, Len: 7},
 		)
+		m.selectCountDown = 60
 	}
 
 	m.arrow.Update()
@@ -188,4 +206,33 @@ func (m *menu) Add() error {
 	}
 
 	return nil
+}
+
+func (m *menu) Hide() {
+	m.bg.VScroll = math.FixOne * 160
+	m.arrow.X = math.FixOne * 240
+}
+
+func (m *menu) Reset(x, y math.Fix8) {
+	m.arrow.TileIndex = 2
+	m.arrow.SetAnimation(
+		game.Frame{Index: 2, Len: 30},
+		game.Frame{Index: 1, Len: 10},
+		game.Frame{Index: 0, Len: 10},
+		game.Frame{Index: 0, HFlip: true, Len: 10},
+		game.Frame{Index: 1, HFlip: true, Len: 10},
+		game.Frame{Index: 2, Len: 10},
+		game.Frame{Index: 1, Len: 10},
+		game.Frame{Index: 0, Len: 10},
+		game.Frame{Index: 0, HFlip: true, Len: 10},
+		game.Frame{Index: 1, HFlip: true, Len: 10},
+	)
+
+	m.x = x
+	m.y = y
+	m.selectStart = 30
+	m.bg.VScroll = 0
+	m.arrow.X = x
+	m.restart = false
+	m.quit = false
 }

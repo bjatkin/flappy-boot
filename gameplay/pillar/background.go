@@ -7,6 +7,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
+// BG is a background the scrolls and spawns in pillars for the player to dodge
 type BG struct {
 	bg          *game.Background
 	rand        *rand.Rand
@@ -19,6 +20,7 @@ type BG struct {
 	started bool
 }
 
+// NewBG creates a new BG struct
 func NewBG(pillarEvery int, bg *game.Background) *BG {
 	pillars := &BG{
 		bg:          bg,
@@ -29,6 +31,7 @@ func NewBG(pillarEvery int, bg *game.Background) *BG {
 	return pillars
 }
 
+// CheckPoint checks to see if the current math.Rect has passed through a new pillar gap
 func (p *BG) CheckPoint(check math.Rect) bool {
 	buffer := 4
 	for i := range p.pillars {
@@ -44,6 +47,7 @@ func (p *BG) CheckPoint(check math.Rect) bool {
 	return false
 }
 
+// Start indicates the that game as started and the background should start spawing pillars
 func (p *BG) Start() {
 	if p.started {
 		return
@@ -53,6 +57,20 @@ func (p *BG) Start() {
 	p.lastPoint = p.bg.HScroll.Int() + p.pillarEvery
 }
 
+// Reset sets the background to it's initial state, resetting it's horizontal scroll and removing all active pillars
+func (p *BG) Reset() {
+	p.started = false
+	p.bg.HScroll = 0
+	p.rand = nil
+
+	for i := range p.pillars {
+		p.removePillar(p.pillars[i])
+	}
+	p.pillars = []math.Rect{}
+}
+
+// CollisionCheck checks the provided rect against all the pillars in the current background. If the rect collides
+// with any pillar CollisionCheck returns true
 func (p *BG) CollisionCheck(check math.Rect) bool {
 	for i := range p.pillars {
 		left := p.pillars[i].X1 - p.bg.HScroll.Int()
@@ -74,6 +92,7 @@ func (p *BG) CollisionCheck(check math.Rect) bool {
 	return false
 }
 
+// addPillar adds a new pillar to the background
 func (p *BG) addPillar(x int) math.Rect {
 	start := (x % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
@@ -104,6 +123,7 @@ func (p *BG) addPillar(x int) math.Rect {
 	return math.Rect{X1: x, Y1: gap*8 + 4, X2: x + 32, Y2: (gap+p.gapSize)*8 + 4}
 }
 
+// removePillar removes the pillar located at math.Rect r
 func (p *BG) removePillar(r math.Rect) {
 	start := (r.X1 % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
@@ -115,6 +135,7 @@ func (p *BG) removePillar(r math.Rect) {
 	}
 }
 
+// Update updates the background including scrolling, adding new pillars, and removing old pillars
 func (p *BG) Update(scrollSpeed math.Fix8) {
 	p.bg.HScroll += scrollSpeed
 
@@ -149,6 +170,7 @@ func (p *BG) Update(scrollSpeed math.Fix8) {
 	p.pillars = keep
 }
 
+// Show adds the background to the list of active backgrounds
 func (p *BG) Show() error {
 	err := p.bg.Add()
 	if err != nil {
@@ -157,6 +179,7 @@ func (p *BG) Show() error {
 	return nil
 }
 
+// Hide hides the current background
 func (p *BG) Hide() {
 	p.bg.Remove()
 }
