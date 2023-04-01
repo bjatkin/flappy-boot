@@ -84,10 +84,40 @@ func (e *Engine) drawSprites() {
 		hw_sprite.OAM[i] = *s.attrs()
 		i++
 	}
+
+	clear := hw_sprite.Attrs{
+		Attr0: hw_sprite.Attr0(255) | hw_sprite.Hide,
+		Attr1: hw_sprite.Attr1(511),
+	}
+	for ; i < 128; i++ {
+		hw_sprite.OAM[i] = clear
+	}
 }
 
 func (e *Engine) drawBackgrounds() {
 	// TODO: only update the backgrouds if something has changed?
+
+	// 0xF0FF masks out all the 'active backgrounds' bits from the controll register
+	// these bits are then added back to the controll value only if the background is still active
+	backgroundControll := memmap.GetReg(hw_display.Controll) & 0xF0FF
+	for i := range e.activeBackgrounds {
+		if e.activeBackgrounds[i] == nil {
+			continue
+		}
+
+		switch i {
+		case 0:
+			backgroundControll |= hw_display.BG0
+		case 1:
+			backgroundControll |= hw_display.BG1
+		case 2:
+			backgroundControll |= hw_display.BG2
+		case 3:
+			backgroundControll |= hw_display.BG3
+		}
+	}
+	memmap.SetReg(hw_display.Controll, backgroundControll)
+
 	for i := range e.activeBackgrounds {
 		if e.activeBackgrounds[i] == nil {
 			continue
@@ -97,22 +127,18 @@ func (e *Engine) drawBackgrounds() {
 		switch i {
 		case 0:
 			memmap.SetReg(hw_display.BG0Controll, controll)
-			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG0)
 			memmap.SetReg(hw_display.BG0HOffset, e.activeBackgrounds[0].HScroll.Uint16())
 			memmap.SetReg(hw_display.BG0VOffset, e.activeBackgrounds[0].VScroll.Uint16())
 		case 1:
 			memmap.SetReg(hw_display.BG1Controll, controll)
-			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG1)
 			memmap.SetReg(hw_display.BG1HOffset, e.activeBackgrounds[1].HScroll.Uint16())
 			memmap.SetReg(hw_display.BG1VOffset, e.activeBackgrounds[1].VScroll.Uint16())
 		case 2:
 			memmap.SetReg(hw_display.BG2Controll, controll)
-			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG2)
 			memmap.SetReg(hw_display.BG2HOffset, e.activeBackgrounds[2].HScroll.Uint16())
 			memmap.SetReg(hw_display.BG2VOffset, e.activeBackgrounds[2].VScroll.Uint16())
 		case 3:
 			memmap.SetReg(hw_display.BG3Controll, controll)
-			memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.BG3)
 			memmap.SetReg(hw_display.BG3HOffset, e.activeBackgrounds[3].HScroll.Uint16())
 			memmap.SetReg(hw_display.BG3VOffset, e.activeBackgrounds[3].VScroll.Uint16())
 		}
