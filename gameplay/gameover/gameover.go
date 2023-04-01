@@ -30,7 +30,7 @@ type Scene struct {
 func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player, roundScore, highScore *score.Counter) (*Scene, error) {
 	scoreBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
-		[]int{0, 16},
+		[]int{24, 0},
 		assets.BannersTileSet,
 	)
 	if err != nil {
@@ -39,7 +39,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 
 	bestBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
-		[]int{8, 24},
+		[]int{16, 8},
 		assets.BannersTileSet,
 	)
 	if err != nil {
