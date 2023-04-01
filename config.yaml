@@ -36,6 +36,10 @@ TileSets:
     File: assets/press_start_ts.png
     Transparent: "#FF00FF"
     Description: the PRESS START text present on the title screen
+  - Name: debug
+    Size: "8x8"
+    File: assets/debug_ts.png
+    Description: small tileset useful for debugging
 TileMaps:
   - Name: bluebg
     File: assets/blue_bg_ts.png
