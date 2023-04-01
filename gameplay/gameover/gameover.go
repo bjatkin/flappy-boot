@@ -2,6 +2,7 @@ package gameover
 
 import (
 	"github.com/bjatkin/flappy_boot/gameplay/actor"
+	"github.com/bjatkin/flappy_boot/gameplay/pillar"
 	"github.com/bjatkin/flappy_boot/gameplay/score"
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
@@ -16,6 +17,7 @@ type Scene struct {
 	player    *actor.Player
 	score     *score.Counter
 	highScore *score.Counter
+	pillars   *pillar.BG
 
 	scoreBanner *game.MetaSprite
 	bestBanner  *game.MetaSprite
@@ -27,7 +29,7 @@ type Scene struct {
 	Restart, Quit bool
 }
 
-func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player, roundScore, highScore *score.Counter) (*Scene, error) {
+func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, roundScore, highScore *score.Counter) (*Scene, error) {
 	scoreBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
 		[]int{24, 0},
@@ -57,6 +59,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 		player:    player,
 		score:     roundScore,
 		highScore: highScore,
+		pillars:   pillars,
 
 		scoreBanner: scoreBanner,
 		bestBanner:  bestBanner,
@@ -92,6 +95,8 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
+	s.score.Draw()
+
 	return nil
 }
 
@@ -107,12 +112,14 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 	return nil
 }
 
+// Hide hides all the assets associated with the scene
 func (s *Scene) Hide() {
 	s.menu.Hide()
-	s.bestBanner.Set(math.FixOne*240, 0)
-	s.scoreBanner.Set(math.FixOne*240, 0)
-	s.highScore.X = 240
-	s.highScore.Draw()
+	s.pillars.Hide()
+	s.bestBanner.Remove()
+	s.scoreBanner.Remove()
+	s.highScore.Remove()
+	s.score.Remove()
 }
 
 // menu is a simple game over menu
@@ -157,12 +164,6 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 
 // Update updates the menu state each frame
 func (m *menu) Update() {
-	if m.selectStart > 0 {
-		m.selectStart--
-		m.arrow.Update()
-		return
-	}
-
 	if m.restart || m.quit {
 		m.selectCountDown--
 		m.arrow.Update()
@@ -175,6 +176,13 @@ func (m *menu) Update() {
 	if key.JustPressed(key.Up) {
 		m.arrow.Y = m.y
 	}
+
+	if m.selectStart > 0 {
+		m.selectStart--
+		m.arrow.Update()
+		return
+	}
+
 	if key.JustPressed(key.A) && m.arrow.Y == m.y {
 		m.restart = true
 	}
@@ -209,7 +217,7 @@ func (m *menu) Add() error {
 }
 
 func (m *menu) Hide() {
-	m.bg.VScroll = math.FixOne * 160
+	m.bg.Remove()
 	m.arrow.X = math.FixOne * 240
 }
 

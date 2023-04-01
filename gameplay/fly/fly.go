@@ -4,9 +4,7 @@ import (
 	"github.com/bjatkin/flappy_boot/gameplay/actor"
 	"github.com/bjatkin/flappy_boot/gameplay/pillar"
 	"github.com/bjatkin/flappy_boot/gameplay/score"
-	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
-	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
@@ -26,14 +24,14 @@ type Scene struct {
 	jumpHeight math.Fix8
 }
 
-func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player, score *score.Counter) *Scene {
+func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, score *score.Counter) *Scene {
 	return &Scene{
 		scrollSpeed: math.FixOne + math.FixEighth,
 		gravity:     math.FixQuarter,
 		ground:      math.FixOne * 147,
 		jumpHeight:  -math.FixOne * 3,
 
-		pillars: pillar.NewBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority1)),
+		pillars: pillars,
 		sky:     sky,
 		clouds:  clouds,
 		player:  player,
@@ -67,6 +65,8 @@ func (s *Scene) Init(e *game.Engine) error {
 	if err != nil {
 		return err
 	}
+
+	s.score.Draw()
 
 	return nil
 }
