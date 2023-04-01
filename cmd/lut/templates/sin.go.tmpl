@@ -1,0 +1,22 @@
+// This is generated code. DO NOT EDIT
+
+package lut
+
+import (
+	"github.com/bjatkin/flappy_boot/internal/math"
+)
+
+var sinLut = []math.Fix8 {
+{{- range $i, $v := .Values}}
+	math.Fix8({{hex $v}}), // {{floatRef $i}} -> {{fixToFloat $v}}
+{{- end}}
+}
+
+// Sin takes fixed point input and returns the sin(f*2pi). The result ranges from -1 to 1
+func Sin(f math.Fix8) math.Fix8 {
+	// only take most significant 6 bits since that's the same precision as the generated look up table
+	f &= 0x00FC 
+	f >>= 2
+
+	return sinLut[f]
+}
