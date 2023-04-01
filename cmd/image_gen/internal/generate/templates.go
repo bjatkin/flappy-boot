@@ -12,12 +12,11 @@ var templates embed.FS
 
 var goTemplates = template.Must(
 	template.New("go_templates").
-		Funcs(
-			map[string]any{
-				"private": private,
-				"public":  public,
-				"add":     add,
-			}).
+		Funcs(map[string]any{
+			"private": private,
+			"public":  public,
+			"add":     add,
+		}).
 		ParseFS(templates, "templates/*.tmpl"),
 )
 
