@@ -37,6 +37,7 @@ func (c *Counter) Set(score int) {
 	c.score[1] = (score - c.score[0]*1000) / 100
 	c.score[2] = (score - c.score[0]*1000 - c.score[1]*100) / 10
 	c.score[3] = score - c.score[0]*1000 - c.score[1]*100 - c.score[2]*10
+	c.Remove()
 }
 
 // Add adds 1 to the counters internal score
@@ -75,6 +76,14 @@ func (c *Counter) Draw() {
 		c.digits[i].X = math.NewFix8(c.X-start+i*11, 0)
 		c.digits[i].Y = math.NewFix8(c.Y, 0)
 		c.digits[i].Add()
+	}
+}
+
+func (c *Counter) Remove() {
+	for i := range c.digits {
+		if c.digits[i] != nil {
+			c.digits[i].Remove()
+		}
 	}
 }
 

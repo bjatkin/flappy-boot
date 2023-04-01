@@ -5,6 +5,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
+	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
@@ -17,6 +18,10 @@ type Scene struct {
 	advance *game.MetaSprite
 	press   *game.MetaSprite
 	start   *game.MetaSprite
+
+	startPressed int
+	blinkOn      bool
+	Done         bool
 }
 
 func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player) (*Scene, error) {
@@ -70,6 +75,10 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 }
 
 func (s *Scene) Init(e *game.Engine) error {
+	s.Done = false
+	s.startPressed = 0
+	s.blinkOn = false
+
 	s.logo.Set(math.FixOne*72, math.FixOne*20)
 	if err := s.logo.Add(); err != nil {
 		return err
@@ -104,6 +113,7 @@ func (s *Scene) Init(e *game.Engine) error {
 
 	s.player.Sprite.X = math.FixOne * 114
 	s.player.Sprite.Y = math.FixOne * 122
+	s.player.Sprite.HFlip = false
 	if err := s.player.Show(); err != nil {
 		return err
 	}
@@ -113,5 +123,36 @@ func (s *Scene) Init(e *game.Engine) error {
 
 func (s *Scene) Update(e *game.Engine, frame int) error {
 	s.clouds.HScroll += math.FixEighth
+	if key.JustPressed(key.Start) && s.startPressed == 0 {
+		s.startPressed = frame
+	}
+
+	if s.startPressed > 0 && (frame-s.startPressed)%10 == 0 {
+		if s.blinkOn {
+			s.press.Set(math.FixOne*72, math.FixOne*74)
+			s.start.Set(math.FixOne*128, math.FixOne*74)
+		} else {
+			s.press.Set(math.FixOne*240, 0)
+			s.start.Set(math.FixOne*240, 0)
+		}
+		s.blinkOn = !s.blinkOn
+	}
+
+	s.Done = s.startPressed > 0 && (frame-s.startPressed) > 90
+
+	if key.JustPressed(key.B) {
+		if err := s.alter.Add(); err != nil {
+			return err
+		}
+	}
+
 	return nil
+}
+
+func (s *Scene) Hide() {
+	s.alter.Remove()
+	s.press.Remove()
+	s.start.Remove()
+	s.logo.Remove()
+	s.advance.Remove()
 }
