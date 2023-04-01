@@ -23,6 +23,19 @@ TileSets:
     Size: "32x16"
     File: assets/score_best_ts.png
     Description: score banners for the game over screen
+  - Name: logo
+    Size: "32x32"
+    File: assets/logo_ts.png
+    Description: the main logo for flappy boot
+  - Name: advance
+    Size: "16x16"
+    File: assets/advance_ts.png
+    Description: the advance badge that goes with the flappy boot logo
+  - Name: start
+    Size: "16x8"
+    File: assets/press_start_ts.png
+    Transparent: "#FF00FF"
+    Description: the PRESS START text present on the title screen
 TileMaps:
   - Name: bluebg
     File: assets/blue_bg_ts.png
@@ -38,3 +51,6 @@ TileMaps:
   - Name: clouds
     File: assets/clouds_tm.png
     Description: the background clouds
+  - Name: mainmenu
+    File: assets/main_menu_tm.png
+    Description: the main set for the main menu
