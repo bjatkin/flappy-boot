@@ -27,6 +27,7 @@ func (p *Pal) Alloc() (*PMem, error) {
 	for i := range p.meta {
 		if !p.meta[i] {
 			p.meta[i] = true
+			// TODO: this could be come a source of lots of garbage, it should be cleaned up
 			return &PMem{
 				Memory: p.memory[i*memmap.PaletteOffset : (i+1)*memmap.PaletteOffset],
 				Offset: i,

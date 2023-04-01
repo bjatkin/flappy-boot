@@ -132,24 +132,33 @@ type menu struct {
 	selectStart     int
 }
 
+var (
+	arrowSpinAnim = []game.Frame{
+		{Index: 2, Len: 30},
+		{Index: 1, Len: 10},
+		{Index: 0, Len: 10},
+		{Index: 0, HFlip: true, Len: 10},
+		{Index: 1, HFlip: true, Len: 10},
+		{Index: 2, Len: 10},
+		{Index: 1, Len: 10},
+		{Index: 0, Len: 10},
+		{Index: 0, HFlip: true, Len: 10},
+		{Index: 1, HFlip: true, Len: 10},
+	}
+
+	arrowBlinkAnim = []game.Frame{
+		{Index: 2, Len: 7},
+		{Index: 3, Len: 7},
+	}
+)
+
 // newMenu creates a new game over menu
 func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	arrow := e.NewSprite(assets.SelectTileSet)
 	arrow.X = x
 	arrow.Y = y
 	arrow.TileIndex = 2
-	arrow.SetAnimation(
-		game.Frame{Index: 2, Len: 30},
-		game.Frame{Index: 1, Len: 10},
-		game.Frame{Index: 0, Len: 10},
-		game.Frame{Index: 0, HFlip: true, Len: 10},
-		game.Frame{Index: 1, HFlip: true, Len: 10},
-		game.Frame{Index: 2, Len: 10},
-		game.Frame{Index: 1, Len: 10},
-		game.Frame{Index: 0, Len: 10},
-		game.Frame{Index: 0, HFlip: true, Len: 10},
-		game.Frame{Index: 1, HFlip: true, Len: 10},
-	)
+	arrow.SetAnimation(arrowSpinAnim)
 
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
@@ -191,10 +200,7 @@ func (m *menu) Update() {
 	}
 
 	if m.restart || m.quit {
-		m.arrow.SetAnimation(
-			game.Frame{Index: 2, Len: 7},
-			game.Frame{Index: 3, Len: 7},
-		)
+		m.arrow.SetAnimation(arrowBlinkAnim)
 		m.selectCountDown = 60
 	}
 
@@ -223,18 +229,7 @@ func (m *menu) Hide() {
 
 func (m *menu) Reset(x, y math.Fix8) {
 	m.arrow.TileIndex = 2
-	m.arrow.SetAnimation(
-		game.Frame{Index: 2, Len: 30},
-		game.Frame{Index: 1, Len: 10},
-		game.Frame{Index: 0, Len: 10},
-		game.Frame{Index: 0, HFlip: true, Len: 10},
-		game.Frame{Index: 1, HFlip: true, Len: 10},
-		game.Frame{Index: 2, Len: 10},
-		game.Frame{Index: 1, Len: 10},
-		game.Frame{Index: 0, Len: 10},
-		game.Frame{Index: 0, HFlip: true, Len: 10},
-		game.Frame{Index: 1, HFlip: true, Len: 10},
-	)
+	m.arrow.SetAnimation(arrowSpinAnim)
 
 	m.x = x
 	m.y = y
