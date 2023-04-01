@@ -6,9 +6,6 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
 
-// Best is the best score that has been scored in this play session
-var Best int
-
 // Counter is a score Counter used for displaying a score on the screen
 type Counter struct {
 	score   [4]int
@@ -81,7 +78,7 @@ func (c *Counter) Draw() {
 	}
 }
 
-// Score
+// Score returns the counters score as an integer
 func (c *Counter) Score() int {
 	return c.score[0]*1000 +
 		c.score[1]*100 +

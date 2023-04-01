@@ -26,10 +26,21 @@ func NewPlayer(x, y math.Fix8, sprite *game.Sprite) *Player {
 	return p
 }
 
+// Start indicates the the game has started and the player should start applying physics
 func (p *Player) Start() {
 	p.started = true
 }
 
+// Reset resets all the players properties to be the same as they were on creation. It also move the sprite to the specified location
+func (p *Player) Reset(x, y math.Fix8) {
+	p.dy = 0
+	p.started = false
+	p.Sprite.X = x
+	p.Sprite.Y = y
+	p.Sprite.HFlip = false
+}
+
+// Rect returns the hitbox of the player as a math.Rect
 func (p *Player) Rect() math.Rect {
 	return math.Rect{
 		X1: p.Sprite.X.Int() + 2,
@@ -39,6 +50,7 @@ func (p *Player) Rect() math.Rect {
 	}
 }
 
+// Show whos the player sprite
 func (p *Player) Show() error {
 	err := p.Sprite.Add()
 	if err != nil {
@@ -48,10 +60,12 @@ func (p *Player) Show() error {
 	return nil
 }
 
+// Hide hides the player sprite
 func (p *Player) Hide() {
 	p.Sprite.Remove()
 }
 
+// Update updates the players physics and interal properites
 func (p *Player) Update(gravity, jump math.Fix8) {
 	if !p.started {
 		// don't update physics if the game has not started yet
