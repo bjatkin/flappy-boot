@@ -2,6 +2,7 @@ package game
 
 import (
 	"github.com/bjatkin/flappy_boot/internal/alloc"
+	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/display"
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
@@ -29,12 +30,16 @@ type Engine struct {
 	bgTileAlloc  *alloc.VRAM
 	sprTileAlloc *alloc.VRAM
 	mapAlloc     *alloc.VRAM
+
+	// Debug sprites
+	debug [10]*Sprite
 }
 
 // NewEngine creates a new instances of a game engine
 func NewEngine() *Engine {
 	memmap.SetReg(hw_display.Controll, hw_display.Sprite1D|hw_display.ForceBlank)
-	return &Engine{
+
+	e := &Engine{
 		activeSprites: make(map[*Sprite]struct{}, 128),
 		bgPalAlloc:    alloc.NewPal(memmap.Palette[:256]),
 		sprPalAlloc:   alloc.NewPal(memmap.Palette[256:]),
@@ -44,6 +49,15 @@ func NewEngine() *Engine {
 		sprTileAlloc: alloc.NewVRAM(memmap.VRAM[memmap.CharBlockOffset*4:], 16),
 		mapAlloc:     alloc.NewVRAM(memmap.VRAM[memmap.CharBlockOffset*2:], memmap.HalfKByte*2),
 	}
+
+	debugSprites := [10]*Sprite{}
+	for i := range debugSprites {
+		debugSprites[i] = e.NewSprite(assets.DebugTileSet)
+	}
+
+	e.debug = debugSprites
+
+	return e
 }
 
 func (e *Engine) Run(run Runable) error {
