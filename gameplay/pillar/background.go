@@ -13,9 +13,9 @@ type BG struct {
 	rand        *rand.Rand
 	nextPillar  int
 	pillarEvery int
-	pillars     []math.Rect
 	gapSize     int
 	lastPoint   int
+	meta        meta
 
 	started bool
 }
@@ -26,6 +26,7 @@ func NewBG(pillarEvery int, bg *game.Background) *BG {
 		bg:          bg,
 		gapSize:     7,
 		pillarEvery: pillarEvery,
+		meta:        meta{},
 	}
 
 	return pillars
@@ -34,13 +35,19 @@ func NewBG(pillarEvery int, bg *game.Background) *BG {
 // CheckPoint checks to see if the current math.Rect has passed through a new pillar gap
 func (p *BG) CheckPoint(check math.Rect) bool {
 	buffer := 4
-	for i := range p.pillars {
-		if p.pillars[i].X2 == p.lastPoint {
+	for i := range p.meta.pillars {
+		if !p.meta.IsSet(i) {
 			continue
 		}
-		right := p.pillars[i].X2 - p.bg.HScroll.Int()
+		pillar := p.meta.pillars[i]
+
+		if pillar.X2 == p.lastPoint {
+			continue
+		}
+
+		right := pillar.X2 - p.bg.HScroll.Int()
 		if right < check.X1+buffer {
-			p.lastPoint = p.pillars[i].X2
+			p.lastPoint = pillar.X2
 			return true
 		}
 	}
@@ -63,23 +70,26 @@ func (p *BG) Reset() {
 	p.bg.HScroll = 0
 	p.rand = nil
 
-	for i := range p.pillars {
-		p.removePillar(p.pillars[i])
+	for i := range p.meta.pillars {
+		p.removePillar(i)
 	}
-	p.pillars = []math.Rect{}
 }
 
 // CollisionCheck checks the provided rect against all the pillars in the current background. If the rect collides
 // with any pillar CollisionCheck returns true
 func (p *BG) CollisionCheck(check math.Rect) bool {
-	for i := range p.pillars {
-		left := p.pillars[i].X1 - p.bg.HScroll.Int()
+	for i := range p.meta.pillars {
+		if !p.meta.set[i] {
+			continue
+		}
+
+		left := p.meta.pillars[i].X1 - p.bg.HScroll.Int()
 		if left <= 0 {
 			continue
 		}
 		right := left + 32
-		top := p.pillars[i].Y1
-		bottom := p.pillars[i].Y2
+		top := p.meta.pillars[i].Y1
+		bottom := p.meta.pillars[i].Y2
 
 		if check.X2 < left || check.X1 > right {
 			continue
@@ -93,7 +103,7 @@ func (p *BG) CollisionCheck(check math.Rect) bool {
 }
 
 // addPillar adds a new pillar to the background
-func (p *BG) addPillar(x int) math.Rect {
+func (p *BG) addPillar(x int) {
 	start := (x % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
 
@@ -120,12 +130,16 @@ func (p *BG) addPillar(x int) math.Rect {
 		}
 	}
 
-	return math.Rect{X1: x, Y1: gap*8 + 4, X2: x + 32, Y2: (gap+p.gapSize)*8 + 4}
+	p.meta.Append(x, gap*8+4, x+32, (gap+p.gapSize)*8+4)
 }
 
 // removePillar removes the pillar located at math.Rect r
-func (p *BG) removePillar(r math.Rect) {
-	start := (r.X1 % 512) / 8
+func (p *BG) removePillar(i int) {
+	if !p.meta.IsSet(i) {
+		return
+	}
+
+	start := (p.meta.pillars[i].X1 % 512) / 8
 	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
 
 	for i := 0; i < 18; i++ {
@@ -133,6 +147,8 @@ func (p *BG) removePillar(r math.Rect) {
 			p.bg.SetTile(columns[j], i, 0)
 		}
 	}
+
+	p.meta.Remove(i)
 }
 
 // Update updates the background including scrolling, adding new pillars, and removing old pillars
@@ -149,25 +165,23 @@ func (p *BG) Update(scrollSpeed math.Fix8) {
 
 	// add pillars to the right just off screen
 	p.nextPillar--
-	var keep []math.Rect
 	if p.nextPillar <= 0 {
 		x := p.bg.HScroll.Int() + 256
-		r := p.addPillar(x)
+		p.addPillar(x)
 		p.nextPillar = p.pillarEvery
-		keep = []math.Rect{r}
 	}
 
 	// remove current pillars to the left of the screen
 	border := p.bg.HScroll.Int() - 32
-	for i := range p.pillars {
-		if p.pillars[i].X1 < border {
-			p.removePillar(p.pillars[i])
-		} else {
-			keep = append(keep, p.pillars[i])
+	for i := range p.meta.pillars {
+		if !p.meta.IsSet(i) {
+			continue
+		}
+
+		if p.meta.pillars[i].X1 < border {
+			p.removePillar(i)
 		}
 	}
-
-	p.pillars = keep
 }
 
 // Show adds the background to the list of active backgrounds
@@ -182,4 +196,33 @@ func (p *BG) Show() error {
 // Hide hides the current background
 func (p *BG) Hide() {
 	p.bg.Remove()
+}
+
+// meta hold meta data about the pillars in the background. It can hold metadata for up to 10 pillars at a time
+type meta struct {
+	pillars [10]math.Rect
+	set     [10]bool
+	i       int
+}
+
+// IsSet returns true only if the pillar at index 'i' is an 'active' onscreen pillar
+func (m *meta) IsSet(i int) bool {
+	return m.set[i]
+}
+
+// Append adds a new pillar to the current list of pillars. meta is a circular buffer so after appending 10 pillars
+// Append will wrap around and start adding pillars to the front of the buffer again
+func (m *meta) Append(x1, y1, x2, y2 int) {
+	m.set[m.i] = true
+	m.pillars[m.i].X1 = x1
+	m.pillars[m.i].Y1 = y1
+	m.pillars[m.i].X2 = x2
+	m.pillars[m.i].Y2 = y2
+	m.i++
+	m.i %= len(m.pillars)
+}
+
+// Remove removes a pillar from the list by marking it as unset
+func (m *meta) Remove(i int) {
+	m.set[i] = false
 }

@@ -58,6 +58,7 @@ func (v *VRAM) Alloc(size int) (*VMem, error) {
 		switch {
 		case diff == 0:
 			v.meta[i] = used | size
+			// TODO: this could become a source of lots of garbage, it should be cleaned up
 			return &VMem{
 				Memory: v.memory[i*v.cellSize : (i+size)*v.cellSize],
 				Offset: i,
@@ -65,6 +66,7 @@ func (v *VRAM) Alloc(size int) (*VMem, error) {
 		case diff > 0:
 			v.meta[i] = used | size
 			v.meta[i+size] = diff
+			// TODO: this could become a source of lots of garbage, it should be cleaned up
 			return &VMem{
 				Memory: v.memory[i*v.cellSize : (i+size)*v.cellSize],
 				Offset: i,

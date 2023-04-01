@@ -34,6 +34,7 @@ type Sprite struct {
 	aniCounter int
 
 	tileSet *assets.TileSet
+	hwAttrs *hw_sprite.Attrs
 }
 
 // NewSprite returns a new Sprite
@@ -43,6 +44,7 @@ func (e *Engine) NewSprite(tileSet *assets.TileSet) *Sprite {
 		tileSet: tileSet,
 		size:    tileSet.Size(),
 		shape:   tileSet.Shape(),
+		hwAttrs: &hw_sprite.Attrs{},
 	}
 }
 
@@ -81,17 +83,17 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 	if y < 0 {
 		y += 256
 	}
-	return &hw_sprite.Attrs{
-		Attr0: hw_sprite.Attr0(y%256) | s.shape | hideAttr,
-		Attr1: hw_sprite.Attr1(x%512) | vFlipAttr | hFlipAttr | s.size,
-		Attr2: (hw_sprite.Attr2(s.TileIndex) + s.tileSet.Offset()) |
-			priorityAttr |
-			s.tileSet.SprPalette(),
-	}
+	s.hwAttrs.Attr0 = hw_sprite.Attr0(y%256) | s.shape | hideAttr
+	s.hwAttrs.Attr1 = hw_sprite.Attr1(x%512) | vFlipAttr | hFlipAttr | s.size
+	s.hwAttrs.Attr2 = (hw_sprite.Attr2(s.TileIndex) + s.tileSet.Offset()) |
+		priorityAttr |
+		s.tileSet.SprPalette()
+
+	return s.hwAttrs
 }
 
 // SetAnimation sets the animation data for the sprite
-func (s *Sprite) SetAnimation(frames ...Frame) {
+func (s *Sprite) SetAnimation(frames []Frame) {
 	s.aniCounter = 0
 	s.aniFrame = 0
 	s.animation = frames
