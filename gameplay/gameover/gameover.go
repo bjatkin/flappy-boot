@@ -75,17 +75,17 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 func (s *Scene) Init(e *game.Engine) error {
 	s.t = 0
 
-	s.player.Sprite.HFlip = true
+	s.player.Dead()
 	s.player.Update(s.gravity, s.deathJump)
 	s.menu.Reset(math.FixOne*87, math.FixOne*102)
 
-	s.scoreBanner.Set(math.FixOne*87, math.FixOne*8)
+	s.scoreBanner.Set(math.FixOne*87, math.FixOne*-16)
 	err := s.scoreBanner.Add()
 	if err != nil {
 		return err
 	}
 
-	s.bestBanner.Set(math.FixOne*87, math.FixOne*48)
+	s.bestBanner.Set(math.FixOne*87, math.FixOne*-16)
 	err = s.bestBanner.Add()
 	if err != nil {
 		return err
@@ -107,7 +107,7 @@ func (s *Scene) Init(e *game.Engine) error {
 func (s *Scene) Update(e *game.Engine, frame int) error {
 	// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
 	s.t += 4
-	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
+	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t*2, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
 	s.bestBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*48, math.Clamp(s.t*2, math.FixOne))+lut.Sin(s.t+math.FixThird)+math.FixEighth)
 
 	s.player.Update(s.gravity, 0)

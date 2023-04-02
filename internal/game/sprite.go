@@ -8,10 +8,11 @@ import (
 
 // Frame is a single frame of sprite animation data
 type Frame struct {
-	Index int
-	HFlip bool
-	VFlip bool
-	Len   int
+	Index  int
+	HFlip  bool
+	VFlip  bool
+	Offset math.V2
+	Len    int
 }
 
 // Sprite is a game engine sprite
@@ -21,6 +22,7 @@ type Sprite struct {
 
 	Y         math.Fix8
 	X         math.Fix8
+	Offset    math.V2
 	TileIndex int
 	Hide      bool
 	HFlip     bool
@@ -75,11 +77,11 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 		priorityAttr = hw_sprite.Priority3
 	}
 
-	x := s.X.Int()
+	x := s.X.Int() + s.Offset.X.Int()
 	if x < 0 {
 		x += 512
 	}
-	y := s.Y.Int()
+	y := s.Y.Int() + s.Offset.Y.Int()
 	if y < 0 {
 		y += 256
 	}
@@ -97,6 +99,11 @@ func (s *Sprite) SetAnimation(frames []Frame) {
 	s.aniCounter = 0
 	s.aniFrame = 0
 	s.animation = frames
+}
+
+// StopAnimation removes the animation data from the sprite
+func (s *Sprite) StopAnimation() {
+	s.animation = nil
 }
 
 // Add adds the sprite to the list of active sprites.
@@ -132,6 +139,10 @@ func (s *Sprite) UnLoad() {
 
 // Update updates the sprites graphics
 func (s *Sprite) Update() {
+	if s.animation == nil {
+		return
+	}
+
 	s.aniCounter++
 	if s.aniCounter < s.animation[s.aniFrame].Len {
 		return
@@ -143,4 +154,5 @@ func (s *Sprite) Update() {
 	s.TileIndex = s.animation[s.aniFrame].Index
 	s.HFlip = s.animation[s.aniFrame].HFlip
 	s.VFlip = s.animation[s.aniFrame].VFlip
+	s.Offset = s.animation[s.aniFrame].Offset
 }

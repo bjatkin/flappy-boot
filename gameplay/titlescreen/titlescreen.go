@@ -111,8 +111,9 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
-	s.player.Sprite.X = math.FixOne * 114
-	s.player.Sprite.Y = math.FixOne * 122
+	s.player.Sprite.X = math.FixOne * 104
+	s.player.Sprite.Y = math.FixOne * 124
+	s.player.Sprite.TileIndex = 16
 	s.player.Sprite.HFlip = false
 	if err := s.player.Show(); err != nil {
 		return err
