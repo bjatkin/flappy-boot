@@ -5,6 +5,10 @@ TileSets:
     File: assets/player.png
     Size: "16x16"
     Description: the sprite sheet for the player character
+  - Name: playerAnim
+    File: assets/player_anim_ts.png
+    Size: "32x16"
+    Description: the sprite sheet for the player character and all it's associated animations
   - Name: pillars
     Size: "8x8"
     File: assets/pillar_ts.png
