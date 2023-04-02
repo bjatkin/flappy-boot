@@ -31,9 +31,9 @@ const (
 	// FixEighth is the value of 1/8 in P8 format
 	FixEighth Fix8 = 0x0020
 
-	// Sixteenth is the value of 1/16 in P8 format
-	Sixteenth Fix8 = 0x0010
+	// FixSixteenth is the value of 1/16 in P8 format
+	FixSixteenth Fix8 = 0x0010
 
-	// Third is the value fo 1/3 in P8 format
-	Third Fix8 = 0x0056
+	// FixThird is the value fo 1/3 in P8 format
+	FixThird Fix8 = 0x0056
 )
