@@ -31,7 +31,7 @@ type Manager struct {
 func NewManager(e *game.Engine) *Manager {
 	sky := e.NewBackground(assets.SkyTileMap, display.Priority3)
 	clouds := e.NewBackground(assets.CloudsTileMap, display.Priority2)
-	player := actor.NewPlayer(math.FixOne*40, math.FixOne*62, e.NewSprite(assets.PlayerTileSet))
+	player := actor.NewPlayer(math.FixOne*32, math.FixOne*62, e.NewSprite(assets.PlayerAnimTileSet))
 	pillars := pillar.NewBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority1))
 	roundScore := score.NewCounter(97, 28, e)
 	highScore := score.NewCounter(240, 0, e)
