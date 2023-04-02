@@ -8,10 +8,11 @@ import (
 
 // Counter is a score Counter used for displaying a score on the screen
 type Counter struct {
-	score   [4]int
-	convert []int
-	digits  [4]*game.Sprite
-	X, Y    int
+	score       [4]int
+	convert     []int
+	digits      [4]*game.Sprite
+	X, Y        int
+	bounceCount int
 }
 
 // NewCounter creates a new counter struct
@@ -55,10 +56,17 @@ func (c *Counter) Add() {
 		c.score[1] = 0
 		c.score[0]++
 	}
+	c.bounceCount = 5
 }
 
 // Draw draw the graphics associated with the counter
 func (c *Counter) Draw() {
+	var bounce math.Fix8
+	if c.bounceCount > 0 {
+		c.bounceCount--
+		bounce = math.FixOne * 2
+	}
+
 	var draw bool
 	start := -1
 	for i := range c.score {
@@ -74,7 +82,7 @@ func (c *Counter) Draw() {
 
 		c.digits[i].TileIndex = c.convert[c.score[i]]
 		c.digits[i].X = math.NewFix8(c.X-start+i*11, 0)
-		c.digits[i].Y = math.NewFix8(c.Y, 0)
+		c.digits[i].Y = math.NewFix8(c.Y, 0) - bounce
 		c.digits[i].Add()
 	}
 }
