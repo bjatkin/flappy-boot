@@ -186,11 +186,7 @@ func (p *BG) Update(scrollSpeed math.Fix8) {
 
 // Show adds the background to the list of active backgrounds
 func (p *BG) Show() error {
-	err := p.bg.Add()
-	if err != nil {
-		return err
-	}
-	return nil
+	return p.bg.Add()
 }
 
 // Hide hides the current background

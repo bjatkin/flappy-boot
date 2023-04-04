@@ -22,6 +22,8 @@ type Scene struct {
 	gravity    math.Fix8
 	ground     math.Fix8
 	jumpHeight math.Fix8
+
+	palFade math.Fix8
 }
 
 func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, score *score.Counter) *Scene {
@@ -36,6 +38,8 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 		clouds:  clouds,
 		player:  player,
 		score:   score,
+
+		palFade: math.FixOne,
 	}
 }
 
@@ -44,6 +48,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.player.Reset(math.FixOne*32, math.FixOne*62)
 	s.pillars.Reset()
 	s.score.Set(0)
+	s.palFade = math.FixOne
 
 	err := s.pillars.Show()
 	if err != nil {
@@ -72,6 +77,10 @@ func (s *Scene) Init(e *game.Engine) error {
 }
 
 func (s *Scene) Update(e *game.Engine, frame int) error {
+	s.palFade -= math.FixSixteenth
+	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
+	e.PalFade(game.White, s.palFade)
+
 	var jump math.Fix8
 	if key.JustPressed(key.A) {
 		s.pillars.Start()

@@ -123,7 +123,7 @@ func (s *Sprite) Add() error {
 // Remove removes the sprites from the list of active sprites.
 // removing a sprites does not unload it's loaded assets from VRAM. To do that you must call Unload
 func (s *Sprite) Remove() {
-	delete(s.engine.activeSprites, s)
+	s.engine.removeSprite(s)
 }
 
 // Load loads a sprites graphics data into memory

@@ -21,7 +21,9 @@ type Scene struct {
 
 	startPressed int
 	blinkOn      bool
-	Done         bool
+	palFade      math.Fix8
+
+	Done bool
 }
 
 func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player) (*Scene, error) {
@@ -71,6 +73,8 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 		advance: advance,
 		press:   press,
 		start:   start,
+
+		palFade: math.FixOne,
 	}, nil
 }
 
@@ -78,6 +82,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.Done = false
 	s.startPressed = 0
 	s.blinkOn = false
+	s.palFade = math.FixOne
 
 	s.logo.Set(math.FixOne*72, math.FixOne*20)
 	if err := s.logo.Add(); err != nil {
@@ -123,6 +128,15 @@ func (s *Scene) Init(e *game.Engine) error {
 }
 
 func (s *Scene) Update(e *game.Engine, frame int) error {
+	if s.startPressed > 0 && (frame-s.startPressed) > 50 {
+		s.palFade += math.FixSixteenth
+	}
+	if s.startPressed == 0 {
+		s.palFade -= math.FixSixteenth
+	}
+	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
+	e.PalFade(game.White, s.palFade)
+
 	s.clouds.HScroll += math.FixEighth
 	if key.JustPressed(key.Start) && s.startPressed == 0 {
 		s.startPressed = frame
