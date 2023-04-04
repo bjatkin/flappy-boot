@@ -18,9 +18,12 @@ func Lerp(a, b, t Fix8) Fix8 {
 }
 
 // Clamp clamps the value to a maximum possible value
-func Clamp(i, max Fix8) Fix8 {
+func Clamp(i, min Fix8, max Fix8) Fix8 {
 	if i > max {
 		return max
+	}
+	if i < min {
+		return min
 	}
 
 	return i

@@ -12,6 +12,8 @@ type PMem struct {
 type Pal struct {
 	meta   [8]bool
 	memory []memmap.PaletteValue
+
+	dirty bool
 }
 
 // NewPal creates a new Pal allocator from a section of palette memory
@@ -27,6 +29,8 @@ func (p *Pal) Alloc() (*PMem, error) {
 	for i := range p.meta {
 		if !p.meta[i] {
 			p.meta[i] = true
+			p.dirty = true
+
 			// TODO: this could be come a source of lots of garbage, it should be cleaned up
 			return &PMem{
 				Memory: p.memory[i*memmap.PaletteOffset : (i+1)*memmap.PaletteOffset],
@@ -38,6 +42,17 @@ func (p *Pal) Alloc() (*PMem, error) {
 	return nil, ErrOOM
 }
 
+// Free marks the memory associated with the provided allocation as free
 func (p *Pal) Free(mem *PMem) {
 	p.meta[mem.Offset] = false
+}
+
+// IsDirty returns true if the allocator has made any new allocations since the palette was last marked clean
+func (p *Pal) IsDirty() bool {
+	return p.dirty
+}
+
+// MarkClean marks the allocator as clean
+func (p *Pal) MarkClean() {
+	p.dirty = false
 }

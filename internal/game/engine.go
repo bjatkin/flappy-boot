@@ -8,9 +8,19 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 	"github.com/bjatkin/flappy_boot/internal/key"
+	"github.com/bjatkin/flappy_boot/internal/math"
 	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
+const (
+	// White is the color white as a memmap.PaletteValue
+	White = memmap.PaletteValue(0x7FFF)
+
+	// Black is the color black as a memmap.PaletteValue
+	Black = memmap.PaletteValue(0x0000)
+)
+
+// Runable is an interface for a type that can be run by the engine
 type Runable interface {
 	Init(*Engine) error
 	Update(*Engine, int) error
@@ -24,6 +34,12 @@ type Engine struct {
 	// activeBackgrounds are the backgrounds that need to be drawn each frame
 	activeBackgrounds [4]*Background
 
+	// palBuff is the palette buffer that is coppied into the palette memory every frame
+	palBuff  [512]memmap.PaletteValue
+	fadeCol  memmap.PaletteValue
+	fadeFrac math.Fix8
+	doFade   bool
+
 	// Allocators
 	bgPalAlloc   *alloc.Pal
 	sprPalAlloc  *alloc.Pal
@@ -31,24 +47,26 @@ type Engine struct {
 	sprTileAlloc *alloc.VRAM
 	mapAlloc     *alloc.VRAM
 
-	// Debug sprites
+	// Debug contains some simple sprites for debugging
 	Debug [10]*Sprite
 }
 
 // NewEngine creates a new instances of a game engine
 func NewEngine() *Engine {
+	memmap.Palette[0] = 0x7FFF
 	memmap.SetReg(hw_display.Controll, hw_display.Sprite1D|hw_display.ForceBlank)
 
 	e := &Engine{
 		activeSprites: make(map[*Sprite]struct{}, 128),
-		bgPalAlloc:    alloc.NewPal(memmap.Palette[:256]),
-		sprPalAlloc:   alloc.NewPal(memmap.Palette[256:]),
 
 		// the first tile is left transparent and can be shared by all tile maps
 		bgTileAlloc:  alloc.NewVRAM(memmap.VRAM[memmap.TileOffset4:memmap.CharBlockOffset*2], 16),
 		sprTileAlloc: alloc.NewVRAM(memmap.VRAM[memmap.CharBlockOffset*4:], 16),
 		mapAlloc:     alloc.NewVRAM(memmap.VRAM[memmap.CharBlockOffset*2:], memmap.HalfKByte*2),
 	}
+
+	e.bgPalAlloc = alloc.NewPal(e.palBuff[:256])
+	e.sprPalAlloc = alloc.NewPal(e.palBuff[256:])
 
 	debugSprites := [10]*Sprite{}
 	for i := range debugSprites {
@@ -60,6 +78,7 @@ func NewEngine() *Engine {
 	return e
 }
 
+// Run runs the provided Runable
 func (e *Engine) Run(run Runable) error {
 	// enable sprites
 	memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.Sprites)
@@ -83,6 +102,14 @@ func (e *Engine) Run(run Runable) error {
 
 			vSyncWait()
 
+			// update the palette if needed
+			if e.doFade || e.bgPalAlloc.IsDirty() || e.sprPalAlloc.IsDirty() {
+				e.updatePalette()
+				e.doFade = false
+				e.bgPalAlloc.MarkClean()
+				e.sprPalAlloc.MarkClean()
+			}
+
 			// copy active sprite data into OAM memory
 			e.drawSprites()
 
@@ -92,6 +119,55 @@ func (e *Engine) Run(run Runable) error {
 	}
 }
 
+// PalFade fades the current color palette towards the specified color
+// t should be between 0 and 1. At 0 the color palette is completely unchanged.
+// At 1 the palette is completely the provided color.
+func (e *Engine) PalFade(color memmap.PaletteValue, t math.Fix8) {
+	if e.fadeCol != color || e.fadeFrac != t {
+		e.doFade = true
+	}
+	e.fadeCol = color
+	e.fadeFrac = t
+}
+
+// updatePalette will copy the current palette into palette RAM
+func (e *Engine) updatePalette() {
+	for i := range e.palBuff {
+		memmap.Palette[i] = lerpColor(e.palBuff[i], e.fadeCol, e.fadeFrac)
+	}
+}
+
+// lerpColor lerps from the src color to the dest color. t should be between 0 and 1
+// at t=0, src is the returned color. at t=1, dest is the returned color.
+func lerpColor(src, dest memmap.PaletteValue, t math.Fix8) memmap.PaletteValue {
+	switch {
+	case t < 15:
+		return src
+	case t > math.FixOne-15:
+		return dest
+	case src == dest:
+		return src
+	}
+
+	// TODO this could be made a lot more efficient if it didin't use math.Lerp
+	redMask := memmap.PaletteValue(0b0_00000_00000_11111)
+	redSrc := math.NewFix8(int(src&redMask), 0)
+	redDest := math.NewFix8(int(dest&redMask), 0)
+	red := math.Lerp(redSrc, redDest, t).Int()
+
+	greenMask := memmap.PaletteValue(0b0_00000_11111_00000)
+	greenSrc := math.NewFix8(int(src&greenMask)>>5, 0)
+	greenDest := math.NewFix8(int(dest&greenMask)>>5, 0)
+	green := math.Lerp(greenSrc, greenDest, t).Int()
+
+	blueSrc := math.NewFix8(int(src>>10), 0)
+	blueDest := math.NewFix8(int(dest>>10), 0)
+	blue := math.Lerp(blueSrc, blueDest, t).Int()
+
+	return memmap.PaletteValue(red | green<<5 | blue<<10)
+}
+
+// drawSprites copies all the engines active sprites into OAM memory
 func (e *Engine) drawSprites() {
 	var i int
 	for s := range e.activeSprites {
@@ -108,6 +184,8 @@ func (e *Engine) drawSprites() {
 	}
 }
 
+// drawBackgrounds updates all the background registers and the display controll register based on the
+// engines active background
 func (e *Engine) drawBackgrounds() {
 	// TODO: only update the backgrouds if something has changed?
 

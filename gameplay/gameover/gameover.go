@@ -27,6 +27,7 @@ type Scene struct {
 	gravity   math.Fix8
 	deathJump math.Fix8
 	t         math.Fix8
+	palFade   math.Fix8
 
 	Restart, Quit bool
 }
@@ -74,6 +75,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 
 func (s *Scene) Init(e *game.Engine) error {
 	s.t = 0
+	s.palFade = 0
 
 	s.player.Dead()
 	s.player.Update(s.gravity, s.deathJump)
@@ -100,20 +102,25 @@ func (s *Scene) Init(e *game.Engine) error {
 	}
 
 	s.score.Draw()
-
 	return nil
 }
 
 func (s *Scene) Update(e *game.Engine, frame int) error {
 	// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
 	s.t += 4
-	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t*2, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
-	s.bestBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*48, math.Clamp(s.t*2, math.FixOne))+lut.Sin(s.t+math.FixThird)+math.FixEighth)
+	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t*2, 0, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
+	s.bestBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*48, math.Clamp(s.t*2, 0, math.FixOne))+lut.Sin(s.t+math.FixThird)+math.FixEighth)
 
 	s.player.Update(s.gravity, 0)
 	s.score.Draw()
 	s.highScore.Draw()
 	s.menu.Update()
+	if s.menu.selectCountDown > 0 && s.menu.selectCountDown > 10 {
+		s.palFade += math.FixSixteenth
+	}
+	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
+	e.PalFade(game.White, s.palFade)
+
 	if s.menu.selectCountDown <= 0 {
 		s.Restart = s.menu.restart
 		s.Quit = s.menu.quit
@@ -233,7 +240,7 @@ func (m *menu) Add() error {
 
 func (m *menu) Hide() {
 	m.bg.Remove()
-	m.arrow.X = math.FixOne * 240
+	m.arrow.Remove()
 }
 
 func (m *menu) Reset(x, y math.Fix8) {
@@ -244,7 +251,7 @@ func (m *menu) Reset(x, y math.Fix8) {
 	m.y = y
 	m.selectStart = 30
 	m.bg.VScroll = 0
-	m.arrow.X = x
+	m.arrow.Y = y
 	m.restart = false
 	m.quit = false
 }
