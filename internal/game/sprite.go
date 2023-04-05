@@ -94,8 +94,8 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 	return s.hwAttrs
 }
 
-// SetAnimation sets the animation data for the sprite
-func (s *Sprite) SetAnimation(frames []Frame) {
+// PlayAnimation sets the animation data for the sprite
+func (s *Sprite) PlayAnimation(frames []Frame) {
 	s.aniCounter = 0
 	s.aniFrame = 0
 	s.animation = frames

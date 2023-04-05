@@ -174,7 +174,7 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	arrow.X = x
 	arrow.Y = y
 	arrow.TileIndex = 2
-	arrow.SetAnimation(arrowSpinAnim)
+	arrow.PlayAnimation(arrowSpinAnim)
 
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
@@ -216,7 +216,7 @@ func (m *menu) Update(e *game.Engine) {
 	}
 
 	if m.restart || m.quit {
-		m.arrow.SetAnimation(arrowBlinkAnim)
+		m.arrow.PlayAnimation(arrowBlinkAnim)
 		m.selectCountDown = 60
 	}
 
@@ -247,7 +247,7 @@ func (m *menu) Hide() {
 // Reset resets the menu back to it's initial state
 func (m *menu) Reset(x, y math.Fix8) {
 	m.arrow.TileIndex = 2
-	m.arrow.SetAnimation(arrowSpinAnim)
+	m.arrow.PlayAnimation(arrowSpinAnim)
 
 	m.x = x
 	m.y = y
