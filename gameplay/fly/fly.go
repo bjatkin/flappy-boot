@@ -76,13 +76,13 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
-func (s *Scene) Update(e *game.Engine, frame int) error {
+func (s *Scene) Update(e *game.Engine) error {
 	s.palFade -= math.FixSixteenth
 	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
 	e.PalFade(game.White, s.palFade)
 
 	var jump math.Fix8
-	if key.JustPressed(key.A) {
+	if e.KeyJustPressed(key.A) {
 		s.pillars.Start()
 		s.player.Start()
 		jump = -math.FixOne * 3
