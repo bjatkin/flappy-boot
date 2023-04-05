@@ -23,7 +23,7 @@ func NewPlayer(x, y math.Fix8, sprite *game.Sprite) *Player {
 	}
 
 	p.Sprite.TileIndex = 16
-	p.Sprite.SetAnimation(glideAni)
+	p.Sprite.PlayAnimation(glideAni)
 	p.Sprite.X = x
 	p.Sprite.Y = y
 	return p
@@ -48,7 +48,7 @@ func (p *Player) Reset(x, y math.Fix8) {
 	p.Sprite.Y = y
 	p.Sprite.HFlip = false
 	p.Sprite.TileIndex = 16
-	p.Sprite.SetAnimation(glideAni)
+	p.Sprite.PlayAnimation(glideAni)
 }
 
 // Rect returns the hitbox of the player as a math.Rect
@@ -115,7 +115,7 @@ func (p *Player) Update(gravity, jump math.Fix8) {
 	}
 
 	if jump != 0 {
-		p.Sprite.SetAnimation(jumpAni)
+		p.Sprite.PlayAnimation(jumpAni)
 		p.dy = jump
 	}
 
