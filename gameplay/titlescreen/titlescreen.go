@@ -127,8 +127,8 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
-func (s *Scene) Update(e *game.Engine, frame int) error {
-	if s.startPressed > 0 && (frame-s.startPressed) > 50 {
+func (s *Scene) Update(e *game.Engine) error {
+	if s.startPressed > 0 && (e.Frame()-s.startPressed) > 50 {
 		s.palFade += math.FixSixteenth
 	}
 	if s.startPressed == 0 {
@@ -138,11 +138,11 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 	e.PalFade(game.White, s.palFade)
 
 	s.clouds.HScroll += math.FixEighth
-	if key.JustPressed(key.Start) && s.startPressed == 0 {
-		s.startPressed = frame
+	if e.KeyJustPressed(key.Start) && s.startPressed == 0 {
+		s.startPressed = e.Frame()
 	}
 
-	if s.startPressed > 0 && (frame-s.startPressed)%10 == 0 {
+	if s.startPressed > 0 && (e.Frame()-s.startPressed)%10 == 0 {
 		if s.blinkOn {
 			s.press.Set(math.FixOne*72, math.FixOne*74)
 			s.start.Set(math.FixOne*128, math.FixOne*74)
@@ -153,9 +153,9 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 		s.blinkOn = !s.blinkOn
 	}
 
-	s.Done = s.startPressed > 0 && (frame-s.startPressed) > 90
+	s.Done = s.startPressed > 0 && (e.Frame()-s.startPressed) > 90
 
-	if key.JustPressed(key.B) {
+	if e.KeyJustPressed(key.B) {
 		if err := s.alter.Add(); err != nil {
 			return err
 		}

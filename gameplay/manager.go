@@ -75,8 +75,8 @@ func (s *Manager) Init(e *game.Engine) error {
 	return nil
 }
 
-func (s *Manager) Update(e *game.Engine, frame int) error {
-	err := s.activeScene.Update(e, frame)
+func (s *Manager) Update(e *game.Engine) error {
+	err := s.activeScene.Update(e)
 	if err != nil {
 		return err
 	}

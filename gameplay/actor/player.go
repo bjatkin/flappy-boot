@@ -76,27 +76,29 @@ func (p *Player) Hide() {
 	p.Sprite.Remove()
 }
 
-var jumpAni = []game.Frame{
-	{Index: 16, Len: 3},
-	{Index: 32, Len: 4},
-	{Index: 0, Len: 7},
-	{Index: 8, Len: 8},
-	{Index: 24, Len: 2},
+var (
+	jumpAni = []game.Frame{
+		{Index: 16, Len: 3},
+		{Index: 32, Len: 4},
+		{Index: 0, Len: 7},
+		{Index: 8, Len: 8},
+		{Index: 24, Len: 2},
 
-	{Index: 16, Len: 40},
-	{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
+		{Index: 16, Len: 40},
+		{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
 
-	{Index: 16, Len: 40},
-	{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
+		{Index: 16, Len: 40},
+		{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
 
-	{Index: 16, Len: 40},
-	{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
-}
+		{Index: 16, Len: 40},
+		{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
+	}
 
-var glideAni = []game.Frame{
-	{Index: 16, Len: 40},
-	{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
-}
+	glideAni = []game.Frame{
+		{Index: 16, Len: 40},
+		{Index: 24, Len: 40, Offset: math.V2{X: 0, Y: math.FixOne}},
+	}
+)
 
 // Update updates the players physics and interal properites
 func (p *Player) Update(gravity, jump math.Fix8) {

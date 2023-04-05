@@ -105,7 +105,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
-func (s *Scene) Update(e *game.Engine, frame int) error {
+func (s *Scene) Update(e *game.Engine) error {
 	// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
 	s.t += 4
 	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t*2, 0, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
@@ -114,7 +114,7 @@ func (s *Scene) Update(e *game.Engine, frame int) error {
 	s.player.Update(s.gravity, 0)
 	s.score.Draw()
 	s.highScore.Draw()
-	s.menu.Update()
+	s.menu.Update(e)
 	if s.menu.selectCountDown > 0 && s.menu.selectCountDown > 10 {
 		s.palFade += math.FixSixteenth
 	}
@@ -188,17 +188,17 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 }
 
 // Update updates the menu state each frame
-func (m *menu) Update() {
+func (m *menu) Update(e *game.Engine) {
 	if m.restart || m.quit {
 		m.selectCountDown--
 		m.arrow.Update()
 		return
 	}
 
-	if key.JustPressed(key.Down) {
+	if e.KeyJustPressed(key.Down) {
 		m.arrow.Y = m.y + math.FixOne*12
 	}
-	if key.JustPressed(key.Up) {
+	if e.KeyJustPressed(key.Up) {
 		m.arrow.Y = m.y
 	}
 
@@ -208,10 +208,10 @@ func (m *menu) Update() {
 		return
 	}
 
-	if key.JustPressed(key.A) && m.arrow.Y == m.y {
+	if e.KeyJustPressed(key.A) && m.arrow.Y == m.y {
 		m.restart = true
 	}
-	if key.JustPressed(key.A) && m.arrow.Y > m.y {
+	if e.KeyJustPressed(key.A) && m.arrow.Y > m.y {
 		m.quit = true
 	}
 
@@ -238,11 +238,13 @@ func (m *menu) Add() error {
 	return nil
 }
 
+// Hide hides the graphics associated with the menu
 func (m *menu) Hide() {
 	m.bg.Remove()
 	m.arrow.Remove()
 }
 
+// Reset resets the menu back to it's initial state
 func (m *menu) Reset(x, y math.Fix8) {
 	m.arrow.TileIndex = 2
 	m.arrow.SetAnimation(arrowSpinAnim)

@@ -7,9 +7,7 @@ import (
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
-	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
-	"github.com/bjatkin/flappy_boot/internal/sprite"
 )
 
 const (
@@ -23,7 +21,7 @@ const (
 // Runable is an interface for a type that can be run by the engine
 type Runable interface {
 	Init(*Engine) error
-	Update(*Engine, int) error
+	Update(*Engine) error
 }
 
 // Engine is the core game engine
@@ -47,13 +45,24 @@ type Engine struct {
 	sprTileAlloc *alloc.VRAM
 	mapAlloc     *alloc.VRAM
 
+	// previousKey holds the state of the hardware key input register durring the last KeyPoll
+	// it is used to check key transition states
+	previousKeys memmap.Input
+
+	// currentKey holds the state of the hardware key input register the current KeyPoll
+	// it is used to check key transition states
+	currentKeys memmap.Input
+
+	// frame is the current engine frame
+	frame int
+
 	// Debug contains some simple sprites for debugging
 	Debug [10]*Sprite
 }
 
 // NewEngine creates a new instances of a game engine
 func NewEngine() *Engine {
-	memmap.Palette[0] = 0x7FFF
+	memmap.Palette[0] = White
 	memmap.SetReg(hw_display.Controll, hw_display.Sprite1D|hw_display.ForceBlank)
 
 	e := &Engine{
@@ -78,11 +87,17 @@ func NewEngine() *Engine {
 	return e
 }
 
+// Frame return the current engine frame
+func (e *Engine) Frame() int {
+	return e.frame
+}
+
 // Run runs the provided Runable
 func (e *Engine) Run(run Runable) error {
 	// enable sprites
 	memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.Sprites)
-	sprite.Reset()
+	// hide all the sprites before the engine starts
+	e.drawSprites()
 
 	for {
 		err := run.Init(e)
@@ -90,15 +105,14 @@ func (e *Engine) Run(run Runable) error {
 			exit(err)
 		}
 
-		var frame int
 		for {
-			key.KeyPoll()
-			err := run.Update(e, frame)
+			e.keyPoll()
+			err := run.Update(e)
 			if err != nil {
 				exit(err)
 			}
 
-			frame++
+			e.frame++
 
 			vSyncWait()
 
