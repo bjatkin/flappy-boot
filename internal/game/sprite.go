@@ -20,8 +20,7 @@ type Sprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
-	Y         math.Fix8
-	X         math.Fix8
+	Pos       math.V2
 	Offset    math.V2
 	TileIndex int
 	HFlip     bool
@@ -72,16 +71,15 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 		priorityAttr = hw_sprite.Priority3
 	}
 
-	x := s.X.Int() + s.Offset.X.Int()
-	if x < 0 {
-		x += 512
+	dest := math.AddV2(s.Pos, s.Offset)
+	if dest.X < 0 {
+		dest.X += 512
 	}
-	y := s.Y.Int() + s.Offset.Y.Int()
-	if y < 0 {
-		y += 256
+	if dest.Y < 0 {
+		dest.Y += 256
 	}
-	s.hwAttrs.Attr0 = hw_sprite.Attr0(y%256) | s.shape | hideAttr
-	s.hwAttrs.Attr1 = hw_sprite.Attr1(x%512) | vFlipAttr | hFlipAttr | s.size
+	s.hwAttrs.Attr0 = hw_sprite.Attr0(dest.Y.Int()%256) | s.shape | hideAttr
+	s.hwAttrs.Attr1 = hw_sprite.Attr1(dest.X.Int()%512) | vFlipAttr | hFlipAttr | s.size
 	s.hwAttrs.Attr2 = (hw_sprite.Attr2(s.TileIndex) + s.tileSet.Offset()) |
 		priorityAttr |
 		s.tileSet.SprPalette()

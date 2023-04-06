@@ -24,8 +24,8 @@ func NewCounter(x, y int, e *game.Engine) *Counter {
 	}
 	for i := range c.digits {
 		c.digits[i] = e.NewSprite(assets.NumbersTileSet)
-		c.digits[i].X = math.NewFix8(x+(i*11), 0)
-		c.digits[i].Y = math.NewFix8(y, 0)
+		c.digits[i].Pos.X = math.NewFix8(x+(i*11), 0)
+		c.digits[i].Pos.Y = math.NewFix8(y, 0)
 	}
 
 	return c
@@ -81,8 +81,8 @@ func (c *Counter) Update() {
 		}
 
 		c.digits[i].TileIndex = c.convert[c.score[i]]
-		c.digits[i].X = math.NewFix8(c.X-start+i*11, 0)
-		c.digits[i].Y = math.NewFix8(c.Y, 0) - bounce
+		c.digits[i].Pos.X = math.NewFix8(c.X-start+i*11, 0)
+		c.digits[i].Pos.Y = math.NewFix8(c.Y, 0) - bounce
 		c.digits[i].Show()
 	}
 }

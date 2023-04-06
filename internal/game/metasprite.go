@@ -11,7 +11,7 @@ type MetaSprite struct {
 	// engine is a reference to the sprites parent engine
 	engine *Engine
 
-	x, y    math.Fix8
+	pos     math.V2
 	sprites []*Sprite
 	offsets []math.V2
 }
@@ -37,22 +37,18 @@ func (e *Engine) NewMetaSprite(offset []math.V2, indexes []int, asset *assets.Ti
 }
 
 // Set sets the x and y position of the meta sprite
-func (s *MetaSprite) Set(x, y math.Fix8) {
-	s.x = x
-	s.y = y
+func (s *MetaSprite) Set(pos math.V2) {
+	s.pos = pos
 	for i := range s.sprites {
-		s.sprites[i].X = s.x + s.offsets[i].X
-		s.sprites[i].Y = s.y + s.offsets[i].Y
+		s.sprites[i].Pos = math.AddV2(s.pos, s.offsets[i])
 	}
 }
 
 // Move moves the meta sprite by dx and dy
-func (s *MetaSprite) Move(dx, dy math.Fix8) {
-	s.x += dx
-	s.y += dy
+func (s *MetaSprite) Move(delta math.V2) {
+	s.pos = math.AddV2(s.pos, delta)
 	for i := range s.sprites {
-		s.sprites[i].X = s.x + s.offsets[i].X
-		s.sprites[i].Y = s.y + s.offsets[i].Y
+		s.sprites[i].Pos = math.AddV2(s.pos, s.offsets[i])
 	}
 }
 
