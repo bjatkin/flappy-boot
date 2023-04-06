@@ -11,4 +11,4 @@ go run ./cmd/lut internal/lut/sin.go
 go test ./...
 
 # build the .gba file
-tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s -gc=leaking .
+tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s .
