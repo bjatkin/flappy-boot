@@ -24,6 +24,7 @@ var sceneFrames = map[state.State]int{
 	fadeOut:   30,
 }
 
+// Scene is the intro scene for the game. It contains the title and allows the player to start the game
 type Scene struct {
 	sky, clouds *game.Background
 	alter       *game.Background
@@ -39,6 +40,7 @@ type Scene struct {
 	Done bool
 }
 
+// NewScene creates a title screen scene
 func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player) (*Scene, error) {
 	logo, err := e.NewMetaSprite(
 		[]math.V2{{X: 0}, {X: math.FixOne * 32}, {X: math.FixOne * 64}},
@@ -93,6 +95,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 	}, nil
 }
 
+// Init sets all the values to their initial steate for the Scene, it is safe to call repetedly
 func (s *Scene) Init(e *game.Engine) error {
 	s.state.Init()
 	s.Done = false
@@ -139,6 +142,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
+// Update draws the title screen, updates the background and waits for the player to press start
 func (s *Scene) Update(e *game.Engine) error {
 	s.state.Update()
 	s.clouds.HScroll += math.FixEighth
@@ -178,6 +182,7 @@ func (s *Scene) Update(e *game.Engine) error {
 	return nil
 }
 
+// Hide removes the title screen from view
 func (s *Scene) Hide() {
 	s.alter.Hide()
 	s.press.Hide()
