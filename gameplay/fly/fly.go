@@ -38,7 +38,7 @@ type Scene struct {
 
 func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, score *score.Counter) *Scene {
 	return &Scene{
-		scrollSpeed: math.FixOne + math.FixEighth,
+		scrollSpeed: math.NewFix8(1, 32),
 		gravity:     math.FixQuarter,
 		ground:      math.FixOne * 147,
 		jumpHeight:  -math.FixOne * 3,
@@ -118,7 +118,7 @@ func (s *Scene) Update(e *game.Engine) error {
 		return err
 	}
 
-	s.pillars.Update(s.scrollSpeed)
+	s.pillars.Update()
 	err = s.pillars.Show()
 	if err != nil {
 		return err

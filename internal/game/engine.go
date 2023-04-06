@@ -57,7 +57,7 @@ type Engine struct {
 	frame int
 
 	// Debug contains some simple sprites for debugging
-	Debug [10]*Sprite
+	Debug [20]*Sprite
 }
 
 // NewEngine creates a new instances of a game engine
@@ -77,9 +77,10 @@ func NewEngine() *Engine {
 	e.bgPalAlloc = alloc.NewPal(e.palBuff[:256])
 	e.sprPalAlloc = alloc.NewPal(e.palBuff[256:])
 
-	debugSprites := [10]*Sprite{}
+	debugSprites := [20]*Sprite{}
 	for i := range debugSprites {
 		debugSprites[i] = e.NewSprite(assets.DebugTileSet)
+		debugSprites[i].Priority = hw_sprite.Priority0
 	}
 
 	e.Debug = debugSprites

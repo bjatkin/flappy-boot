@@ -16,6 +16,7 @@ type BG struct {
 	gapSize     int
 	lastPoint   int
 	meta        meta
+	scrollSpeed math.Fix8
 
 	started bool
 }
@@ -27,6 +28,7 @@ func NewBG(pillarEvery int, bg *game.Background) *BG {
 		gapSize:     7,
 		pillarEvery: pillarEvery,
 		meta:        meta{},
+		scrollSpeed: math.NewFix8(1, 32),
 	}
 
 	return pillars
@@ -87,7 +89,7 @@ func (p *BG) CollisionCheck(check math.Rect) bool {
 		if left <= 0 {
 			continue
 		}
-		right := left + 32
+		right := p.meta.pillars[i].X2 - p.bg.HScroll.Int()
 		top := p.meta.pillars[i].Y1
 		bottom := p.meta.pillars[i].Y2
 
@@ -104,8 +106,8 @@ func (p *BG) CollisionCheck(check math.Rect) bool {
 
 // addPillar adds a new pillar to the background
 func (p *BG) addPillar(x int) {
-	start := (x % 512) / 8
-	columns := [4]int{start, (start + 1) % 64, (start + 2) % 64, (start + 3) % 64}
+	startTile := (x % 512) / 8
+	columns := [4]int{startTile, (startTile + 1) % 64, (startTile + 2) % 64, (startTile + 3) % 64}
 
 	gap := p.rand.Intn(15 - p.gapSize)
 	for i := 0; i < 18; i++ {
@@ -130,7 +132,8 @@ func (p *BG) addPillar(x int) {
 		}
 	}
 
-	p.meta.Append(x, gap*8+4, x+32, (gap+p.gapSize)*8+4)
+	hBoxX := (x / 8) * 8
+	p.meta.Append(hBoxX+3, gap*8+4, hBoxX+27, (gap+p.gapSize)*8+2)
 }
 
 // deletePillar removes the pillar located at math.Rect r
@@ -152,8 +155,8 @@ func (p *BG) deletePillar(i int) {
 }
 
 // Update updates the background including scrolling, adding new pillars, and removing old pillars
-func (p *BG) Update(scrollSpeed math.Fix8) {
-	p.bg.HScroll += scrollSpeed
+func (p *BG) Update() {
+	p.bg.HScroll += p.scrollSpeed
 
 	if !p.started {
 		return
