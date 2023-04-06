@@ -2,12 +2,27 @@ package titlescreen
 
 import (
 	"github.com/bjatkin/flappy_boot/gameplay/actor"
+	"github.com/bjatkin/flappy_boot/gameplay/state"
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
+
+const (
+	fadeIn    = state.A
+	main      = state.B
+	confirmed = state.C
+	fadeOut   = state.D
+	done      = state.E
+)
+
+var sceneFrames = map[state.State]int{
+	fadeIn:    30,
+	confirmed: 60,
+	fadeOut:   30,
+}
 
 type Scene struct {
 	sky, clouds *game.Background
@@ -19,9 +34,7 @@ type Scene struct {
 	press   *game.MetaSprite
 	start   *game.MetaSprite
 
-	startPressed int
-	blinkOn      bool
-	palFade      math.Fix8
+	state *state.Tracker
 
 	Done bool
 }
@@ -74,15 +87,15 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, player *actor.Player
 		press:   press,
 		start:   start,
 
-		palFade: math.FixOne,
+		state: &state.Tracker{
+			SceneFrames: sceneFrames,
+		},
 	}, nil
 }
 
 func (s *Scene) Init(e *game.Engine) error {
+	s.state.Init()
 	s.Done = false
-	s.startPressed = 0
-	s.blinkOn = false
-	s.palFade = math.FixOne
 
 	s.logo.Set(math.FixOne*72, math.FixOne*20)
 	if err := s.logo.Add(); err != nil {
@@ -128,37 +141,39 @@ func (s *Scene) Init(e *game.Engine) error {
 }
 
 func (s *Scene) Update(e *game.Engine) error {
-	if s.startPressed > 0 && (e.Frame()-s.startPressed) > 50 {
-		s.palFade += math.FixSixteenth
-	}
-	if s.startPressed == 0 {
-		s.palFade -= math.FixSixteenth
-	}
-	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
-	e.PalFade(game.White, s.palFade)
-
+	s.state.Update()
 	s.clouds.HScroll += math.FixEighth
-	if e.KeyJustPressed(key.Start) && s.startPressed == 0 {
-		s.startPressed = e.Frame()
+
+	if s.state.Is(fadeIn) {
+		e.PalFade(game.White, math.FixOne-s.state.Frac())
+		return nil
 	}
 
-	if s.startPressed > 0 && (e.Frame()-s.startPressed)%10 == 0 {
-		if s.blinkOn {
+	if s.state.Is(main) {
+		if e.KeyJustPressed(key.Start) {
+			s.state.Next()
+		}
+		return nil
+	}
+
+	if s.state.Is(confirmed | fadeOut) {
+		if s.state.Frame()>>3%2 == 0 {
 			s.press.Set(math.FixOne*72, math.FixOne*74)
 			s.start.Set(math.FixOne*128, math.FixOne*74)
 		} else {
 			s.press.Set(math.FixOne*240, 0)
 			s.start.Set(math.FixOne*240, 0)
 		}
-		s.blinkOn = !s.blinkOn
+
 	}
 
-	s.Done = s.startPressed > 0 && (e.Frame()-s.startPressed) > 90
+	if s.state.Is(fadeOut) {
+		e.PalFade(game.White, s.state.Frac())
+		return nil
+	}
 
-	if e.KeyJustPressed(key.B) {
-		if err := s.alter.Add(); err != nil {
-			return err
-		}
+	if s.state.Is(done) {
+		s.Done = true
 	}
 
 	return nil

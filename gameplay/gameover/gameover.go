@@ -4,6 +4,7 @@ import (
 	"github.com/bjatkin/flappy_boot/gameplay/actor"
 	"github.com/bjatkin/flappy_boot/gameplay/pillar"
 	"github.com/bjatkin/flappy_boot/gameplay/score"
+	"github.com/bjatkin/flappy_boot/gameplay/state"
 	"github.com/bjatkin/flappy_boot/internal/assets"
 	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/hardware/display"
@@ -11,6 +12,20 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/lut"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
+
+const (
+	easeIn    = state.A
+	main      = state.B
+	confirmed = state.C
+	fadeOut   = state.D
+	done      = state.E
+)
+
+var sceneFrames = map[state.State]int{
+	easeIn:    10,
+	confirmed: 60,
+	fadeOut:   30,
+}
 
 type Scene struct {
 	sky       *game.Background
@@ -26,8 +41,8 @@ type Scene struct {
 
 	gravity   math.Fix8
 	deathJump math.Fix8
-	t         math.Fix8
-	palFade   math.Fix8
+
+	state *state.Tracker
 
 	Restart, Quit bool
 }
@@ -68,18 +83,23 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 		bestBanner:  bestBanner,
 		menu:        menu,
 
+		state: &state.Tracker{
+			SceneFrames: sceneFrames,
+		},
+
 		gravity:   math.FixQuarter,
 		deathJump: -math.FixOne * 6,
 	}, nil
 }
 
 func (s *Scene) Init(e *game.Engine) error {
-	s.t = 0
-	s.palFade = 0
+	s.state.Init()
+	s.Restart = false
+	s.Quit = false
 
 	s.player.Dead()
 	s.player.Update(s.gravity, s.deathJump)
-	s.menu.Reset(math.FixOne*87, math.FixOne*102)
+	s.menu.Reset()
 
 	s.scoreBanner.Set(math.FixOne*87, math.FixOne*-16)
 	err := s.scoreBanner.Add()
@@ -106,25 +126,44 @@ func (s *Scene) Init(e *game.Engine) error {
 }
 
 func (s *Scene) Update(e *game.Engine) error {
-	// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
-	s.t += 4
-	s.scoreBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*8, math.Clamp(s.t*2, 0, math.FixOne))+lut.Sin(s.t)+math.FixEighth)
-	s.bestBanner.Set(math.FixOne*87, math.Lerp(math.FixOne*-16, math.FixOne*48, math.Clamp(s.t*2, 0, math.FixOne))+lut.Sin(s.t+math.FixThird)+math.FixEighth)
-
+	s.state.Update()
 	s.player.Update(s.gravity, 0)
 	s.score.Draw()
 	s.highScore.Draw()
-	s.menu.Update(e)
-	if s.menu.selectCountDown > 0 && s.menu.selectCountDown > 10 {
-		s.palFade += math.FixSixteenth
-	}
-	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
-	e.PalFade(game.White, s.palFade)
 
-	if s.menu.selectCountDown <= 0 {
+	if s.state.Is(main) {
+		// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
+		t := math.Fix8(s.state.Frame() * 4)
+		lerpT := math.Clamp(t*2, 0, math.FixOne)
+		y := math.FixOne * 87
+		ε := math.FixEighth
+		s.scoreBanner.Set(y, math.Lerp(math.FixOne*-16, math.FixOne*8, lerpT)+lut.Sin(t)+ε)
+		s.bestBanner.Set(y, math.Lerp(math.FixOne*-16, math.FixOne*48, lerpT)+lut.Sin(t+math.FixThird)+ε)
+
+		s.menu.Update(e, s.state.Current())
+		if s.menu.quit || s.menu.restart {
+			s.state.Next()
+		}
+
+		return nil
+	}
+
+	if s.state.Is(confirmed | fadeOut) {
+		s.menu.Update(e, s.state.Current())
+
+	}
+
+	if s.state.Is(fadeOut) {
+		e.PalFade(game.White, s.state.Frac())
+
+		return nil
+	}
+
+	if s.state.Is(done) {
 		s.Restart = s.menu.restart
 		s.Quit = s.menu.quit
 	}
+
 	return nil
 }
 
@@ -140,12 +179,10 @@ func (s *Scene) Hide() {
 
 // menu is a simple game over menu
 type menu struct {
-	x, y            math.Fix8
-	arrow           *game.Sprite
-	bg              *game.Background
-	restart, quit   bool
-	selectCountDown int
-	selectStart     int
+	x, y          math.Fix8
+	arrow         *game.Sprite
+	bg            *game.Background
+	restart, quit bool
 }
 
 var (
@@ -179,48 +216,36 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
 	return &menu{
-		x:           x,
-		y:           y,
-		arrow:       arrow,
-		bg:          bg,
-		selectStart: 30,
+		x:     x,
+		y:     y,
+		arrow: arrow,
+		bg:    bg,
 	}, nil
 }
 
 // Update updates the menu state each frame
-func (m *menu) Update(e *game.Engine) {
-	if m.restart || m.quit {
-		m.selectCountDown--
-		m.arrow.Update()
-		return
-	}
-
-	if e.KeyJustPressed(key.Down) {
-		m.arrow.Y = m.y + math.FixOne*12
-	}
-	if e.KeyJustPressed(key.Up) {
-		m.arrow.Y = m.y
-	}
-
-	if m.selectStart > 0 {
-		m.selectStart--
-		m.arrow.Update()
-		return
-	}
-
-	if e.KeyJustPressed(key.A) && m.arrow.Y == m.y {
-		m.restart = true
-	}
-	if e.KeyJustPressed(key.A) && m.arrow.Y > m.y {
-		m.quit = true
-	}
-
-	if m.restart || m.quit {
-		m.arrow.PlayAnimation(arrowBlinkAnim)
-		m.selectCountDown = 60
-	}
-
+func (m *menu) Update(e *game.Engine, s state.State) {
 	m.arrow.Update()
+
+	if s == easeIn || s == main {
+		if e.KeyJustPressed(key.Down) {
+			m.arrow.Y = m.y + math.FixOne*12
+		}
+		if e.KeyJustPressed(key.Up) {
+			m.arrow.Y = m.y
+		}
+	}
+
+	if s == main {
+		if e.KeyJustPressed(key.A) && m.arrow.Y == m.y {
+			m.restart = true
+			m.arrow.PlayAnimation(arrowBlinkAnim)
+		}
+		if e.KeyJustPressed(key.A) && m.arrow.Y > m.y {
+			m.quit = true
+			m.arrow.PlayAnimation(arrowBlinkAnim)
+		}
+	}
 }
 
 // Add adds menu sprites and backgrounds into active engine memory
@@ -245,15 +270,12 @@ func (m *menu) Hide() {
 }
 
 // Reset resets the menu back to it's initial state
-func (m *menu) Reset(x, y math.Fix8) {
+func (m *menu) Reset() {
 	m.arrow.TileIndex = 2
 	m.arrow.PlayAnimation(arrowSpinAnim)
+	m.arrow.Y = m.y
 
-	m.x = x
-	m.y = y
-	m.selectStart = 30
 	m.bg.VScroll = 0
-	m.arrow.Y = y
 	m.restart = false
 	m.quit = false
 }
