@@ -24,7 +24,6 @@ type Sprite struct {
 	X         math.Fix8
 	Offset    math.V2
 	TileIndex int
-	Hide      bool
 	HFlip     bool
 	VFlip     bool
 	Priority  int
@@ -52,10 +51,6 @@ func (e *Engine) NewSprite(tileSet *assets.TileSet) *Sprite {
 
 func (s *Sprite) attrs() *hw_sprite.Attrs {
 	var hideAttr hw_sprite.Attr0
-	if s.Hide {
-		hideAttr = hw_sprite.Hide
-	}
-
 	var vFlipAttr hw_sprite.Attr1
 	if s.VFlip {
 		vFlipAttr = hw_sprite.HMirrior
@@ -106,11 +101,11 @@ func (s *Sprite) StopAnimation() {
 	s.animation = nil
 }
 
-// Add adds the sprite to the list of active sprites.
-// if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
+// Show adds the sprite to the list of active sprites.
+// if the sprites associated assets have not been loaded yet, Show will automatically attempt to load them.
 // all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
 // sprites will be randomly flickered to ensure all sprites continue to be drawn
-func (s *Sprite) Add() error {
+func (s *Sprite) Show() error {
 	err := s.Load()
 	if err != nil {
 		return err
@@ -120,9 +115,9 @@ func (s *Sprite) Add() error {
 	return nil
 }
 
-// Remove removes the sprites from the list of active sprites.
+// Hide removes the sprites from the list of active sprites.
 // removing a sprites does not unload it's loaded assets from VRAM. To do that you must call Unload
-func (s *Sprite) Remove() {
+func (s *Sprite) Hide() {
 	s.engine.removeSprite(s)
 }
 

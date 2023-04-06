@@ -56,13 +56,13 @@ func (s *MetaSprite) Move(dx, dy math.Fix8) {
 	}
 }
 
-// Add adds the meta sprite's component sprites to the list of active sprites.
-// if the sprites associated assets have not been loaded yet, Add will automatically attempt to load them.
+// Show adds the meta sprite's component sprites to the list of active sprites.
+// if the sprites associated assets have not been loaded yet, Show will automatically attempt to load them.
 // all active sprites are drawn every frame, if more than 128 sprites are active at a time all active
 // sprites will be randomly flickered to ensure all sprites continue to be drawn
-func (s *MetaSprite) Add() error {
+func (s *MetaSprite) Show() error {
 	for i := range s.sprites {
-		err := s.sprites[i].Add()
+		err := s.sprites[i].Show()
 		if err != nil {
 			return err
 		}
@@ -70,11 +70,11 @@ func (s *MetaSprite) Add() error {
 	return nil
 }
 
-// Remove removes the sprites from the list of active sprites.
+// Hide removes the sprites from the list of active sprites.
 // removing a sprites does not unload it's loaded assets from VRAM. To do that you must call Unload
-func (s *MetaSprite) Remove() {
+func (s *MetaSprite) Hide() {
 	for i := range s.sprites {
-		s.sprites[i].Remove()
+		s.sprites[i].Hide()
 	}
 }
 

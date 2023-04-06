@@ -38,11 +38,11 @@ func (c *Counter) Set(score int) {
 	c.score[1] = (score - c.score[0]*1000) / 100
 	c.score[2] = (score - c.score[0]*1000 - c.score[1]*100) / 10
 	c.score[3] = score - c.score[0]*1000 - c.score[1]*100 - c.score[2]*10
-	c.Remove()
+	c.Hide()
 }
 
-// Add adds 1 to the counters internal score
-func (c *Counter) Add() {
+// Show adds 1 to the counters internal score
+func (c *Counter) Show() {
 	c.score[3]++
 	if c.score[3] > 9 {
 		c.score[3] = 0
@@ -59,8 +59,8 @@ func (c *Counter) Add() {
 	c.bounceCount = 5
 }
 
-// Draw draw the graphics associated with the counter
-func (c *Counter) Draw() {
+// Update draw the graphics associated with the counter
+func (c *Counter) Update() {
 	var bounce math.Fix8
 	if c.bounceCount > 0 {
 		c.bounceCount--
@@ -83,14 +83,14 @@ func (c *Counter) Draw() {
 		c.digits[i].TileIndex = c.convert[c.score[i]]
 		c.digits[i].X = math.NewFix8(c.X-start+i*11, 0)
 		c.digits[i].Y = math.NewFix8(c.Y, 0) - bounce
-		c.digits[i].Add()
+		c.digits[i].Show()
 	}
 }
 
-func (c *Counter) Remove() {
+func (c *Counter) Hide() {
 	for i := range c.digits {
 		if c.digits[i] != nil {
-			c.digits[i].Remove()
+			c.digits[i].Hide()
 		}
 	}
 }

@@ -57,8 +57,8 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 
 func (s *Scene) Init(e *game.Engine) error {
 	s.GameOver = false
-	s.player.Reset(math.FixOne*32, math.FixOne*62)
-	s.pillars.Reset()
+	s.player.Init(math.FixOne*32, math.FixOne*62)
+	s.pillars.Init()
 	s.score.Set(0)
 	s.state.Init()
 
@@ -67,12 +67,12 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
-	err = s.sky.Add()
+	err = s.sky.Show()
 	if err != nil {
 		return err
 	}
 
-	err = s.clouds.Add()
+	err = s.clouds.Show()
 	if err != nil {
 		return err
 	}
@@ -83,7 +83,7 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
-	s.score.Draw()
+	s.score.Update()
 
 	return nil
 }
@@ -107,13 +107,13 @@ func (s *Scene) Update(e *game.Engine) error {
 	}
 
 	s.sky.HScroll += s.scrollSpeed / 3
-	err := s.sky.Add()
+	err := s.sky.Show()
 	if err != nil {
 		return err
 	}
 
 	s.clouds.HScroll += s.scrollSpeed / 2
-	err = s.clouds.Add()
+	err = s.clouds.Show()
 	if err != nil {
 		return err
 	}
@@ -125,10 +125,10 @@ func (s *Scene) Update(e *game.Engine) error {
 	}
 
 	if s.pillars.CheckPoint(s.player.Rect()) {
-		s.score.Add()
+		s.score.Show()
 	}
 
-	s.score.Draw()
+	s.score.Update()
 
 	if s.pillars.CollisionCheck(s.player.Rect()) {
 		s.GameOver = true

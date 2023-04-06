@@ -32,6 +32,17 @@ func NewBG(pillarEvery int, bg *game.Background) *BG {
 	return pillars
 }
 
+// Init sets the background to it's initial state, resetting it's horizontal scroll and removing all active pillars
+func (p *BG) Init() {
+	p.started = false
+	p.bg.HScroll = 0
+	p.rand = nil
+
+	for i := range p.meta.pillars {
+		p.deletePillar(i)
+	}
+}
+
 // CheckPoint checks to see if the current math.Rect has passed through a new pillar gap
 func (p *BG) CheckPoint(check math.Rect) bool {
 	buffer := 4
@@ -62,17 +73,6 @@ func (p *BG) Start() {
 
 	p.started = true
 	p.lastPoint = p.bg.HScroll.Int() + p.pillarEvery
-}
-
-// Reset sets the background to it's initial state, resetting it's horizontal scroll and removing all active pillars
-func (p *BG) Reset() {
-	p.started = false
-	p.bg.HScroll = 0
-	p.rand = nil
-
-	for i := range p.meta.pillars {
-		p.removePillar(i)
-	}
 }
 
 // CollisionCheck checks the provided rect against all the pillars in the current background. If the rect collides
@@ -133,8 +133,8 @@ func (p *BG) addPillar(x int) {
 	p.meta.Append(x, gap*8+4, x+32, (gap+p.gapSize)*8+4)
 }
 
-// removePillar removes the pillar located at math.Rect r
-func (p *BG) removePillar(i int) {
+// deletePillar removes the pillar located at math.Rect r
+func (p *BG) deletePillar(i int) {
 	if !p.meta.IsSet(i) {
 		return
 	}
@@ -148,7 +148,7 @@ func (p *BG) removePillar(i int) {
 		}
 	}
 
-	p.meta.Remove(i)
+	p.meta.Delete(i)
 }
 
 // Update updates the background including scrolling, adding new pillars, and removing old pillars
@@ -179,19 +179,19 @@ func (p *BG) Update(scrollSpeed math.Fix8) {
 		}
 
 		if p.meta.pillars[i].X1 < border {
-			p.removePillar(i)
+			p.deletePillar(i)
 		}
 	}
 }
 
 // Show adds the background to the list of active backgrounds
 func (p *BG) Show() error {
-	return p.bg.Add()
+	return p.bg.Show()
 }
 
 // Hide hides the current background
 func (p *BG) Hide() {
-	p.bg.Remove()
+	p.bg.Hide()
 }
 
 // meta hold meta data about the pillars in the background. It can hold metadata for up to 10 pillars at a time
@@ -218,7 +218,7 @@ func (m *meta) Append(x1, y1, x2, y2 int) {
 	m.i %= len(m.pillars)
 }
 
-// Remove removes a pillar from the list by marking it as unset
-func (m *meta) Remove(i int) {
+// Delete removes a pillar from the list by marking it as unset
+func (m *meta) Delete(i int) {
 	m.set[i] = false
 }
