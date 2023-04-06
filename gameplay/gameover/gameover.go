@@ -27,6 +27,7 @@ var sceneFrames = map[state.State]int{
 	fadeOut:   30,
 }
 
+// Scene occures when the player has died. It contains a menu for restarting or quiting the game
 type Scene struct {
 	sky       *game.Background
 	clouds    *game.Background
@@ -47,6 +48,7 @@ type Scene struct {
 	Restart, Quit bool
 }
 
+// NewScene creates a gameover gameplay scene
 func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, roundScore, highScore *score.Counter) (*Scene, error) {
 	scoreBanner, err := e.NewMetaSprite(
 		[]math.V2{{X: 0, Y: 0}, {X: math.FixOne * 32, Y: 0}},
@@ -92,6 +94,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 	}, nil
 }
 
+// Init sets all the values to their initial steate for the Scene, it is safe to call repetedly
 func (s *Scene) Init(e *game.Engine) error {
 	s.state.Init()
 	s.Restart = false
@@ -125,6 +128,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
+// Update updates the restart and quit menu and shows the players scores
 func (s *Scene) Update(e *game.Engine) error {
 	s.state.Update()
 	s.player.Update(s.gravity, 0)

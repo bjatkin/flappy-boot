@@ -19,6 +19,7 @@ var sceneFrames = map[state.State]int{
 	fadeIn: 30,
 }
 
+// Scene is the main gameplay scene where the player can fly through gaps in pillars to gain points
 type Scene struct {
 	GameOver bool
 
@@ -36,6 +37,7 @@ type Scene struct {
 	state state.Tracker
 }
 
+// NewScene creates a new fly gameplay scene
 func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, score *score.Counter) *Scene {
 	return &Scene{
 		scrollSpeed: math.NewFix8(1, 32),
@@ -55,6 +57,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 	}
 }
 
+// Init sets all the values to their initial steate for the Scene, it is safe to call repetedly
 func (s *Scene) Init(e *game.Engine) error {
 	s.GameOver = false
 	s.player.Init(math.V2{X: math.FixOne * 32, Y: math.FixOne * 62})
@@ -88,6 +91,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	return nil
 }
 
+// Update updates the player, backgrounds, pillars and game state
 func (s *Scene) Update(e *game.Engine) error {
 	s.state.Update()
 	if s.state.Is(fadeIn) {
