@@ -39,8 +39,8 @@ func (p *Player) Dead() {
 	p.dead = true
 }
 
-// Reset resets all the players properties to be the same as they were on creation. It also move the sprite to the specified location
-func (p *Player) Reset(x, y math.Fix8) {
+// Init resets all the players properties to be the same as they were on creation. It also move the sprite to the specified location
+func (p *Player) Init(x, y math.Fix8) {
 	p.dy = 0
 	p.started = false
 	p.dead = false
@@ -63,7 +63,7 @@ func (p *Player) Rect() math.Rect {
 
 // Show whos the player sprite
 func (p *Player) Show() error {
-	err := p.Sprite.Add()
+	err := p.Sprite.Show()
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func (p *Player) Show() error {
 
 // Hide hides the player sprite
 func (p *Player) Hide() {
-	p.Sprite.Remove()
+	p.Sprite.Hide()
 }
 
 var (

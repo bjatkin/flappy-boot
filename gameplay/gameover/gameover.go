@@ -99,16 +99,16 @@ func (s *Scene) Init(e *game.Engine) error {
 
 	s.player.Dead()
 	s.player.Update(s.gravity, s.deathJump)
-	s.menu.Reset()
+	s.menu.Init()
 
 	s.scoreBanner.Set(math.FixOne*87, math.FixOne*-16)
-	err := s.scoreBanner.Add()
+	err := s.scoreBanner.Show()
 	if err != nil {
 		return err
 	}
 
 	s.bestBanner.Set(math.FixOne*87, math.FixOne*-16)
-	err = s.bestBanner.Add()
+	err = s.bestBanner.Show()
 	if err != nil {
 		return err
 	}
@@ -116,20 +116,20 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.highScore.X = 97
 	s.highScore.Y = 70
 
-	err = s.menu.Add()
+	err = s.menu.Show()
 	if err != nil {
 		return err
 	}
 
-	s.score.Draw()
+	s.score.Update()
 	return nil
 }
 
 func (s *Scene) Update(e *game.Engine) error {
 	s.state.Update()
 	s.player.Update(s.gravity, 0)
-	s.score.Draw()
-	s.highScore.Draw()
+	s.score.Update()
+	s.highScore.Update()
 
 	if s.state.Is(main) {
 		// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
@@ -171,10 +171,10 @@ func (s *Scene) Update(e *game.Engine) error {
 func (s *Scene) Hide() {
 	s.menu.Hide()
 	s.pillars.Hide()
-	s.bestBanner.Remove()
-	s.scoreBanner.Remove()
-	s.highScore.Remove()
-	s.score.Remove()
+	s.bestBanner.Hide()
+	s.scoreBanner.Hide()
+	s.highScore.Hide()
+	s.score.Hide()
 }
 
 // menu is a simple game over menu
@@ -223,6 +223,17 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 	}, nil
 }
 
+// Init resets the menu back to it's initial state
+func (m *menu) Init() {
+	m.arrow.TileIndex = 2
+	m.arrow.PlayAnimation(arrowSpinAnim)
+	m.arrow.Y = m.y
+
+	m.bg.VScroll = 0
+	m.restart = false
+	m.quit = false
+}
+
 // Update updates the menu state each frame
 func (m *menu) Update(e *game.Engine, s state.State) {
 	m.arrow.Update()
@@ -248,14 +259,14 @@ func (m *menu) Update(e *game.Engine, s state.State) {
 	}
 }
 
-// Add adds menu sprites and backgrounds into active engine memory
-func (m *menu) Add() error {
-	err := m.bg.Add()
+// Show adds menu sprites and backgrounds into active engine memory
+func (m *menu) Show() error {
+	err := m.bg.Show()
 	if err != nil {
 		return err
 	}
 
-	err = m.arrow.Add()
+	err = m.arrow.Show()
 	if err != nil {
 		return err
 	}
@@ -265,17 +276,6 @@ func (m *menu) Add() error {
 
 // Hide hides the graphics associated with the menu
 func (m *menu) Hide() {
-	m.bg.Remove()
-	m.arrow.Remove()
-}
-
-// Reset resets the menu back to it's initial state
-func (m *menu) Reset() {
-	m.arrow.TileIndex = 2
-	m.arrow.PlayAnimation(arrowSpinAnim)
-	m.arrow.Y = m.y
-
-	m.bg.VScroll = 0
-	m.restart = false
-	m.quit = false
+	m.bg.Hide()
+	m.arrow.Hide()
 }

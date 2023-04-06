@@ -39,11 +39,11 @@ func (b *Background) Load() error {
 	return nil
 }
 
-// Add adds the background to the list of active backgrounds.
-// if the background has not yet been loaded, Add will automatically attempt to load them.
+// Show adds the background to the list of active backgrounds.
+// if the background has not yet been loaded, Show will automatically attempt to load them.
 // all active backgrounds are drawn every frame, if the maximum number of backgrounds are already
 // active an error will be returned
-func (b *Background) Add() error {
+func (b *Background) Show() error {
 	err := b.Load()
 	if err != nil {
 		return err
@@ -63,9 +63,9 @@ func (b *Background) Add() error {
 	return nil
 }
 
-// Remove removes the background for the list of active backgrounds.
+// Hide removes the background for the list of active backgrounds.
 // removing a background does not unload it's loaded assets from VRAM. To do that you must call Unload
-func (b *Background) Remove() {
+func (b *Background) Hide() {
 	b.engine.removeBackground(b)
 	b.added = false
 }

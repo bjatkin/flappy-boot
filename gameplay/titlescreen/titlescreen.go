@@ -98,34 +98,34 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.Done = false
 
 	s.logo.Set(math.FixOne*72, math.FixOne*20)
-	if err := s.logo.Add(); err != nil {
+	if err := s.logo.Show(); err != nil {
 		return err
 	}
 
 	s.advance.Set(math.FixOne*128, math.FixOne*40)
-	if err := s.advance.Add(); err != nil {
+	if err := s.advance.Show(); err != nil {
 		return err
 	}
 
 	s.press.Set(math.FixOne*72, math.FixOne*74)
-	if err := s.press.Add(); err != nil {
+	if err := s.press.Show(); err != nil {
 		return err
 	}
 
 	s.start.Set(math.FixOne*128, math.FixOne*74)
-	if err := s.start.Add(); err != nil {
+	if err := s.start.Show(); err != nil {
 		return err
 	}
 
-	if err := s.sky.Add(); err != nil {
+	if err := s.sky.Show(); err != nil {
 		return err
 	}
 
-	if err := s.clouds.Add(); err != nil {
+	if err := s.clouds.Show(); err != nil {
 		return err
 	}
 
-	if err := s.alter.Add(); err != nil {
+	if err := s.alter.Show(); err != nil {
 		return err
 	}
 
@@ -180,9 +180,9 @@ func (s *Scene) Update(e *game.Engine) error {
 }
 
 func (s *Scene) Hide() {
-	s.alter.Remove()
-	s.press.Remove()
-	s.start.Remove()
-	s.logo.Remove()
-	s.advance.Remove()
+	s.alter.Hide()
+	s.press.Hide()
+	s.start.Hide()
+	s.logo.Hide()
+	s.advance.Hide()
 }
