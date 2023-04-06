@@ -16,17 +16,15 @@ type Player struct {
 }
 
 // NewPlayer creates a new player struct
-func NewPlayer(x, y math.Fix8, sprite *game.Sprite) *Player {
-	p := &Player{
+func NewPlayer(pos math.V2, sprite *game.Sprite) *Player {
+	sprite.TileIndex = 16
+	sprite.PlayAnimation(glideAni)
+	sprite.Pos = pos
+
+	return &Player{
 		Sprite: sprite,
 		maxDy:  math.FixOne * 8,
 	}
-
-	p.Sprite.TileIndex = 16
-	p.Sprite.PlayAnimation(glideAni)
-	p.Sprite.X = x
-	p.Sprite.Y = y
-	return p
 }
 
 // Start indicates the the game has started and the player should start applying physics
@@ -40,12 +38,11 @@ func (p *Player) Dead() {
 }
 
 // Init resets all the players properties to be the same as they were on creation. It also move the sprite to the specified location
-func (p *Player) Init(x, y math.Fix8) {
+func (p *Player) Init(pos math.V2) {
 	p.dy = 0
 	p.started = false
 	p.dead = false
-	p.Sprite.X = x
-	p.Sprite.Y = y
+	p.Sprite.Pos = pos
 	p.Sprite.HFlip = false
 	p.Sprite.TileIndex = 16
 	p.Sprite.PlayAnimation(glideAni)
@@ -54,10 +51,10 @@ func (p *Player) Init(x, y math.Fix8) {
 // Rect returns the hitbox of the player as a math.Rect
 func (p *Player) Rect() math.Rect {
 	return math.Rect{
-		X1: p.Sprite.X.Int() + 12,
-		Y1: p.Sprite.Y.Int() + 2,
-		X2: p.Sprite.X.Int() + 22,
-		Y2: p.Sprite.Y.Int() + 12,
+		X1: p.Sprite.Pos.X.Int() + 12,
+		Y1: p.Sprite.Pos.Y.Int() + 2,
+		X2: p.Sprite.Pos.X.Int() + 22,
+		Y2: p.Sprite.Pos.Y.Int() + 12,
 	}
 }
 
@@ -125,12 +122,12 @@ func (p *Player) Update(gravity, jump math.Fix8) {
 		p.Sprite.TileIndex = 0
 	}
 
-	p.Sprite.Y += p.dy
-	if p.Sprite.Y > math.FixOne*200 {
-		p.Sprite.Y = math.FixOne * 200
+	p.Sprite.Pos.Y += p.dy
+	if p.Sprite.Pos.Y > math.FixOne*200 {
+		p.Sprite.Pos.Y = math.FixOne * 200
 	}
 
-	if p.Sprite.Y < -math.FixOne*16 {
-		p.Sprite.Y = -math.FixOne * 16
+	if p.Sprite.Pos.Y < -math.FixOne*16 {
+		p.Sprite.Pos.Y = -math.FixOne * 16
 	}
 }

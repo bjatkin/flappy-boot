@@ -66,7 +66,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 		return nil, err
 	}
 
-	menu, err := newMenu(math.FixOne*87, math.FixOne*102, e)
+	menu, err := newMenu(math.V2{X: math.FixOne * 87, Y: math.FixOne * 102}, e)
 	if err != nil {
 		return nil, err
 	}
@@ -101,13 +101,13 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.player.Update(s.gravity, s.deathJump)
 	s.menu.Init()
 
-	s.scoreBanner.Set(math.FixOne*87, math.FixOne*-16)
+	s.scoreBanner.Set(math.V2{X: math.FixOne * 87, Y: math.FixOne * -16})
 	err := s.scoreBanner.Show()
 	if err != nil {
 		return err
 	}
 
-	s.bestBanner.Set(math.FixOne*87, math.FixOne*-16)
+	s.bestBanner.Set(math.V2{X: math.FixOne * 87, Y: math.FixOne * -16})
 	err = s.bestBanner.Show()
 	if err != nil {
 		return err
@@ -135,10 +135,16 @@ func (s *Scene) Update(e *game.Engine) error {
 		// this lerps the score and best banners in from off screen. It also uses the lut.Sin function to make the banners bob slightly
 		t := math.Fix8(s.state.Frame() * 4)
 		lerpT := math.Clamp(t*2, 0, math.FixOne)
-		y := math.FixOne * 87
+		x := math.FixOne * 87
 		ε := math.FixEighth
-		s.scoreBanner.Set(y, math.Lerp(math.FixOne*-16, math.FixOne*8, lerpT)+lut.Sin(t)+ε)
-		s.bestBanner.Set(y, math.Lerp(math.FixOne*-16, math.FixOne*48, lerpT)+lut.Sin(t+math.FixThird)+ε)
+		s.scoreBanner.Set(math.V2{
+			X: x,
+			Y: math.Lerp(math.FixOne*-16, math.FixOne*8, lerpT) + lut.Sin(t) + ε,
+		})
+		s.bestBanner.Set(math.V2{
+			X: x,
+			Y: math.Lerp(math.FixOne*-16, math.FixOne*48, lerpT) + lut.Sin(t+math.FixThird) + ε,
+		})
 
 		s.menu.Update(e, s.state.Current())
 		if s.menu.quit || s.menu.restart {
@@ -179,7 +185,7 @@ func (s *Scene) Hide() {
 
 // menu is a simple game over menu
 type menu struct {
-	x, y          math.Fix8
+	pos           math.V2
 	arrow         *game.Sprite
 	bg            *game.Background
 	restart, quit bool
@@ -206,18 +212,16 @@ var (
 )
 
 // newMenu creates a new game over menu
-func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
+func newMenu(pos math.V2, e *game.Engine) (*menu, error) {
 	arrow := e.NewSprite(assets.SelectTileSet)
-	arrow.X = x
-	arrow.Y = y
+	arrow.Pos = pos
 	arrow.TileIndex = 2
 	arrow.PlayAnimation(arrowSpinAnim)
 
 	bg := e.NewBackground(assets.BluebgTileMap, display.Priority0)
 
 	return &menu{
-		x:     x,
-		y:     y,
+		pos:   pos,
 		arrow: arrow,
 		bg:    bg,
 	}, nil
@@ -227,7 +231,7 @@ func newMenu(x, y math.Fix8, e *game.Engine) (*menu, error) {
 func (m *menu) Init() {
 	m.arrow.TileIndex = 2
 	m.arrow.PlayAnimation(arrowSpinAnim)
-	m.arrow.Y = m.y
+	m.arrow.Pos.Y = m.pos.Y
 
 	m.bg.VScroll = 0
 	m.restart = false
@@ -240,19 +244,19 @@ func (m *menu) Update(e *game.Engine, s state.State) {
 
 	if s == easeIn || s == main {
 		if e.KeyJustPressed(key.Down) {
-			m.arrow.Y = m.y + math.FixOne*12
+			m.arrow.Pos.Y = m.pos.Y + math.FixOne*12
 		}
 		if e.KeyJustPressed(key.Up) {
-			m.arrow.Y = m.y
+			m.arrow.Pos.Y = m.pos.Y
 		}
 	}
 
 	if s == main {
-		if e.KeyJustPressed(key.A) && m.arrow.Y == m.y {
+		if e.KeyJustPressed(key.A) && m.arrow.Pos.Y == m.pos.Y {
 			m.restart = true
 			m.arrow.PlayAnimation(arrowBlinkAnim)
 		}
-		if e.KeyJustPressed(key.A) && m.arrow.Y > m.y {
+		if e.KeyJustPressed(key.A) && m.arrow.Pos.Y > m.pos.Y {
 			m.quit = true
 			m.arrow.PlayAnimation(arrowBlinkAnim)
 		}

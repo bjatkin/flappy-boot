@@ -57,7 +57,7 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 
 func (s *Scene) Init(e *game.Engine) error {
 	s.GameOver = false
-	s.player.Init(math.FixOne*32, math.FixOne*62)
+	s.player.Init(math.V2{X: math.FixOne * 32, Y: math.FixOne * 62})
 	s.pillars.Init()
 	s.score.Set(0)
 	s.state.Init()

@@ -11,6 +11,13 @@ type V2 struct {
 	X, Y Fix8
 }
 
+func AddV2(a, b V2) V2 {
+	return V2{
+		X: a.X + b.X,
+		Y: a.Y + b.Y,
+	}
+}
+
 // Lerp linerally interpolates between the values a, and b. t determins the percentage of the interpolation
 // t is not clamped to the range (0-1) so you must do that yourself.
 func Lerp(a, b, t Fix8) Fix8 {

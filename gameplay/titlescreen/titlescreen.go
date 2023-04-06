@@ -97,22 +97,22 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.state.Init()
 	s.Done = false
 
-	s.logo.Set(math.FixOne*72, math.FixOne*20)
+	s.logo.Set(math.V2{X: math.FixOne * 72, Y: math.FixOne * 20})
 	if err := s.logo.Show(); err != nil {
 		return err
 	}
 
-	s.advance.Set(math.FixOne*128, math.FixOne*40)
+	s.advance.Set(math.V2{X: math.FixOne * 128, Y: math.FixOne * 40})
 	if err := s.advance.Show(); err != nil {
 		return err
 	}
 
-	s.press.Set(math.FixOne*72, math.FixOne*74)
+	s.press.Set(math.V2{X: math.FixOne * 72, Y: math.FixOne * 74})
 	if err := s.press.Show(); err != nil {
 		return err
 	}
 
-	s.start.Set(math.FixOne*128, math.FixOne*74)
+	s.start.Set(math.V2{X: math.FixOne * 128, Y: math.FixOne * 74})
 	if err := s.start.Show(); err != nil {
 		return err
 	}
@@ -129,8 +129,7 @@ func (s *Scene) Init(e *game.Engine) error {
 		return err
 	}
 
-	s.player.Sprite.X = math.FixOne * 104
-	s.player.Sprite.Y = math.FixOne * 124
+	s.player.Sprite.Pos = math.V2{X: math.FixOne * 104, Y: math.FixOne * 124}
 	s.player.Sprite.TileIndex = 16
 	s.player.Sprite.HFlip = false
 	if err := s.player.Show(); err != nil {
@@ -158,11 +157,11 @@ func (s *Scene) Update(e *game.Engine) error {
 
 	if s.state.Is(confirmed | fadeOut) {
 		if s.state.Frame()>>3%2 == 0 {
-			s.press.Set(math.FixOne*72, math.FixOne*74)
-			s.start.Set(math.FixOne*128, math.FixOne*74)
+			s.press.Set(math.V2{X: math.FixOne * 72, Y: math.FixOne * 74})
+			s.start.Set(math.V2{X: math.FixOne * 128, Y: math.FixOne * 74})
 		} else {
-			s.press.Set(math.FixOne*240, 0)
-			s.start.Set(math.FixOne*240, 0)
+			s.press.Set(math.V2{X: math.FixOne * 240})
+			s.start.Set(math.V2{X: math.FixOne * 240})
 		}
 
 	}
