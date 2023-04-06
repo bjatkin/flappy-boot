@@ -25,7 +25,7 @@ type Sprite struct {
 	TileIndex int
 	HFlip     bool
 	VFlip     bool
-	Priority  int
+	Priority  hw_sprite.Attr2
 	size      hw_sprite.Attr1
 	shape     hw_sprite.Attr0
 
@@ -59,29 +59,17 @@ func (s *Sprite) attrs() *hw_sprite.Attrs {
 		hFlipAttr = hw_sprite.VMirrior
 	}
 
-	var priorityAttr hw_sprite.Attr2
-	switch s.Priority {
-	case 0:
-		priorityAttr = hw_sprite.Priority0
-	case 1:
-		priorityAttr = hw_sprite.Priority1
-	case 2:
-		priorityAttr = hw_sprite.Priority2
-	case 3:
-		priorityAttr = hw_sprite.Priority3
-	}
-
 	dest := math.AddV2(s.Pos, s.Offset)
 	if dest.X < 0 {
-		dest.X += 512
+		dest.X += math.FixOne * 512
 	}
 	if dest.Y < 0 {
-		dest.Y += 256
+		dest.Y += math.FixOne * 256
 	}
 	s.hwAttrs.Attr0 = hw_sprite.Attr0(dest.Y.Int()%256) | s.shape | hideAttr
 	s.hwAttrs.Attr1 = hw_sprite.Attr1(dest.X.Int()%512) | vFlipAttr | hFlipAttr | s.size
 	s.hwAttrs.Attr2 = (hw_sprite.Attr2(s.TileIndex) + s.tileSet.Offset()) |
-		priorityAttr |
+		s.Priority |
 		s.tileSet.SprPalette()
 
 	return s.hwAttrs

@@ -51,7 +51,7 @@ func (p *Player) Init(pos math.V2) {
 // Rect returns the hitbox of the player as a math.Rect
 func (p *Player) Rect() math.Rect {
 	return math.Rect{
-		X1: p.Sprite.Pos.X.Int() + 12,
+		X1: p.Sprite.Pos.X.Int() + 9,
 		Y1: p.Sprite.Pos.Y.Int() + 2,
 		X2: p.Sprite.Pos.X.Int() + 22,
 		Y2: p.Sprite.Pos.Y.Int() + 12,
