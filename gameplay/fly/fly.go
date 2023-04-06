@@ -4,10 +4,20 @@ import (
 	"github.com/bjatkin/flappy_boot/gameplay/actor"
 	"github.com/bjatkin/flappy_boot/gameplay/pillar"
 	"github.com/bjatkin/flappy_boot/gameplay/score"
+	"github.com/bjatkin/flappy_boot/gameplay/state"
 	"github.com/bjatkin/flappy_boot/internal/game"
 	"github.com/bjatkin/flappy_boot/internal/key"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
+
+const (
+	fadeIn = state.A
+	main   = state.B
+)
+
+var sceneFrames = map[state.State]int{
+	fadeIn: 30,
+}
 
 type Scene struct {
 	GameOver bool
@@ -23,7 +33,7 @@ type Scene struct {
 	ground     math.Fix8
 	jumpHeight math.Fix8
 
-	palFade math.Fix8
+	state state.Tracker
 }
 
 func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, player *actor.Player, score *score.Counter) *Scene {
@@ -39,7 +49,9 @@ func NewScene(e *game.Engine, sky, clouds *game.Background, pillars *pillar.BG, 
 		player:  player,
 		score:   score,
 
-		palFade: math.FixOne,
+		state: state.Tracker{
+			SceneFrames: sceneFrames,
+		},
 	}
 }
 
@@ -48,7 +60,7 @@ func (s *Scene) Init(e *game.Engine) error {
 	s.player.Reset(math.FixOne*32, math.FixOne*62)
 	s.pillars.Reset()
 	s.score.Set(0)
-	s.palFade = math.FixOne
+	s.state.Init()
 
 	err := s.pillars.Show()
 	if err != nil {
@@ -77,9 +89,10 @@ func (s *Scene) Init(e *game.Engine) error {
 }
 
 func (s *Scene) Update(e *game.Engine) error {
-	s.palFade -= math.FixSixteenth
-	s.palFade = math.Clamp(s.palFade, 0, math.FixOne)
-	e.PalFade(game.White, s.palFade)
+	s.state.Update()
+	if s.state.Is(fadeIn) {
+		e.PalFade(game.White, math.FixOne-s.state.Frac())
+	}
 
 	var jump math.Fix8
 	if e.KeyJustPressed(key.A) {

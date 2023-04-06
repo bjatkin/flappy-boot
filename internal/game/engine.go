@@ -134,9 +134,10 @@ func (e *Engine) Run(run Runable) error {
 }
 
 // PalFade fades the current color palette towards the specified color
-// t should be between 0 and 1. At 0 the color palette is completely unchanged.
+// t is clamped to between 0 and 1. At 0 the color palette is completely unchanged.
 // At 1 the palette is completely the provided color.
 func (e *Engine) PalFade(color memmap.PaletteValue, t math.Fix8) {
+	t = math.Clamp(t, 0, math.FixOne)
 	if e.fadeCol != color || e.fadeFrac != t {
 		e.doFade = true
 	}
