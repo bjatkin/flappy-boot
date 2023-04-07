@@ -1,3 +1,6 @@
 # GBA files
 *.gba
 *.sav
+
+# Frontend
+node_modules

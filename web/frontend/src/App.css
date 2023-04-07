@@ -1,0 +1,141 @@
+#root {
+  width: 100vw;
+  height: 100vh;
+
+  margin: 0px;
+  padding: 0px;
+  text-align: center;
+  
+  overflow: hidden;
+}
+
+.App {
+  --bg-1: #212529;
+  --bg-2: #495057;
+  --bg-3: #f8f9fa;
+
+  --speed: 3s;
+
+  --forground: #151515;
+
+  animation: background-pan var(--speed) linear infinite;
+  background: linear-gradient(
+    90deg, 
+    var(--bg-1) 0%, 
+    var(--bg-2) 50%, 
+    var(--bg-3) 90%,
+    var(--bg-1) 100%
+    );
+  background-size: 200%;
+
+  display: grid;
+  grid-template-columns: calc(50% - 40px) 80px calc(50% - 40px);
+  grid-template-rows: 50vh 55vh;
+}
+
+@keyframes background-pan {
+  from {
+    background-position: 0% center;
+  }
+
+  to {
+    background-position: -200% center;
+  }
+}
+
+.pannel {
+  background-color: var(--forground);
+  margin-bottom: 0.1em;
+}
+
+#middle-top {
+  animation: top-open 0.12s ease-out;
+  height: calc(50vh - 40px);
+}
+
+@keyframes top-open {
+  from {
+    height: 50vh;
+  }
+
+  to {
+    height: calc(50vh - 40px);
+  }
+}
+
+#middle-bottom {
+  animation: bottom-open 0.12s ease-out;
+  margin-top: 40px;
+}
+
+@keyframes bottom-open {
+  from {
+    margin-top: 0px;
+  }
+
+  to {
+    margin-top: 40px;
+  }
+}
+
+#runButton {
+  display: none;
+
+  width: 80px;
+  height: 80px;
+  padding: 0px;
+  border: 0px;
+  background-color: #15151500;
+
+  z-index: 1;
+  position: absolute;
+  left: calc(50% - 40px);
+  top: calc(50% - 40px);
+  cursor: pointer;
+}
+
+#runCircle {
+  transition: 0.4s;
+}
+
+#runCircle:hover {
+  fill: #15151500;
+}
+
+#overlay {
+  position: absolute;
+  width: 100vw;
+  height: 100vh;
+}
+
+.fade-out {
+  animation: fade-out 0.15s ease-in;
+  background-color: #151515;
+  z-index: 2;
+}
+
+@keyframes fade-out {
+  from {
+    background-color: #15151500;
+  }
+
+  to {
+    background-color: #151515;
+  }
+}
+
+#screen {
+  display: block;
+  max-width: 960px;
+  width: 80%;
+  margin-left: auto;
+  margin-right: auto;
+  background-color: black;
+  image-rendering: optimizeSpeed;
+  image-rendering: -moz-crisp-edges;
+  image-rendering: -webkit-crisp-edges;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  box-shadow: 0.1px 2px 4px rgba(0, 0, 0, 0.7);
+  padding: 0.2em;
+}
