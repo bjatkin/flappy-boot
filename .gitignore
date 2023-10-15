@@ -1,3 +1,6 @@
 # GBA files
 *.gba
 *.sav
+
+# itch.io assets
+itch.io

@@ -1,15 +1,36 @@
 # Flappy Boot
-This is a simple flappy bird clone for the GBA.
-You play as hermes boot trying to return to him.
+Oh No! Hermes, the Olympian god, seems to have dropped on of his winged boots from the heavens!
+Better hurry and find your way back to him, but beware of the many Roman columns that stand in your way.
+
+This is a flappy bird clone written from scratch for the GBA.
+It is open source and fairly well commented so feel free to use it as a jumping off point for your own project.
+If you would like to learn about this project check out [this presentation](https://youtu.be/mrWJZSVSRVQ?si=653ayqaEtqz5xB6o) on makeing GBA games in Go.
 
 # Project Structure
 This project has the following structure.
-    * cmd: tools used as part of game development
-        * image_gen: conversion tool used to generate GBA compatible graphics from png image files
-    * gameplay: all gameplay related code.
-    * internal: internal engine code. The core logic that the game is built on top of.
-        * hardware: GBA hardware related code, includes things like hardware registers and memory offsets
-        * fix: the fixed point number type used extensivly through the project. It is has 24 whole number bits and 8 fractional bits
+* assets: png assets and mockups for the game
+* cmd: tools used as part of game development
+    * image_gen: conversion tool used to generate GBA compatible graphics from png image files.
+    * lut: look up table generation for the sin function.
+* gameplay: all gameplay related code.
+* internal: internal engine code. The core logic that the game is built on top of.
+    * fix: the fixed point number type used extensivly through the project. It is has 24 whole number bits and 8 fractional bits.
+    * alloc: memory allocators for the gba's VRAM and Paletts memory.
+    * assets: generated assets that are used directly in the engine.
+    * display: display and color related code for the engine.
+    * key: key codes for input handling.
+    * lut: look up tables for the sin function.
+    * math: some simple math focused utilities.
+    * game: the code for the game engine.
+    * hardware: GBA hardware related code, includes things like hardware registers and memory offsets.
+        * audio: some of the basic audio registers. (unused)
+        * display: display related registers.
+        * dma: registers for direct memory access. (unused)
+        * key: input related registers.
+        * memmap: gba memory layout and register access. 
+        * sprite: oam and palette memory.
+        * timer: some of the basic gba timer registers. (unused)
+* config.yaml: configuration for the image_gen tool.
 
 # Running Flappy Boot
 First ensure you have the [tiny-go complier](https://tinygo.org/getting-started/install/) installed.
