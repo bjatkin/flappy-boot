@@ -30,6 +30,7 @@ This project has the following structure.
         * memmap: gba memory layout and register access. 
         * sprite: oam and palette memory.
         * timer: some of the basic gba timer registers. (unused)
+        * save: registers and memory related to save data on the GBA. It specifically supports FRAM style hardware.
 * config.yaml: configuration for the image_gen tool.
 
 # Running Flappy Boot

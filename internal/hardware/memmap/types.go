@@ -6,7 +6,8 @@ type reg interface {
 	uint16 |
 		AudioStat | DSControll |
 		DisplayControll | DisplayStat | BGControll | DisplayVCount |
-		Input | InputControll
+		Input | InputControll |
+		WaitControll
 }
 
 // AudioStat is the type used for the audio stats register. See audio.Stat for more information on using this type
@@ -32,3 +33,6 @@ type Input uint16
 
 // InputControll is the type used for the input register, see key.Controll for more information on using this type
 type InputControll uint16
+
+// WaitControll is the type used for the system controll wait state register
+type WaitControll uint16
