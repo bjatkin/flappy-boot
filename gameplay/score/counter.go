@@ -87,6 +87,7 @@ func (c *Counter) Update() {
 	}
 }
 
+// Hide hides all the graphics for the counter
 func (c *Counter) Hide() {
 	for i := range c.digits {
 		if c.digits[i] != nil {

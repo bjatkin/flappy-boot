@@ -28,13 +28,26 @@ type Manager struct {
 	initErr     error
 }
 
+// scoreToSaveData converts a score into a byte slice that can be saved in FRAM
+func scoreToSaveData(score int) []byte {
+	return []byte{byte(score >> 8), byte(score)}
+}
+
+// saveDataToScore converts data from FRAM into a valid score
+func saveDataToScore(data []byte) int {
+	return int(data[0])<<8 | int(data[1])
+}
+
 func NewManager(e *game.Engine) *Manager {
 	sky := e.NewBackground(assets.SkyTileMap, display.Priority3)
 	clouds := e.NewBackground(assets.CloudsTileMap, display.Priority2)
 	player := actor.NewPlayer(math.V2{X: math.FixOne * 32, Y: math.FixOne * 62}, e.NewSprite(assets.PlayerAnimTileSet))
 	pillars := pillar.NewBG(100, e.NewBackground(assets.PillarsTileMap, display.Priority1))
 	roundScore := score.NewCounter(97, 28, e)
+
 	highScore := score.NewCounter(240, 0, e)
+	// load the highScore from FRAM
+	highScore.Set(saveDataToScore(e.LoadData(2)))
 
 	var initErr error
 	over, err := gameover.NewScene(e, sky, clouds, pillars, player, roundScore, highScore)
@@ -90,6 +103,8 @@ func (s *Manager) Update(e *game.Engine) error {
 			}
 			if s.roundScore.Score() > s.highScore.Score() {
 				s.highScore.Set(s.roundScore.Score())
+				// save the new high score in FRAM
+				e.SaveData(scoreToSaveData(s.roundScore.Score()))
 			}
 		}
 	case s.gameOver:

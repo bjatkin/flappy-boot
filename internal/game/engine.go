@@ -6,6 +6,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/display"
 	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
+	"github.com/bjatkin/flappy_boot/internal/hardware/save"
 	hw_sprite "github.com/bjatkin/flappy_boot/internal/hardware/sprite"
 	"github.com/bjatkin/flappy_boot/internal/math"
 )
@@ -84,6 +85,8 @@ func NewEngine() *Engine {
 	}
 
 	e.Debug = debugSprites
+
+	e.initFRAM()
 
 	return e
 }
@@ -285,6 +288,41 @@ func (e *Engine) addSprite(sprite *Sprite) {
 // from memory so you must do that yourself if the sprite is no longer needed
 func (e *Engine) removeSprite(sprite *Sprite) {
 	delete(e.activeSprites, sprite)
+}
+
+// initFRAM initializes FRAM so that it can be used to save the high score
+func (e *Engine) initFRAM() {
+	// set the SRAM wait cycle to 8 for correct reading of FRAM
+	memmap.SetReg(save.WaitControll, save.SRAM8)
+
+	if save.SRAM[0] > 0xAA {
+		// set the init bit so we know that memory is initialized
+		save.SRAM[0] = 0xAA
+
+		// zero out the initial score
+		save.SRAM[1] = 0x00
+		save.SRAM[2] = 0x00
+	}
+}
+
+// SaveData saves data to the SRAM/FRAM section of the gba cart
+func (e *Engine) SaveData(data []byte) {
+	for i := range data {
+		// +1 because the first byte is used to initalize save memory
+		save.SRAM[i+1] = save.SRAMValue(data[i])
+	}
+}
+
+// LoadData loads n bytes of data from the SRAM/FRAM section of the gba cart into a
+// byte slice and returns it
+func (e *Engine) LoadData(n int) []byte {
+	load := make([]byte, n)
+	for i := 1; i < n; i++ {
+		// +1 because the firs byte is used to initalize save memory
+		load[i] = byte(save.SRAM[i+1])
+	}
+
+	return load
 }
 
 // exit exits the game loop and draws error infromation to the screen
