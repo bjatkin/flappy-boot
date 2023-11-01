@@ -97,44 +97,43 @@ func (e *Engine) Frame() int {
 }
 
 // Run runs the provided Runable
-func (e *Engine) Run(run Runable) error {
+func (e *Engine) Init(run Runable) {
 	// enable sprites
 	memmap.SetReg(hw_display.Controll, *hw_display.Controll|hw_display.Sprites)
 	// hide all the sprites before the engine starts
 	e.drawSprites()
 
-	for {
-		err := run.Init(e)
-		if err != nil {
-			exit(err)
-		}
-
-		for {
-			e.keyPoll()
-			err := run.Update(e)
-			if err != nil {
-				exit(err)
-			}
-
-			e.frame++
-
-			vSyncWait()
-
-			// update the palette if needed
-			if e.doFade || e.bgPalAlloc.IsDirty() || e.sprPalAlloc.IsDirty() {
-				e.updatePalette()
-				e.doFade = false
-				e.bgPalAlloc.MarkClean()
-				e.sprPalAlloc.MarkClean()
-			}
-
-			// copy active sprite data into OAM memory
-			e.drawSprites()
-
-			// copy active background data into the background registers
-			e.drawBackgrounds()
-		}
+	err := run.Init(e)
+	if err != nil {
+		exit(err)
 	}
+}
+
+func (e *Engine) Update(run Runable) {
+	e.keyPoll()
+	err := run.Update(e)
+	if err != nil {
+		exit(err)
+	}
+
+	e.frame++
+}
+
+func (e *Engine) Draw() {
+	// update the palette if needed
+	if e.doFade || e.bgPalAlloc.IsDirty() || e.sprPalAlloc.IsDirty() {
+		e.updatePalette()
+		e.doFade = false
+		e.bgPalAlloc.MarkClean()
+		e.sprPalAlloc.MarkClean()
+	}
+
+	// copy active sprite data into OAM memory
+	e.drawSprites()
+
+	// copy active background data into the background registers
+	e.drawBackgrounds()
+
 }
 
 // PalFade fades the current color palette towards the specified color
@@ -348,10 +347,10 @@ func vSyncWait() {
 	// my guess is this is going to lead to pretty high power usage for no real benefit
 
 	// wait till VDraw
-	for display.VCount() >= 160 {
+	for hw_display.GetVCount() >= 160 {
 	}
 
 	// wailt tile VBlank
-	for display.VCount() < 160 {
+	for hw_display.GetVCount() < 160 {
 	}
 }

@@ -18,6 +18,7 @@ This project has the following structure.
     * alloc: memory allocators for the gba's VRAM and Paletts memory.
     * assets: generated assets that are used directly in the engine.
     * display: display and color related code for the engine.
+    * emu/ppu: a simple ppu emulator that allows standalone and web builds.
     * key: key codes for input handling.
     * lut: look up tables for the sin function.
     * math: some simple math focused utilities.
@@ -32,8 +33,44 @@ This project has the following structure.
         * timer: some of the basic gba timer registers. (unused)
         * save: registers and memory related to save data on the GBA. It specifically supports FRAM style hardware.
 * config.yaml: configuration for the image_gen tool.
+* wasm: all code related to the frontend web build.
 
 # Running Flappy Boot
+Flappy Boot can be run in 3 different modes:
+1) as a standalone game using an emulated PPU
+2) as a wasm build using wasm and npm
+3) as a GBA ROM inside an emulator/ or on actual hardware
+
+you can build all these files for all these targets using the `./build` script
+
+### Standalone
+The Standalone build and be built using the normal go build tool.
+You will need to include the `standalone` and `local` build tags however.
+```sh
+go build -tags=standalone,local .
+```
+when run this game will create a `flappy_boot_stand.sav` file, which contains the high score save data.
+
+### Web
+You can build the flappy bird file for `.wasm` using the following command.
+```sh
+env GOOS=js GOARCH=wasm go build -tags=standalone,web -o wasm/flappy_boot.wasm github.com/bjatkin/flappy_boot
+```
+
+If this is the first time building the wasm file you will nee to run
+```sh
+npm init
+```
+
+You can play this in a browser by entering the `wasm` directory and then running
+```sh
+npm run dev
+```
+
+note that the PPU emulator doesn't quite performe as well as the standalone or emulated versions of the game.
+For the best experience, you should play one of the other verions.
+
+### GBA ROM
 First ensure you have the [tiny-go complier](https://tinygo.org/getting-started/install/) installed.
 This is the complier that this project uses and you will not be able to complie without it.
 
@@ -50,10 +87,13 @@ This `.gba` file can then be run with any sutiable GBA emulator.
 
 # References
 This game with built with the help of a couple of really excelent  GBA programming resources.
-These are both tailored for C/C++ development on the GBA but still provied great general knowledge
+These are both tailored for C/C++ development on the GBA but still provied great general knowledge.
+* [TONIC](https://www.coranac.com/tonc/text/toc.htm)
+* [GBATEK](https://problemkaputt.de/gbatek.htm)
 
-TONIC: https://www.coranac.com/tonc/text/toc.htm
+The GBxCart RW was used to flash flappy boot to a phisical repoduction cart.
+* [GBxCart RW](https://www.gbxcart.com/)
 
-GBATEK: https://problemkaputt.de/gbatek.htm
-
-
+There are also several talks related to the development of this project.
+* [Go West 2023](https://www.youtube.com/live/5qvfAc1C2Kg?si=mJF-05vCzNOkdn4z&t=5955)
+* [Forge Utah Go Users Group](https://youtu.be/mrWJZSVSRVQ?si=SfUO3th8HURi0uJj)

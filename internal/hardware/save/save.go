@@ -6,15 +6,12 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 )
 
-// SRAMAddr is the base memory address for SRAM in the gba pack memory
-const SRAMAddr uintptr = 0x0E00_0000
-
 // SRAMValue is a valid sram value. SRAM can only be written to one byte at a time
 type SRAMValue byte
 
 // SRAM is persistent storage that exists inside some GBA cartriages.
 // it can be either SRAM which is battery powered or FRAM which is solid state memory
-var sramStart = (*SRAMValue)(unsafe.Pointer(SRAMAddr))
+var sramStart = (*SRAMValue)(unsafe.Pointer(memmap.SRAMAddr))
 var SRAM = unsafe.Slice(sramStart, 0x7FFF)
 
 // WaitControll is the register is used to configure game pak access timings
@@ -45,7 +42,7 @@ var SRAM = unsafe.Slice(sramStart, 0x7FFF)
 // [E] Game ROM Prefetch Buffer (0=Disable, 1=Enable)
 //
 // [F] Game ROM type flag (Read Only) (0=GBA, 1=GBC)
-var WaitControll = (*memmap.WaitControll)(unsafe.Pointer(uintptr(0x0400_0204)))
+var WaitControll = (*memmap.WaitControll)(unsafe.Pointer(memmap.IOAddr + 0x0204))
 
 const (
 	// SRAM4 sets the SRAM wait controll register to 4 cycles

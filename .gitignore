@@ -1,6 +1,21 @@
-# GBA files
+# Complied Files
 *.gba
 *.sav
+flappy_boot
+flappy_boot.wasm
 
 # itch.io assets
 itch.io
+
+# pprof files
+cpu.prof
+mem.prof
+
+# compliled files
+dist
+
+# NPM files
+wasm/node_modules
+
+# VSCode editor
+.vscode
