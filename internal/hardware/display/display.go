@@ -343,6 +343,9 @@ const (
 	// backgrounds and all below sprites
 	Priority3 memmap.BGControll = 0x0003
 
+	// PrioirtyMask mask out all bits except for the background prioirty bits
+	PriorityMask memmap.BGControll = 0x0003
+
 	// Mosaic enables the mosaic background effect
 	Mosaic memmap.BGControll = 0x0020
 
@@ -364,8 +367,17 @@ const (
 	// BGSizeLarge sets the background size to 512 x 512 pixels
 	BGSizeLarge memmap.BGControll = 0xC000
 
+	// BGSizeMask masks out all bits except the background size bits
+	BGSizeMask memmap.BGControll = 0xC000
+
+	// SBBMask mask out all bits except the screen base block bits
+	SBBMask memmap.BGControll = 0x1F00
+
 	// SBBShift shifts a number into the correct bits to set the screen base block
 	SBBShift memmap.BGControll = 0x0008
+
+	// CBBMask mask out all bits except the char base block bits
+	CBBMask memmap.BGControll = 0x000C
 
 	// CBBShift shifts a number into the correct bits to set the char base block
 	CBBShift memmap.BGControll = 0x0002

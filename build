@@ -8,7 +8,13 @@ go run ./cmd/image_gen config.yaml
 go run ./cmd/lut internal/lut/sin.go
 
 # run go test to make sure all new code passes
-go test ./...
+go test -tags=standalone,local ./...
 
 # build the .gba file
 tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s .
+
+# build the standalone version of the game
+go build -tags=standalone,local .
+
+# build the .wasm file
+env GOOS=js GOARCH=wasm go build -tags=standalone,web -o wasm/flappy_boot.wasm github.com/bjatkin/flappy_boot

@@ -70,12 +70,15 @@ var (
 	PaletteF = memmap.Palette[0x01F0:0x0200]
 )
 
-// OAM contains all the regular sprite data, it can hold up to 128 sprites, note that only 96 sprites can be drawn on a given horizontal line
-var OAM = *((*[]Attrs)(unsafe.Pointer(&memmap.OAM)))
+// OAM contains all the regular sprite data, it can hold up to 128 sprites,
+// note that only 96 sprites can be drawn on a given horizontal line
+var oamStart = (*Attrs)(unsafe.Pointer(memmap.OAMAddr))
+var OAM = unsafe.Slice(oamStart, 128)
 
-// AffineOAM contains all the affine sprite data, it can hold up to 32 affine sprite attributes, note that the affine sprite index must be
-// set using the regular sprite data
-var AffineOAM = *((*[]AffineAttrs)(unsafe.Pointer(&memmap.OAM)))
+// AffineOAM contains all the affine sprite data, it can hold up to 32 affine sprite attributes,
+// note that the affine sprite index must be set using the regular sprite data
+var affineOAMStart = (*AffineAttrs)(unsafe.Pointer(memmap.OAMAddr))
+var AffineOAM = unsafe.Slice(oamStart, 32)
 
 type (
 	// Attr0 is the type of the first attribute in the Attrs struct
@@ -294,6 +297,9 @@ const (
 
 	// PriorityMask masks out all the bits from Attr2 that are not part of the sprite priority
 	PriorityMask Attr2 = 0x0C00
+
+	// PriorityShift is the offset of the priority value in Attr2
+	PriorityShift Attr2 = 0x000A
 )
 
 // AffineAttrs is the structure sprite OAM affine attributes, it maps the sprites pixels from screen space to the sprites pixel space

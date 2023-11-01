@@ -1,16 +1,5 @@
 package display
 
-import (
-	hw_display "github.com/bjatkin/flappy_boot/internal/hardware/display"
-	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
-)
-
-// VCount returns the vertical scan line that is currently being drawn. It treats the value as
-// volitile so it is safe to use in tight loops
-func VCount() int {
-	return int(memmap.GetReg(hw_display.VCount))
-}
-
 // Color represents a 15 bit RGB(grb) color
 type Color uint16
 

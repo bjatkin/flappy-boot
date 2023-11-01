@@ -1,8 +1,5 @@
 package memmap
 
-// #include "memmap.h"
-import "C"
-
 import (
 	"fmt"
 	"io"
@@ -11,6 +8,9 @@ import (
 )
 
 const (
+	// KByte is the size of a kilobyte
+	KByte = 0x0400
+
 	// HalfKByte is the size of a kilobyte in uint16's
 	HalfKByte = 0x0200
 
@@ -25,23 +25,6 @@ const (
 
 	// TileOffset4 is the size of a 4 bit per pixel tile in uint16's
 	TileOffset4 = 16
-)
-
-const (
-	// IO is the base memory address for the LCD I/O Registers
-	IOAddr uintptr = 0x0400_0000
-
-	// Keypad is the base memory address for the keypad input registers
-	KeypadAddr uintptr = 0x0400_0130
-
-	// Palette is the base memory address for the BG and Sprite palettes (1 Kbyte)
-	PaletteAddr uintptr = 0x0500_0000
-
-	// VRAM is the base address for video RAM (96 KBytes)
-	VRAMAddr uintptr = 0x0600_0000
-
-	// OAM is the base addres of all the object (sprite) attributes (1 Kbyte)
-	OAMAddr uintptr = 0x0700_0000
 )
 
 // PaletteValue represents a valid color palette value
@@ -75,17 +58,6 @@ var OAM = unsafe.Slice(oamStart, HalfKByte)
 // values is a composit type of all the core memory value types
 type values interface {
 	PaletteValue | VRAMValue | OAMValue
-}
-
-// GetReg returns the volatile value of a 16 bit regiter
-func GetReg[T reg](reg *T) T {
-	v := C.GetReg((*C.ushort)(unsafe.Pointer(reg)))
-	return T(v)
-}
-
-// SetReg sets the value of a 16 bit volitile register
-func SetReg[T reg](reg *T, value T) {
-	C.SetReg((*C.ushort)(unsafe.Pointer(reg)), C.ushort(value))
 }
 
 // Copy16 coppies data from the source to the destination in 16 bit chunks

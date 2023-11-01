@@ -6,6 +6,6 @@ import (
 )
 
 func main() {
-	engine := game.NewEngine()
-	engine.Run(gameplay.NewManager(engine))
+	harness := game.NewHarness()
+	harness.Run(gameplay.NewManager(harness.E))
 }
