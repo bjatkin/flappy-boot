@@ -3,6 +3,7 @@
 package game
 
 import (
+	"fmt"
 	"log"
 
 	"github.com/bjatkin/flappy_boot/internal/emu/ppu"
@@ -11,6 +12,7 @@ import (
 	"github.com/bjatkin/flappy_boot/internal/hardware/memmap"
 	"github.com/bjatkin/flappy_boot/internal/hardware/save"
 	"github.com/hajimehoshi/ebiten/v2"
+	"github.com/hajimehoshi/ebiten/v2/ebitenutil"
 )
 
 const saveFile = "flappy_boot_stand.sav"
@@ -97,22 +99,8 @@ func (h *Harness) Draw(screen *ebiten.Image) {
 	// i is the priority, we draw from lowest prioirity(3) to highest priority(0) so higher priorities
 	// overwrite pixels from lower priorities
 	for i := 3; i >= 0; i-- {
-		for _, bg := range h.PPU.Backgrounds {
-			if bg.Priority != i {
-				continue
-			}
-			if !bg.Enabled {
-				continue
-			}
 
-			transform := ebiten.GeoM{}
-			transform.Translate(float64(-(bg.Pos.X % (bg.Size.X * 256))), float64(-bg.Pos.Y))
-			screen.DrawImage(ebiten.NewImageFromImage(bg.Image), &ebiten.DrawImageOptions{GeoM: transform})
-
-			// TODO: save a draw call by only drawing this frame if it will be seen
-			transform.Translate(float64(bg.Size.X*256), 0)
-			screen.DrawImage(ebiten.NewImageFromImage(bg.Image), &ebiten.DrawImageOptions{GeoM: transform})
-		}
+		screen.DrawImage(ebiten.NewImageFromImage(h.PPU.Final), &ebiten.DrawImageOptions{})
 
 		for _, spr := range h.PPU.Sprites {
 			if !spr.Enabled {
@@ -148,6 +136,10 @@ func (h *Harness) Draw(screen *ebiten.Image) {
 			screen.DrawImage(ebiten.NewImageFromImage(spr.Image), &ebiten.DrawImageOptions{GeoM: transform})
 		}
 	}
+
+	// performance
+	msg := fmt.Sprintf("TPS: %0.2f\nFPS: %0.2f", ebiten.ActualTPS(), ebiten.ActualFPS())
+	ebitenutil.DebugPrint(screen, msg)
 }
 
 // Layout just returns the resolution of the GBA

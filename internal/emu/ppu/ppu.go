@@ -10,6 +10,77 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+const transparent memmap.PaletteValue = 0x7C1F
+
+type RGB15 struct {
+	colors []memmap.PaletteValue
+	width  int
+	height int
+}
+
+func NewRGB15(width, height int) *RGB15 {
+	return &RGB15{
+		colors: make([]memmap.PaletteValue, width*height),
+		width:  width,
+		height: height,
+	}
+}
+
+func (i *RGB15) DrawImage(x, y int, draw *RGB15) {
+	for dy := 0; dy < draw.height; dy++ {
+		for dx := 0; dx < draw.width; dx++ {
+			if y+dy >= i.height ||
+				y+dy < 0 ||
+				x+dx >= i.width ||
+				x+dx < 0 {
+				continue
+			}
+
+			c := draw.At(dx, dy)
+			if c == transparent {
+				continue
+			}
+
+			i.Set(x+dx, y+dy, c)
+		}
+	}
+}
+
+func (i *RGB15) At(x, y int) memmap.PaletteValue {
+	return i.colors[y*i.width+x]
+}
+
+func (i *RGB15) ColAt(x, y int) color.RGBA {
+	c := i.At(x, y)
+	if c == transparent {
+		return color.RGBA{}
+	}
+
+	b := int(c&0b01111100_00000000) >> 0xA
+	g := int(c&0b00000011_11100000) >> 0x5
+	r := int(c & 0b00000000_00011111)
+
+	ret := color.RGBA{
+		R: uint8(float64(r) * 8.2258),
+		G: uint8(float64(g) * 8.2258),
+		B: uint8(float64(b) * 8.2258),
+		A: 255,
+	}
+
+	return ret
+}
+
+func (i *RGB15) Set(x, y int, c memmap.PaletteValue) {
+	if y >= i.height ||
+		y < 0 ||
+		x >= i.width ||
+		x < 0 {
+		return
+	}
+
+	i.colors[y*i.width+x] = c
+}
+
 // v2 is a simple vector 2
 type v2 struct {
 	X int
@@ -35,7 +106,7 @@ type Background struct {
 	Pos           v2
 	Size          v2
 	Priority      int
-	Image         *image.RGBA
+	Image         *RGB15
 	SkipGFXUpdate bool
 }
 
@@ -106,7 +177,7 @@ func (b *Background) setTile(gfxData []memmap.VRAMValue, palData []memmap.Palett
 	view := b.getTileView(data.mapOffset)
 	for y := 0; y < 8; y++ {
 		for x := 0; x < 8; x++ {
-			color := palColorToRGBA(palData, indexes[y*8+x])
+			// color := palColorToRGBA(palData, indexes[y*8+x])
 
 			var px, py int
 			switch {
@@ -125,7 +196,12 @@ func (b *Background) setTile(gfxData []memmap.VRAMValue, palData []memmap.Palett
 			}
 
 			// TODO: instead of setting each pixel it would be better to copy data directly between images
-			b.Image.Set(px, py, color)
+			i := indexes[y*8+x]
+			if i == 0 {
+				b.Image.Set(px, py, transparent)
+			} else {
+				b.Image.Set(px, py, palData[i])
+			}
 		}
 	}
 }
@@ -244,6 +320,8 @@ type PPU struct {
 	Backgrounds [4]Background
 	lastPal     [512]memmap.PaletteValue
 	palDirty    bool
+	backBuffer  *RGB15
+	Screen      *image.RGBA
 }
 
 // New creates a new PPU struct
@@ -256,7 +334,8 @@ func New() *PPU {
 				bgVOffset:   display.BG0VOffset,
 				enableCheck: display.BG0,
 
-				Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				//Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				Image: NewRGB15(512, 512),
 			},
 			{
 				controll:    display.BG1Controll,
@@ -264,7 +343,8 @@ func New() *PPU {
 				bgVOffset:   display.BG1VOffset,
 				enableCheck: display.BG1,
 
-				Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				// Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				Image: NewRGB15(512, 512),
 			},
 			{
 				controll:    display.BG2Controll,
@@ -272,7 +352,8 @@ func New() *PPU {
 				bgVOffset:   display.BG2VOffset,
 				enableCheck: display.BG2,
 
-				Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				// Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				Image: NewRGB15(512, 512),
 			},
 			{
 				controll:    display.BG3Controll,
@@ -280,9 +361,12 @@ func New() *PPU {
 				bgVOffset:   display.BG3VOffset,
 				enableCheck: display.BG3,
 
-				Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				// Image: image.NewRGBA(image.Rect(0, 0, 512, 512)),
+				Image: NewRGB15(512, 512),
 			},
 		},
+		backBuffer: NewRGB15(240, 160),
+		Screen:     image.NewRGBA(image.Rect(0, 0, 240, 160)),
 	}
 
 	for i := range ppu.Sprites {
@@ -314,6 +398,65 @@ func (p *PPU) Update() {
 		p.Sprites[i].update()
 	}
 
+	for i := 3; i >= 0; i-- {
+		for _, bg := range p.Backgrounds {
+			if bg.Priority != i {
+				continue
+			}
+			if !bg.Enabled {
+				continue
+			}
+
+			x := -(bg.Pos.X % (bg.Size.X * 256))
+			y := -bg.Pos.Y
+			p.backBuffer.DrawImage(x, y, bg.Image)
+			// duplicate the BG for horizontal scrolling
+			p.backBuffer.DrawImage(x+(bg.Size.X*256), y, bg.Image)
+		}
+
+		// for _, spr := range p.Sprites {
+		// 	if !spr.Enabled {
+		// 		continue
+		// 	}
+		// 	if spr.Priority != i {
+		// 		continue
+		// 	}
+
+		// 	y := ((spr.Pos.Y + spr.Size.Y) % 0xFF) - spr.Size.Y
+		// 	x := ((spr.Pos.X + spr.Size.X) % 0x1FF) - spr.Size.X
+		// 	if x > 240 || y > 160 {
+		// 		continue
+		// 	}
+
+		// 	transform := ebiten.GeoM{}
+		// 	switch {
+		// 	case spr.VFlip && spr.HFlip:
+		// 		transform.Scale(-1, -1)
+		// 		// Transform must take scale into account since all the sprites are 64x64 by default
+		// 		transform.Translate(float64(x+spr.Size.X), float64((y + spr.Size.Y)))
+		// 	case spr.VFlip:
+		// 		transform.Scale(1, -1)
+		// 		// Transform must take scale into account since all the sprites are 64x64 by default
+		// 		transform.Translate(float64(x), float64((y + spr.Size.Y)))
+		// 	case spr.HFlip:
+		// 		transform.Scale(-1, 1)
+		// 		// Transform must take scale into account since all the sprites are 64x64 by default
+		// 		transform.Translate(float64(x+spr.Size.X), float64(y))
+		// 	default:
+		// 		transform.Translate(float64(x), float64(y))
+		// 	}
+
+		// 	p.backBuffer.DrawImage(x, y, spr.Image)
+		// 	// screen.DrawImage(ebiten.NewImageFromImage(spr.Image), &ebiten.DrawImageOptions{GeoM: transform})
+		// }
+	}
+
+	for y := 0; y < 160; y++ {
+		for x := 0; x < 240; x++ {
+			p.Screen.Set(x, y, p.backBuffer.ColAt(x, y))
+		}
+	}
+
 	p.palDirty = false
 }
 
@@ -328,34 +471,34 @@ func getIndexQuartet(i int, gfxData []memmap.VRAMValue) [4]int {
 }
 
 // palCache makes converting palette values faster by caching past colors that have been converted
-var palCache = make(map[memmap.PaletteValue]color.RGBA, 1024)
+// var palCache = make(map[memmap.PaletteValue]color.RGBA, 1024)
 
-// palColorToRGBA converts a palette's color into an RGBA color
+// // palColorToRGBA converts a palette's color into an RGBA color
 func palColorToRGBA(palette []memmap.PaletteValue, index int) color.RGBA {
 	if index == 0 {
 		return color.RGBA{}
 	}
 	c := palette[index]
 
-	if color, ok := palCache[c]; ok {
-		return color
-	}
+	// if color, ok := palCache[c]; ok {
+	// 	return color
+	// }
 
 	b := (c & 0b01111100_00000000) >> 0xA
 	g := (c & 0b00000011_11100000) >> 0x5
 	r := c & 0b00000000_00011111
 
 	ret := color.RGBA{
-		// R: uint8(float64(r) * 8.2258),
-		// G: uint8(float64(g) * 8.2258),
-		// B: uint8(float64(b) * 8.2258),
+		R: uint8(float64(r) * 8.2258),
+		G: uint8(float64(g) * 8.2258),
+		B: uint8(float64(b) * 8.2258),
 		// multiplying by 8 is less accurate but way faster
-		R: uint8(r * 8),
-		G: uint8(g * 8),
-		B: uint8(b * 8),
+		// R: uint8(r * 8),
+		// G: uint8(g * 8),
+		// B: uint8(b * 8),
 		A: 255,
 	}
 
-	palCache[c] = ret
+	//palCache[c] = ret
 	return ret
 }
