@@ -11,10 +11,40 @@ go run ./cmd/lut internal/lut/sin.go
 go test -tags=standalone,local ./...
 
 # build the .gba file
-tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s .
+tinygo build -o=flappy_boot.gba -target=gameboy-advance -opt=s -o dist/gba/flappy_boot.gba .
 
 # build the standalone version of the game
-go build -tags=standalone,local .
+env GOOS=linux GOARCH=amd64 go build -tags=standalone,local -o dist/linux/flappy_boot .
+env GOOS=windows GOARCH=amd64 go build -tags=standalone,local -o dist/windows/flappy_boot .
+
+# cant build mac files on linux due to cgo :(
+# env GOOS=darwin GOARCH=amd64 go build -tags=standalone,local -o dist/mac/flappy_boot .
+# env GOOS=darwin GOARCH=arm64 go build -tags=standalone,local -o dist/mac/flappy_boot_m1 .
 
 # build the .wasm file
-env GOOS=js GOARCH=wasm go build -tags=standalone,web -o wasm/flappy_boot.wasm github.com/bjatkin/flappy_boot
+env GOOS=js GOARCH=wasm go build -tags=standalone,web -o web/flappy_boot.wasm .
+cp web/flappy_boot.wasm dist/html5/flappy_boot.wasm
+
+# build the web version
+cd web && npm run build
+
+# remove the old build
+rm -r dist/flappy_boot || echo "no build folder to remove"
+mkdir dist/flappy_boot
+
+# copy new dist files into the flappy_boot folder
+cp -a dist/assets/. dist/flappy_boot/
+cp dist/index.html dist/flappy_boot/index.html
+cp dist/waserve.svg dist/flappy_boot/waserve.svg
+cp flappy_boot.wasm dist/flappy_boot/flappy_boot.wasm
+
+# fix up the html file so it knows the asset files are not nested
+sed -i 's/\/assets\///g' dist/flappy_boot/index.html 
+
+# move out of the web folder and copy things into dist
+cd ..
+rm -r dist/html5/flappy_boot || echo "no dist folder to remove"
+mv web/dist/flappy_boot dist/html5/
+
+# create the zip archive for itch uploads
+zip -r dist/html5/flappy_boot.zip dist/html5/flappy_boot
