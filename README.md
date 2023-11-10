@@ -41,10 +41,11 @@ Flappy Boot can be run in 3 different modes:
 2) as a wasm build using wasm and npm
 3) as a GBA ROM inside an emulator/ or on actual hardware
 
-you can build all these files for all these targets using the `./build` script
+You can build all these files for all these targets using the `./build` script.
+Note that you should only run `./build` from the root directory of the repo otherwise it will fail.
 
 ### Standalone
-The Standalone build and be built using the normal go build tool.
+The Standalone build can be built using the normal go build tool.
 You will need to include the `standalone` and `local` build tags however.
 ```sh
 go build -tags=standalone,local .
@@ -86,7 +87,10 @@ Instead it will create a file called `flappy_boot.gba`.
 This `.gba` file can then be run with any sutiable GBA emulator.
 
 # References
-This game with built with the help of a couple of really excelent  GBA programming resources.
+This project was made possible because of the awesome [tiny go complier](https://tinygo.org/),
+as well as those who worked to get support for the [GBA compile target](https://tinygo.org/docs/reference/microcontrollers/gameboy-advance/).
+
+Flappy boot was built with the help of a couple of really excelent GBA programming resources.
 These are both tailored for C/C++ development on the GBA but still provied great general knowledge.
 * [TONIC](https://www.coranac.com/tonc/text/toc.htm)
 * [GBATEK](https://problemkaputt.de/gbatek.htm)

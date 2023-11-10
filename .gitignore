@@ -15,7 +15,7 @@ mem.prof
 dist
 
 # NPM files
-wasm/node_modules
+web/node_modules
 
 # VSCode editor
 .vscode
