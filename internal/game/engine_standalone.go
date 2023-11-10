@@ -94,13 +94,15 @@ func (h *Harness) updateSaveData(path string) {
 // Draw takes the data form inside the simulated GBA memory and draws it onto the screen
 // this can happy more than 60 times a second which is why the actuall GBA draw call needs to be in the Update function
 func (h *Harness) Draw(screen *ebiten.Image) {
+	// TODO: we should probably just hand the screen directly into the PPU
 	h.PPU.Update()
+
+	// backgrounds are all rendeder by the PPU
+	screen.DrawImage(ebiten.NewImageFromImage(h.PPU.Screen), &ebiten.DrawImageOptions{})
 
 	// i is the priority, we draw from lowest prioirity(3) to highest priority(0) so higher priorities
 	// overwrite pixels from lower priorities
 	for i := 3; i >= 0; i-- {
-
-		screen.DrawImage(ebiten.NewImageFromImage(h.PPU.Final), &ebiten.DrawImageOptions{})
 
 		for _, spr := range h.PPU.Sprites {
 			if !spr.Enabled {

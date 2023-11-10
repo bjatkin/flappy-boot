@@ -10,14 +10,17 @@ import (
 	"github.com/hajimehoshi/ebiten/v2"
 )
 
+// transparent is the transparent color to use for RGB15 images
 const transparent memmap.PaletteValue = 0x7C1F
 
+// RGB15 is an image that holds memmap.PaletteValue colors directly
 type RGB15 struct {
 	colors []memmap.PaletteValue
 	width  int
 	height int
 }
 
+// NewRGB15 creates a new RGB15 image with the given width and height
 func NewRGB15(width, height int) *RGB15 {
 	return &RGB15{
 		colors: make([]memmap.PaletteValue, width*height),
@@ -26,6 +29,7 @@ func NewRGB15(width, height int) *RGB15 {
 	}
 }
 
+// DrawImage draws the given RGB15 image onto the target RGB15 image
 func (i *RGB15) DrawImage(x, y int, draw *RGB15) {
 	for dy := 0; dy < draw.height; dy++ {
 		for dx := 0; dx < draw.width; dx++ {
@@ -46,10 +50,13 @@ func (i *RGB15) DrawImage(x, y int, draw *RGB15) {
 	}
 }
 
+// At gets the memmap.PaletteValue from the image at location x,y
 func (i *RGB15) At(x, y int) memmap.PaletteValue {
 	return i.colors[y*i.width+x]
 }
 
+// ColAt gets the memmap.PaletteValue from the image at location x,y and converts that into
+// a valid color.RGBA value
 func (i *RGB15) ColAt(x, y int) color.RGBA {
 	c := i.At(x, y)
 	if c == transparent {
@@ -70,6 +77,7 @@ func (i *RGB15) ColAt(x, y int) color.RGBA {
 	return ret
 }
 
+// Set sets the color of the pixel at x,y in the image to the given value
 func (i *RGB15) Set(x, y int, c memmap.PaletteValue) {
 	if y >= i.height ||
 		y < 0 ||
@@ -177,8 +185,6 @@ func (b *Background) setTile(gfxData []memmap.VRAMValue, palData []memmap.Palett
 	view := b.getTileView(data.mapOffset)
 	for y := 0; y < 8; y++ {
 		for x := 0; x < 8; x++ {
-			// color := palColorToRGBA(palData, indexes[y*8+x])
-
 			var px, py int
 			switch {
 			case data.hflip && data.vflip:
@@ -414,41 +420,8 @@ func (p *PPU) Update() {
 			p.backBuffer.DrawImage(x+(bg.Size.X*256), y, bg.Image)
 		}
 
-		// for _, spr := range p.Sprites {
-		// 	if !spr.Enabled {
-		// 		continue
-		// 	}
-		// 	if spr.Priority != i {
-		// 		continue
-		// 	}
-
-		// 	y := ((spr.Pos.Y + spr.Size.Y) % 0xFF) - spr.Size.Y
-		// 	x := ((spr.Pos.X + spr.Size.X) % 0x1FF) - spr.Size.X
-		// 	if x > 240 || y > 160 {
-		// 		continue
-		// 	}
-
-		// 	transform := ebiten.GeoM{}
-		// 	switch {
-		// 	case spr.VFlip && spr.HFlip:
-		// 		transform.Scale(-1, -1)
-		// 		// Transform must take scale into account since all the sprites are 64x64 by default
-		// 		transform.Translate(float64(x+spr.Size.X), float64((y + spr.Size.Y)))
-		// 	case spr.VFlip:
-		// 		transform.Scale(1, -1)
-		// 		// Transform must take scale into account since all the sprites are 64x64 by default
-		// 		transform.Translate(float64(x), float64((y + spr.Size.Y)))
-		// 	case spr.HFlip:
-		// 		transform.Scale(-1, 1)
-		// 		// Transform must take scale into account since all the sprites are 64x64 by default
-		// 		transform.Translate(float64(x+spr.Size.X), float64(y))
-		// 	default:
-		// 		transform.Translate(float64(x), float64(y))
-		// 	}
-
-		// 	p.backBuffer.DrawImage(x, y, spr.Image)
-		// 	// screen.DrawImage(ebiten.NewImageFromImage(spr.Image), &ebiten.DrawImageOptions{GeoM: transform})
-		// }
+		// TOOD: we should also draw the sprites to the back buffer here but my first attempt ended
+		// up killing performance so I'll need to make another atempt in the future.
 	}
 
 	for y := 0; y < 160; y++ {
@@ -470,19 +443,12 @@ func getIndexQuartet(i int, gfxData []memmap.VRAMValue) [4]int {
 	}
 }
 
-// palCache makes converting palette values faster by caching past colors that have been converted
-// var palCache = make(map[memmap.PaletteValue]color.RGBA, 1024)
-
-// // palColorToRGBA converts a palette's color into an RGBA color
+// palColorToRGBA converts a palette's color into an RGBA color
 func palColorToRGBA(palette []memmap.PaletteValue, index int) color.RGBA {
 	if index == 0 {
 		return color.RGBA{}
 	}
 	c := palette[index]
-
-	// if color, ok := palCache[c]; ok {
-	// 	return color
-	// }
 
 	b := (c & 0b01111100_00000000) >> 0xA
 	g := (c & 0b00000011_11100000) >> 0x5
@@ -492,13 +458,8 @@ func palColorToRGBA(palette []memmap.PaletteValue, index int) color.RGBA {
 		R: uint8(float64(r) * 8.2258),
 		G: uint8(float64(g) * 8.2258),
 		B: uint8(float64(b) * 8.2258),
-		// multiplying by 8 is less accurate but way faster
-		// R: uint8(r * 8),
-		// G: uint8(g * 8),
-		// B: uint8(b * 8),
 		A: 255,
 	}
 
-	//palCache[c] = ret
 	return ret
 }
