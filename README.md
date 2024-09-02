@@ -1,10 +1,20 @@
 # Flappy Boot
+![flappy boot title](https://github.com/bjatkin/flappy-boot/blob/main/assets/title.png)
 Oh No! Hermes, the Olympian god, seems to have dropped on of his winged boots from the heavens!
 Better hurry and find your way back to him, but beware of the many Roman columns that stand in your way.
 
 This is a flappy bird clone written from scratch for the GBA.
 It is open source and fairly well commented so feel free to use it as a jumping off point for your own project.
 If you would like to learn about this project check out [this presentation](https://youtu.be/mrWJZSVSRVQ?si=653ayqaEtqz5xB6o) on makeing GBA games in Go.
+
+
+# Play Me
+![flappy boot gameplay](https://github.com/bjatkin/flappy-boot/blob/main/assets/gameplay.gif)
+You can play this game on [itch.io](https://aanval.itch.io/flappy-boot-advance).
+itch.io will allow you do download the gba rom to play on any gba emulator.
+It also contains a web build so you can play it in your browser.
+The web player is a customer emulator built using [ebitengine](https://ebitengine.org/).
+You can look at the emulator code [here](https://github.com/bjatkin/flappy-boot/tree/main/internal/emu).
 
 # Project Structure
 This project has the following structure.
